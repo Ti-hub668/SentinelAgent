@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 
+from app.api.scans import router as scans_router
 from app.api.assets import router as assets_router
 from app.db.database import Base, engine
 from app.models.asset import Asset
-
+from app.models.scan_task import ScanTask
+from app.models.port import Port
 
 app = FastAPI(
     title="SentinelAgent",
@@ -16,7 +18,7 @@ Base.metadata.create_all(bind=engine)
 
 
 app.include_router(assets_router)
-
+app.include_router(scans_router)
 
 @app.get("/")
 def root():
