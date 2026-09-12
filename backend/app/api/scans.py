@@ -8,8 +8,11 @@ from app.db.database import get_db
 from app.models.asset import Asset
 from app.models.port import Port
 from app.models.scan_task import ScanTask
+from app.models.vulnerability import Vulnerability
 from app.schemas.scan import ScanCreate, ScanResponse
 from app.scanners.nmap_scanner import run_nmap
+from app.scanners.nuclei_scanner import run_nuclei
+from app.scanners.web_discovery import build_web_targets
 
 
 router = APIRouter(
@@ -23,8 +26,10 @@ def create_scan(
     scan_data: ScanCreate,
     db: Session = Depends(get_db)
 ):
-    # 1. 根据 asset_id 查询资产
-    asset = db.get(Asset, scan_data.asset_id)
+    asset = db.get(
+        Asset,
+        scan_data.asset_id
+    )
 
     if asset is None:
         raise HTTPException(
@@ -32,10 +37,9 @@ def create_scan(
             detail="Asset not found"
         )
 
-    # 2. 创建扫描任务
     scan_task = ScanTask(
         asset_id=asset.id,
-        scanner="nmap",
+        scanner="nmap+nuclei",
         status="running",
         started_at=datetime.now()
     )
@@ -44,14 +48,18 @@ def create_scan(
     db.commit()
     db.refresh(scan_task)
 
-    try:
-        # 3. 调用 Nmap
-        scan_results = run_nmap(asset.target)
+    scan_task_id = scan_task.id
 
-        # 4. 保存扫描发现的端口
+    try:
+        # 1. Nmap 扫描
+        scan_results = run_nmap(
+            asset.target
+        )
+
+        # 2. 保存端口
         for result in scan_results:
             port = Port(
-                scan_task_id=scan_task.id,
+                scan_task_id=scan_task_id,
                 host=result["host"],
                 protocol=result["protocol"],
                 port=result["port"],
@@ -62,7 +70,42 @@ def create_scan(
 
             db.add(port)
 
-        # 5. 更新任务状态
+        db.commit()
+
+        # 3. 根据端口生成 Web URL
+        web_targets = build_web_targets(
+            scan_results
+        )
+
+        # 4. 对 Web 服务运行 Nuclei
+        for target in web_targets:
+            nuclei_results = run_nuclei(
+                target
+            )
+
+            # 5. 保存漏洞
+            for finding in nuclei_results:
+                vulnerability = Vulnerability(
+                    scan_task_id=scan_task_id,
+                    target=finding["target"],
+                    template_id=finding["template_id"],
+                    name=finding["name"],
+                    severity=finding["severity"],
+                    matched_at=finding["matched_at"],
+                    description=finding["description"],
+                    remediation=finding["remediation"]
+                )
+
+                db.add(vulnerability)
+
+        db.commit()
+
+        # 6. 标记扫描完成
+        scan_task = db.get(
+            ScanTask,
+            scan_task_id
+        )
+
         scan_task.status = "completed"
         scan_task.finished_at = datetime.now()
 
@@ -71,30 +114,37 @@ def create_scan(
     except Exception as e:
         db.rollback()
 
-        # rollback 后重新获取任务
-        scan_task = db.get(ScanTask, scan_task.id)
+        scan_task = db.get(
+            ScanTask,
+            scan_task_id
+        )
 
-        scan_task.status = "failed"
-        scan_task.error_message = str(e)
-        scan_task.finished_at = datetime.now()
+        if scan_task is not None:
+            scan_task.status = "failed"
+            scan_task.error_message = str(e)
+            scan_task.finished_at = datetime.now()
 
-        db.commit()
+            db.commit()
 
         raise HTTPException(
             status_code=500,
             detail=f"Scan failed: {str(e)}"
         )
 
-    # 6. 查询刚刚保存的端口
+    # 7. 查询端口结果
     result = db.execute(
         select(Port).where(
-            Port.scan_task_id == scan_task.id
+            Port.scan_task_id == scan_task_id
         )
     )
 
     ports = result.scalars().all()
 
-    # 7. 返回结果
+    scan_task = db.get(
+        ScanTask,
+        scan_task_id
+    )
+
     return {
         "id": scan_task.id,
         "asset_id": scan_task.asset_id,
@@ -108,13 +158,18 @@ def create_scan(
     }
 
 
-@router.get("/{scan_id}", response_model=ScanResponse)
+@router.get(
+    "/{scan_id}",
+    response_model=ScanResponse
+)
 def get_scan(
     scan_id: int,
     db: Session = Depends(get_db)
 ):
-    # 查询扫描任务
-    scan_task = db.get(ScanTask, scan_id)
+    scan_task = db.get(
+        ScanTask,
+        scan_id
+    )
 
     if scan_task is None:
         raise HTTPException(
@@ -122,7 +177,6 @@ def get_scan(
             detail="Scan task not found"
         )
 
-    # 查询对应端口
     result = db.execute(
         select(Port).where(
             Port.scan_task_id == scan_id

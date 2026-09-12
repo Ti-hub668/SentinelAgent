@@ -6,6 +6,8 @@ from app.db.database import Base, engine
 from app.models.asset import Asset
 from app.models.scan_task import ScanTask
 from app.models.port import Port
+from app.models.vulnerability import Vulnerability
+from app.api.vulnerabilities import router as vulnerabilities_router
 
 app = FastAPI(
     title="SentinelAgent",
@@ -19,6 +21,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(assets_router)
 app.include_router(scans_router)
+app.include_router(vulnerabilities_router)
 
 @app.get("/")
 def root():
