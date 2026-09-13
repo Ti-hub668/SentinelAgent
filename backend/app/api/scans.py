@@ -9,6 +9,7 @@ from app.models.asset import Asset
 from app.models.port import Port
 from app.models.scan_task import ScanTask
 from app.models.vulnerability import Vulnerability
+from app.models.finding import Finding
 from app.schemas.scan import ScanCreate, ScanResponse
 from app.scanners.nmap_scanner import run_nmap
 from app.scanners.nuclei_scanner import run_nuclei
@@ -84,19 +85,35 @@ def create_scan(
             )
 
             # 5. 保存漏洞
-            for finding in nuclei_results:
+            for nuclei_finding in nuclei_results:
                 vulnerability = Vulnerability(
                     scan_task_id=scan_task_id,
-                    target=finding["target"],
-                    template_id=finding["template_id"],
-                    name=finding["name"],
-                    severity=finding["severity"],
-                    matched_at=finding["matched_at"],
-                    description=finding["description"],
-                    remediation=finding["remediation"]
+                    target=nuclei_finding["target"],
+                    template_id=nuclei_finding["template_id"],
+                    name=nuclei_finding["name"],
+                    severity=nuclei_finding["severity"],
+                    matched_at=nuclei_finding["matched_at"],
+                    description=nuclei_finding["description"],
+                    remediation=nuclei_finding["remediation"]
                 )
 
                 db.add(vulnerability)
+
+                security_finding = Finding(
+                    scan_task_id=scan_task_id,
+                    asset_id=asset.id,
+                    source="nuclei",
+                    finding_type="vulnerability",
+                    title=nuclei_finding["name"],
+                    severity=nuclei_finding["severity"],
+                    target=nuclei_finding["target"],
+                    description=nuclei_finding["description"],
+                    evidence=nuclei_finding["matched_at"],
+                    remediation=nuclei_finding["remediation"],
+                    status="open"
+                )
+
+                db.add(security_finding)
 
         db.commit()
 
