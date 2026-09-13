@@ -1,5 +1,5 @@
 from app.schemas.ai_analysis import AIAnalysisInput
-
+PROMPT_VERSION = "v1"
 
 def build_risk_analysis_prompt(
     data: AIAnalysisInput

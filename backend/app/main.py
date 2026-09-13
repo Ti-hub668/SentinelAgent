@@ -10,6 +10,7 @@ from app.models.vulnerability import Vulnerability
 from app.models.finding import Finding
 from app.api.vulnerabilities import router as vulnerabilities_router
 from app.api.findings import router as findings_router
+from app.models.ai_analysis import AIAnalysis
 
 app = FastAPI(
     title="SentinelAgent",
