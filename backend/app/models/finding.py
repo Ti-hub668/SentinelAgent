@@ -73,6 +73,20 @@ class Finding(Base):
         nullable=False,
         default="open"
     )
+    risk_score: Mapped[int | None] = mapped_column(
+    Integer,
+    nullable=True
+    )
+
+    risk_level: Mapped[str | None] = mapped_column(
+    String(20),
+    nullable=True
+    )
+
+    risk_reason: Mapped[str | None] = mapped_column(
+    Text,
+    nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
