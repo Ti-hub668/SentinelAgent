@@ -1,0 +1,34 @@
+[
+  {
+    "id": "real_0001",
+    "finding_id": 1,
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Wappalyzer Technology Detection",
+    "severity": "info",
+    "target": "127.0.0.1",
+    "description": "",
+    "evidence": "http://127.0.0.1:8000",
+    "remediation": "",
+    "risk_score": null,
+    "risk_level": null,
+    "risk_reason": null,
+    "expected_verdict": null
+  },
+  {
+    "id": "real_0002",
+    "finding_id": 2,
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Wappalyzer Technology Detection",
+    "severity": "info",
+    "target": "127.0.0.1",
+    "description": "",
+    "evidence": "http://127.0.0.1:8000",
+    "remediation": "",
+    "risk_score": 15,
+    "risk_level": "low",
+    "risk_reason": "基础严重程度为 info，初始风险分数为 10；该发现属于漏洞类安全发现，风险分数增加 5；该结果来源于 Nuclei 自动化安全扫描；当前结果主要属于技术识别信息，未直接表明存在可利用漏洞",
+    "expected_verdict": null
+  }
+]

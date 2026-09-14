@@ -22,7 +22,10 @@ DATASETS = {
     ),
     "holdout": Path(
         "evals/prompt_holdout_cases.json"
-    )
+    ),
+    "benchmark_v1": Path(
+        "evals/security_benchmark_v1.json"
+    ),
 }
 
 
@@ -496,14 +499,16 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--dataset",
-        choices=[
-            "development",
-            "holdout"
-        ],
-        default="development",
-        help="选择需要运行的评测数据集"
+    "--dataset",
+    choices=[
+        "development",
+        "holdout",
+        "benchmark_v1",
+    ],
+    default="development",
+    help="选择需要运行的评测数据集"
     )
+    
     parser.add_argument(
     "--model",
     type=str,
