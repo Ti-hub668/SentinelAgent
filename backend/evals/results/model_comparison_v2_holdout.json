@@ -1,0 +1,52 @@
+{
+  "dataset": "holdout",
+  "prompt_version": "v2",
+  "models": [
+    {
+      "model": "qwen3:14b",
+      "verdict_accuracy": 62.5,
+      "schema_success_rate": 100.0,
+      "average_latency_seconds": 50.88,
+      "average_confidence": 0.79,
+      "error_count": 3,
+      "high_confidence_error_count": 2,
+      "error_cases": [
+        {
+          "case_id": "holdout_002",
+          "expected_verdict": "likely_true_positive",
+          "actual_verdict": "informational",
+          "confidence": 0.9
+        },
+        {
+          "case_id": "holdout_004",
+          "expected_verdict": "likely_false_positive",
+          "actual_verdict": "needs_review",
+          "confidence": 0.6
+        },
+        {
+          "case_id": "holdout_008",
+          "expected_verdict": "likely_false_positive",
+          "actual_verdict": "informational",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "model": "qwen3:8b",
+      "verdict_accuracy": 87.5,
+      "schema_success_rate": 100.0,
+      "average_latency_seconds": 32.46,
+      "average_confidence": 0.85,
+      "error_count": 1,
+      "high_confidence_error_count": 1,
+      "error_cases": [
+        {
+          "case_id": "holdout_002",
+          "expected_verdict": "likely_true_positive",
+          "actual_verdict": "informational",
+          "confidence": 0.95
+        }
+      ]
+    }
+  ]
+}

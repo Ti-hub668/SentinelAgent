@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "dataset": "holdout",
+    "prompt_version": "v2",
+    "provider": "ollama",
+    "model": "qwen3:14b",
+    "total_cases": 8,
+    "successful_cases": 8,
+    "correct_cases": 5,
+    "schema_success_rate": 100.0,
+    "verdict_accuracy": 62.5,
+    "average_latency_seconds": 50.88,
+    "average_confidence": 0.79,
+    "evaluated_at": "2026-09-14T17:07:12"
+  },
+  "cases": [
+    {
+      "case_id": "holdout_001",
+      "title": "HTTP Server Banner Detection",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.9,
+      "correct": true,
+      "latency_seconds": 50.04,
+      "summary": "检测到HTTP服务器响应头披露了Web服务器产品信息",
+      "risk_explanation": "该发现仅涉及服务器banner信息的披露，未直接证明存在漏洞或安全问题。根据提供的证据，仅确认了服务器软件信息的暴露，没有进一步的漏洞利用证据。",
+      "recommended_action": "建议配置服务器以隐藏或最小化不必要的banner信息，降低信息泄露风险。",
+      "error": null
+    },
+    {
+      "case_id": "holdout_002",
+      "title": "Missing Content Security Policy Header",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "informational",
+      "confidence": 0.9,
+      "correct": false,
+      "latency_seconds": 42.04,
+      "summary": "发现目标缺少Content-Security-Policy响应头",
+      "risk_explanation": "该发现仅表明缺少安全策略头，属于信息类结果，不直接代表存在安全漏洞",
+      "recommended_action": "建议根据安全最佳实践配置合适的Content-Security-Policy头",
+      "error": null
+    },
+    {
+      "case_id": "holdout_003",
+      "title": "Possible SQL Injection Behavior",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.6,
+      "correct": true,
+      "latency_seconds": 50.16,
+      "summary": "发现可能的 SQL 注入行为，但证据不足",
+      "risk_explanation": "扫描器观察到异常输入导致 HTTP 500 错误，但未检测到数据库错误信息或其他确认 SQL 注入的证据。需要进一步验证是否存在 SQL 注入漏洞。",
+      "recommended_action": "进行人工验证，检查服务器端查询处理逻辑，确认是否存在 SQL 注入漏洞。",
+      "error": null
+    },
+    {
+      "case_id": "holdout_004",
+      "title": "Possible Git Repository Exposure",
+      "expected_verdict": "likely_false_positive",
+      "actual_verdict": "needs_review",
+      "confidence": 0.6,
+      "correct": false,
+      "latency_seconds": 63.93,
+      "summary": "扫描器检测到可能暴露的Git仓库元数据路径，但响应内容未包含Git元数据。",
+      "risk_explanation": "虽然扫描器报告了Git仓库暴露的可能，但证据不足，因为响应内容为通用的fallback页面，未包含Git元数据。需要进一步验证是否存在真正的暴露。",
+      "recommended_action": "检查Web服务器的路由配置，确认是否错误地公开了Git仓库元数据路径，并确保敏感信息未被暴露。",
+      "error": null
+    },
+    {
+      "case_id": "holdout_005",
+      "title": "TLS Certificate Information",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.9,
+      "correct": true,
+      "latency_seconds": 59.61,
+      "summary": "该发现涉及TLS证书信息收集，未直接表明存在安全问题。",
+      "risk_explanation": "扫描器仅收集了证书的主体、颁发者和有效期信息，这些信息本身属于正常的技术识别范畴，未显示证书存在漏洞或配置错误。",
+      "recommended_action": "无需立即处理，但建议定期审查证书配置，确保其符合安全最佳实践。",
+      "error": null
+    },
+    {
+      "case_id": "holdout_006",
+      "title": "Default Credential Authentication Confirmed",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 41.6,
+      "summary": "扫描器确认默认凭证可以成功登录管理界面",
+      "risk_explanation": "证据显示认证成功且返回了管理页面，直接支持默认凭证存在的结论",
+      "recommended_action": "立即更换默认凭证并审查管理访问控制",
+      "error": null
+    },
+    {
+      "case_id": "holdout_007",
+      "title": "Possible Directory Listing",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.6,
+      "correct": true,
+      "latency_seconds": 47.83,
+      "summary": "发现可能存在的目录列表功能，但证据不足",
+      "risk_explanation": "扫描器检测到页面标题包含'Index of'，但未获取到实际文件列表内容，无法确认是否真的启用了目录列表功能",
+      "recommended_action": "手动访问目标路径验证是否真的启用了目录列表功能，并根据验证结果进行相应处理",
+      "error": null
+    },
+    {
+      "case_id": "holdout_008",
+      "title": "Possible Secret Exposure",
+      "expected_verdict": "likely_false_positive",
+      "actual_verdict": "informational",
+      "confidence": 0.9,
+      "correct": false,
+      "latency_seconds": 51.85,
+      "summary": "扫描器检测到公开页面中存在密码相关关键词，但实际为示例说明，未发现真实凭据。",
+      "risk_explanation": "证据显示匹配文本是公开文档中的示例句子，用于解释用户如何更改密码，未包含任何实际凭证或敏感信息。",
+      "recommended_action": "无需立即修复，但建议定期审查公开文档内容，确保不包含敏感信息。",
+      "error": null
+    }
+  ]
+}

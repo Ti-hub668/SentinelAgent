@@ -1,0 +1,13 @@
+{
+  "prompt_version": "v2",
+  "provider": "ollama",
+  "model": "qwen3:8b",
+  "dataset": "development",
+  "total_cases": 8,
+  "successful_cases": 8,
+  "correct_cases": 8,
+  "schema_success_rate": 100.0,
+  "verdict_accuracy": 100.0,
+  "average_latency": 30.17,
+  "average_confidence": 0.86
+}

@@ -1,0 +1,71 @@
+{
+  "prompt_version": "v1",
+  "provider": "ollama",
+  "model": "qwen3:8b",
+  "dataset": "development",
+  "total_cases": 8,
+  "successful_cases": 8,
+  "correct_cases": 4,
+  "schema_success_rate": 100.0,
+  "verdict_accuracy": 50.0,
+  "average_latency": 28.78,
+  "average_confidence": 0.91,
+  "cases": [
+    {
+      "id": "case_001",
+      "expected": "informational",
+      "actual": "informational",
+      "confidence": 0.95,
+      "correct": true
+    },
+    {
+      "id": "case_002",
+      "expected": "likely_true_positive",
+      "actual": "needs_review",
+      "confidence": 0.85,
+      "correct": false
+    },
+    {
+      "id": "case_003",
+      "expected": "needs_review",
+      "actual": "needs_review",
+      "confidence": 0.75,
+      "correct": true
+    },
+    {
+      "id": "case_004",
+      "expected": "informational",
+      "actual": "informational",
+      "confidence": 0.95,
+      "correct": true
+    },
+    {
+      "id": "case_005",
+      "expected": "likely_true_positive",
+      "actual": "needs_review",
+      "confidence": 0.95,
+      "correct": false
+    },
+    {
+      "id": "case_006",
+      "expected": "likely_false_positive",
+      "actual": "informational",
+      "confidence": 0.95,
+      "correct": false
+    },
+    {
+      "id": "case_007",
+      "expected": "needs_review",
+      "actual": "informational",
+      "confidence": 0.95,
+      "correct": false
+    },
+    {
+      "id": "case_008",
+      "expected": "likely_true_positive",
+      "actual": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true
+    }
+  ]
+}

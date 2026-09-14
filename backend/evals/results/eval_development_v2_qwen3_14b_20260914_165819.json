@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "dataset": "development",
+    "prompt_version": "v2",
+    "provider": "ollama",
+    "model": "qwen3:14b",
+    "total_cases": 8,
+    "successful_cases": 8,
+    "correct_cases": 8,
+    "schema_success_rate": 100.0,
+    "verdict_accuracy": 100.0,
+    "average_latency_seconds": 52.68,
+    "average_confidence": 0.79,
+    "evaluated_at": "2026-09-14T16:58:19"
+  },
+  "cases": [
+    {
+      "case_id": "case_001",
+      "title": "Wappalyzer Technology Detection",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 80.28,
+      "summary": "检测到目标Web应用使用了特定技术栈信息",
+      "risk_explanation": "该发现仅涉及技术栈识别，未直接表明存在可利用漏洞，属于信息收集范畴",
+      "recommended_action": "建议持续监控技术栈信息变化，无需立即处置",
+      "error": null
+    },
+    {
+      "case_id": "case_002",
+      "title": "Exposed Administration Panel",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.9,
+      "correct": true,
+      "latency_seconds": 42.57,
+      "summary": "发现暴露的管理后台登录接口",
+      "risk_explanation": "证据显示管理登录页面已成功响应，表明管理接口确实暴露在扫描网络中，增加了攻击面",
+      "recommended_action": "限制管理接口仅允许受信任网络访问，启用多因素认证，定期审查访问日志",
+      "error": null
+    },
+    {
+      "case_id": "case_003",
+      "title": "Possible Sensitive File Exposure",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.5,
+      "correct": true,
+      "latency_seconds": 47.15,
+      "summary": "扫描器发现疑似敏感文件，但证据不足",
+      "risk_explanation": "虽然扫描器报告了可能的敏感文件暴露，但HTTP响应内容不足以确认敏感信息是否真的暴露。需要进一步手动验证返回内容以确定是否存在实际风险。",
+      "recommended_action": "手动检查HTTP响应内容，确认是否包含敏感信息，并根据检查结果采取相应措施。",
+      "error": null
+    },
+    {
+      "case_id": "case_004",
+      "title": "Server Version Information",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.9,
+      "correct": true,
+      "latency_seconds": 45.4,
+      "summary": "该发现属于服务器版本信息泄露，未直接表明存在可利用漏洞。",
+      "risk_explanation": "扫描器检测到服务器响应头中包含产品和版本信息，属于信息泄露类资产指纹，不直接代表存在可利用漏洞。",
+      "recommended_action": "建议检查服务器配置，移除不必要的版本信息披露。",
+      "error": null
+    },
+    {
+      "case_id": "case_005",
+      "title": "Known Vulnerable Component Detected",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.9,
+      "correct": true,
+      "latency_seconds": 54.11,
+      "summary": "检测到已知漏洞组件",
+      "risk_explanation": "证据显示组件版本与已知漏洞检测规则匹配，符合高风险判定标准",
+      "recommended_action": "立即验证组件版本并应用厂商安全补丁",
+      "error": null
+    },
+    {
+      "case_id": "case_006",
+      "title": "Generic Error Page Detection",
+      "expected_verdict": "likely_false_positive",
+      "actual_verdict": "likely_false_positive",
+      "confidence": 0.6,
+      "correct": true,
+      "latency_seconds": 57.04,
+      "summary": "扫描器检测到可能存在通用错误页面，但证据较弱",
+      "risk_explanation": "证据仅显示响应包含常见错误关键词，但未发现敏感信息，可能为正常错误页面",
+      "recommended_action": "无需立即处理，建议定期复查错误页面内容",
+      "error": null
+    },
+    {
+      "case_id": "case_007",
+      "title": "Potential Backup File Exposure",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.6,
+      "correct": true,
+      "latency_seconds": 52.68,
+      "summary": "发现疑似备份文件暴露，但证据不足",
+      "risk_explanation": "扫描器检测到可能的备份文件位置，但未验证响应体是否为真实备份文件，需要进一步检查响应内容以确认是否存在敏感数据泄露",
+      "recommended_action": "人工验证该资源的响应内容，确认是否包含敏感备份数据，如确认存在则需修复，如不存在则需调整扫描规则",
+      "error": null
+    },
+    {
+      "case_id": "case_008",
+      "title": "Accessible Debug Endpoint",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 42.16,
+      "summary": "发现可访问的调试接口",
+      "risk_explanation": "证据显示该端点确实返回了调试和运行时诊断信息，确认暴露了调试接口",
+      "recommended_action": "禁用生产环境中的调试接口或限制其访问",
+      "error": null
+    }
+  ]
+}

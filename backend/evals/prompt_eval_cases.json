@@ -1,0 +1,129 @@
+[
+  {
+    "id": "case_001",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Wappalyzer Technology Detection",
+    "severity": "info",
+    "target": "192.168.1.10",
+    "description": "Detected technologies used by the target web application.",
+    "evidence": "Web server technology fingerprint detected.",
+    "remediation": "",
+    "risk_score": 15,
+    "risk_level": "low",
+    "risk_reason": "技术识别信息，未直接表明存在可利用漏洞",
+    "expected_verdict": "informational"
+  },
+
+  {
+    "id": "case_002",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Exposed Administration Panel",
+    "severity": "medium",
+    "target": "192.168.1.20",
+    "description": "An administration login interface is accessible from the scanned network.",
+    "evidence": "Administration login page responded successfully.",
+    "remediation": "Restrict administrative interfaces to trusted networks.",
+    "risk_score": 55,
+    "risk_level": "medium",
+    "risk_reason": "管理接口暴露会增加攻击面",
+    "expected_verdict": "likely_true_positive"
+  },
+
+  {
+    "id": "case_003",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Possible Sensitive File Exposure",
+    "severity": "high",
+    "target": "192.168.1.30",
+    "description": "Scanner reported a potentially sensitive file.",
+    "evidence": "HTTP response was returned, but response content was not sufficient to confirm that sensitive information was actually exposed.",
+    "remediation": "Manually verify the returned content.",
+    "risk_score": 75,
+    "risk_level": "high",
+    "risk_reason": "扫描器发现疑似敏感文件，但证据不足",
+    "expected_verdict": "needs_review"
+  },
+
+  {
+    "id": "case_004",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Server Version Information",
+    "severity": "info",
+    "target": "192.168.1.40",
+    "description": "The web server disclosed its product name and version.",
+    "evidence": "Server header contained product and version information.",
+    "remediation": "Consider minimizing unnecessary version disclosure.",
+    "risk_score": 15,
+    "risk_level": "low",
+    "risk_reason": "属于信息泄露类资产指纹，不代表已经存在可利用漏洞",
+    "expected_verdict": "informational"
+  },
+
+  {
+    "id": "case_005",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Known Vulnerable Component Detected",
+    "severity": "high",
+    "target": "192.168.1.50",
+    "description": "The detected component version matches a known vulnerable version according to the scanner rule.",
+    "evidence": "Product and version fingerprint matched the vulnerability detection rule.",
+    "remediation": "Verify the component version and apply the vendor security update.",
+    "risk_score": 80,
+    "risk_level": "high",
+    "risk_reason": "组件版本与已知漏洞检测规则匹配，需要优先处置",
+    "expected_verdict": "likely_true_positive"
+  },
+
+  {
+    "id": "case_006",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Generic Error Page Detection",
+    "severity": "low",
+    "target": "192.168.1.60",
+    "description": "Scanner matched a generic error page pattern.",
+    "evidence": "The response contained a common error-related keyword but no sensitive information.",
+    "remediation": "Review manually if necessary.",
+    "risk_score": 20,
+    "risk_level": "low",
+    "risk_reason": "匹配证据较弱，可能只是普通错误页面",
+    "expected_verdict": "likely_false_positive"
+  },
+
+  {
+    "id": "case_007",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Potential Backup File Exposure",
+    "severity": "medium",
+    "target": "192.168.1.70",
+    "description": "A possible backup file location responded to the scanner.",
+    "evidence": "The server returned a successful response, but the response body was not verified as a real backup file.",
+    "remediation": "Verify whether the resource contains sensitive backup data.",
+    "risk_score": 50,
+    "risk_level": "medium",
+    "risk_reason": "存在疑似备份文件响应，但证据不足以确认泄露",
+    "expected_verdict": "needs_review"
+  },
+
+  {
+    "id": "case_008",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Accessible Debug Endpoint",
+    "severity": "high",
+    "target": "192.168.1.80",
+    "description": "A debug interface was confirmed accessible and returned application diagnostic information.",
+    "evidence": "The endpoint returned debugging and runtime diagnostic information.",
+    "remediation": "Disable the debug interface in production or restrict access.",
+    "risk_score": 78,
+    "risk_level": "high",
+    "risk_reason": "调试接口已确认暴露并返回诊断信息",
+    "expected_verdict": "likely_true_positive"
+  }
+]
