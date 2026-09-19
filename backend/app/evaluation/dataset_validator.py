@@ -31,7 +31,7 @@ DATASETS = {
         "evals/prompt_holdout_cases.json"
     ),
     "real": Path(
-        "evals/real_findings_labeled.json"
+        "evals/real_findings_labeled_v1.json"
     ),
     "benchmark_v1": Path(
         "evals/security_benchmark_v1.json"

@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "dataset": "holdout",
+    "prompt_version": "v5",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "total_cases": 8,
+    "successful_cases": 8,
+    "correct_cases": 8,
+    "schema_success_rate": 100.0,
+    "verdict_accuracy": 100.0,
+    "average_latency_seconds": 35.01,
+    "average_confidence": 0.89,
+    "evaluated_at": "2026-09-19T18:03:19"
+  },
+  "cases": [
+    {
+      "case_id": "holdout_001",
+      "title": "HTTP Server Banner Detection",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 33.31,
+      "summary": "HTTP服务器标识信息检测结果属于信息收集类发现，未发现直接安全漏洞",
+      "risk_explanation": "该发现仅表明服务器返回了产品信息，未涉及具体安全配置缺陷、资源暴露或已知漏洞，因此属于信息观察类结果",
+      "recommended_action": "可考虑关闭不必要的服务器标识信息披露，但该发现本身不构成安全威胁，无需紧急处置",
+      "error": null
+    },
+    {
+      "case_id": "holdout_002",
+      "title": "Missing Content Security Policy Header",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 35.07,
+      "summary": "检测到HTTP响应头缺少Content-Security-Policy安全策略头",
+      "risk_explanation": "扫描器已确认响应头中确实不存在Content-Security-Policy头，该配置缺失属于安全配置问题，可能增加跨站脚本攻击(XSS)等风险",
+      "recommended_action": "建议配置适当的Content-Security-Policy头以增强应用安全性，可参考CSP头配置指南进行设置",
+      "error": null
+    },
+    {
+      "case_id": "holdout_003",
+      "title": "Possible SQL Injection Behavior",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.65,
+      "correct": true,
+      "latency_seconds": 31.32,
+      "summary": "扫描器检测到可能的 SQL 注入行为，但证据不足",
+      "risk_explanation": "虽然扫描器观察到异常响应，但未观察到数据库错误信息或进一步确认 SQL 注入的证据，无法确定是否存在实际漏洞",
+      "recommended_action": "建议进行人工验证，检查服务器端查询处理逻辑，确认是否存在 SQL 注入风险",
+      "error": null
+    },
+    {
+      "case_id": "holdout_004",
+      "title": "Possible Git Repository Exposure",
+      "expected_verdict": "likely_false_positive",
+      "actual_verdict": "likely_false_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 39.54,
+      "summary": "扫描器报告可能存在 Git 仓库暴露，但实际响应内容为通用错误页面，未包含 Git 元数据",
+      "risk_explanation": "虽然扫描器检测到 Git 元数据路径返回 200 状态码，但响应内容为应用的通用错误页面，未实际暴露 Git 仓库信息，因此该发现更可能为误报",
+      "recommended_action": "检查应用路由配置，确认是否存在不必要的 Git 元数据路径暴露，并验证错误页面是否可能被误识别为 Git 仓库暴露",
+      "error": null
+    },
+    {
+      "case_id": "holdout_005",
+      "title": "TLS Certificate Information",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 28.8,
+      "summary": "TLS证书信息收集属于技术栈识别，未发现安全配置缺陷或敏感信息暴露",
+      "risk_explanation": "该发现仅涉及证书元数据收集，属于常规技术信息识别，不构成安全风险",
+      "recommended_action": "无需特殊处理，建议定期进行资产信息收集和证书管理审计",
+      "error": null
+    },
+    {
+      "case_id": "holdout_006",
+      "title": "Default Credential Authentication Confirmed",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.98,
+      "correct": true,
+      "latency_seconds": 33.38,
+      "summary": "扫描器确认了默认凭证认证成功，表明存在默认凭证未被更改的安全问题。",
+      "risk_explanation": "扫描器已经验证了默认凭证可以成功登录管理界面，这直接证明了默认凭证未被修改，存在严重的安全风险。",
+      "recommended_action": "立即更换默认凭证，并审查和加固管理接口的访问控制策略。",
+      "error": null
+    },
+    {
+      "case_id": "holdout_007",
+      "title": "Possible Directory Listing",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.75,
+      "correct": true,
+      "latency_seconds": 37.84,
+      "summary": "扫描器检测到可能的目录列表启用迹象，但证据不足",
+      "risk_explanation": "虽然页面标题包含'Index of'，但响应中未包含实际文件或目录条目，无法确认目录列表是否真正启用。这可能是一个误报或部分配置问题，需要进一步验证。",
+      "recommended_action": "建议手动检查服务器配置，确认目录列表功能是否启用，并验证相关目录是否存在敏感文件。同时，检查Web服务器日志以确认是否有异常访问行为。",
+      "error": null
+    },
+    {
+      "case_id": "holdout_008",
+      "title": "Possible Secret Exposure",
+      "expected_verdict": "likely_false_positive",
+      "actual_verdict": "likely_false_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 40.77,
+      "summary": "扫描器检测到密码相关关键词，但实际为文档中的示例说明，未发现真实凭据",
+      "risk_explanation": "扫描器报告的潜在敏感信息泄露问题实际上是由文档中的示例内容触发，而非真实凭据暴露。证据显示匹配文本仅为说明性文字，未包含任何实际密码或秘密信息。",
+      "recommended_action": "无需立即处理，但建议检查相关文档内容是否包含敏感信息，确保示例内容不会被误用。同时，可考虑对文档进行脱敏处理以避免类似误报。",
+      "error": null
+    }
+  ]
+}

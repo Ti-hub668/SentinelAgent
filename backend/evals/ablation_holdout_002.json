@@ -1,0 +1,17 @@
+[
+  {
+    "id": "ablation_holdout_002",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Missing Content Security Policy Header",
+    "severity": "unknown",
+    "target": "192.168.2.20",
+    "description": "The application response does not contain a Content-Security-Policy header.",
+    "evidence": "The inspected HTTP response headers confirmed that Content-Security-Policy was absent.",
+    "remediation": "Review whether an appropriate Content Security Policy should be configured.",
+    "risk_score": 0,
+    "risk_level": "unknown",
+    "risk_reason": "N/A",
+    "expected_verdict": "likely_true_positive"
+  }
+]

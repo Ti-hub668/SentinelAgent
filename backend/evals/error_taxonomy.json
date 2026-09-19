@@ -1,0 +1,50 @@
+{
+  "version": "v1",
+  "error_types": {
+    "finding_type_semantic_confusion": {
+    "description": "模型能够理解 Evidence 中的事实，但错误识别 Finding 本身的安全语义类别，例如将安全配置缺陷误认为技术识别或普通信息类结果。"
+    },
+    "risk_verdict_confusion": {
+      "description": "模型正确识别了安全问题，但因为风险较低或没有直接可利用性，将真实安全发现错误分类为 informational。"
+    },
+    "insufficient_evidence_overclaim": {
+      "description": "证据不足以确认安全问题，但模型仍然给出 likely_true_positive。"
+    },
+    "false_positive_misclassification": {
+      "description": "证据已经表明扫描结果属于误报，但模型未分类为 likely_false_positive。"
+    },
+    "informational_overclassification": {
+      "description": "仅属于技术、资产或指纹信息的发现，被模型错误升级为安全问题。"
+    },
+    "review_boundary_error": {
+      "description": "证据不足、存在歧义或需要人工验证时，模型未正确分类为 needs_review。"
+    }
+  },
+  "observed_errors": [
+    {
+      "case_id": "holdout_002",
+      "title": "Missing Content Security Policy Header",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "error_type": "finding_type_semantic_confusion",
+      "root_cause": "模型能够正确识别 HTTP 响应中缺少 Content-Security-Policy，但将该 Finding 错误理解为信息识别或技术栈特征，因此映射为 informational。受控消融中，仅中和 severity、risk_score、risk_level 和 risk_reason 后 verdict 仍为 informational；进一步明确 Security Misconfiguration 语义后，verdict 转为 likely_true_positive，支持 Finding 语义分类偏差这一根因假设。",
+      "ablation_evidence": {
+      "original_case": {
+        "verdict": "informational",
+        "confidence": 0.95
+      },
+      "neutralized_risk_fields": {
+        "verdict": "informational",
+        "confidence": 0.95
+      },
+      "explicit_security_semantics": {
+        "verdict": "likely_true_positive",
+        "confidence": 0.95
+      },
+      "conclusion": "结果支持 Finding 语义分类偏差假设，而不支持单纯由低风险辅助字段导致错误的假设。"
+    },
+      "expected_reasoning": "如果 Evidence 已直接确认某个安全配置缺陷存在，则 Finding 本身应判断为 likely_true_positive。风险等级较低并不意味着 Finding 是 informational。"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "summary": {
+    "dataset": "real",
+    "prompt_version": "v4",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "total_cases": 6,
+    "successful_cases": 6,
+    "correct_cases": 5,
+    "schema_success_rate": 100.0,
+    "verdict_accuracy": 83.33,
+    "average_latency_seconds": 50.09,
+    "average_confidence": 0.88,
+    "evaluated_at": "2026-09-19T17:39:56"
+  },
+  "cases": [
+    {
+      "case_id": "real_001",
+      "title": "Public Swagger API - Detect",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 100.33,
+      "summary": "检测到公开的Swagger API文档，但未发现敏感数据或可利用漏洞",
+      "risk_explanation": "该发现属于技术信息暴露，未确认存在可利用的安全缺陷或敏感数据泄露",
+      "recommended_action": "建议审查Swagger API的访问控制策略，确保仅对授权用户开放，并考虑移除不必要的API文档公开",
+      "error": null
+    },
+    {
+      "case_id": "real_002",
+      "title": "HTTP Missing Security Headers",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "informational",
+      "confidence": 0.5,
+      "correct": false,
+      "latency_seconds": 44.77,
+      "summary": "扫描器检测到HTTP响应中缺少部分安全头，但证据未明确具体缺失的头信息",
+      "risk_explanation": "由于证据中未明确保存导致Nuclei模板匹配的具体安全头信息，无法确认是否存在实际的安全配置问题",
+      "recommended_action": "建议进一步检查HTTP响应头配置，确认是否缺少必要的安全头（如Content-Security-Policy、X-Content-Type-Options、X-Frame-Options等）并进行补充配置",
+      "error": null
+    },
+    {
+      "case_id": "real_003",
+      "title": "Prometheus Metrics - Detect",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 34.04,
+      "summary": "检测到Prometheus指标端点未授权访问，返回应用运行及进程监控信息",
+      "risk_explanation": "扫描器已确认Prometheus指标页面可无需认证访问并返回实际监控数据，证据支持该安全问题真实存在",
+      "recommended_action": "立即限制对/metrics端点的访问，配置认证机制，定期检查监控端口暴露情况",
+      "error": null
+    },
+    {
+      "case_id": "real_004",
+      "title": "Public Swagger API - Detect",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 38.32,
+      "summary": "检测到Swagger API文档页面可访问，但未发现直接的安全漏洞或配置问题",
+      "risk_explanation": "该发现属于技术栈信息识别，未发现可利用的漏洞或敏感数据泄露，因此风险较低",
+      "recommended_action": "建议定期扫描并监控API文档的访问情况，确保其仅对授权用户开放",
+      "error": null
+    },
+    {
+      "case_id": "real_005",
+      "title": "ReDoc API Docs - Detect",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 37.78,
+      "summary": "ReDoc API 文档接口被公开访问，但属于技术栈信息识别",
+      "risk_explanation": "该发现属于技术栈信息识别，未发现实际安全配置缺陷或敏感信息暴露，因此风险较低",
+      "recommended_action": "无需特殊处理，但建议定期检查技术栈暴露情况",
+      "error": null
+    },
+    {
+      "case_id": "real_006",
+      "title": "OpenAPI - Detect",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 45.33,
+      "summary": "检测到 OpenAPI 3.1.0 规范文件暴露，包含 API 路由定义信息",
+      "risk_explanation": "该发现属于技术栈识别和资产指纹信息，未发现具体安全配置缺陷或敏感数据暴露",
+      "recommended_action": "建议检查 OpenAPI 端点的访问控制策略，确保仅授权用户可访问，同时评估是否需要保留该暴露的 OpenAPI 文档",
+      "error": null
+    }
+  ]
+}

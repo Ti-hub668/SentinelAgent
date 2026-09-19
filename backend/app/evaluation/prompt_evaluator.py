@@ -23,6 +23,9 @@ DATASETS = {
     "holdout": Path(
         "evals/prompt_holdout_cases.json"
     ),
+    "real": Path(
+        "evals/real_findings_labeled_v1.json"
+    ),
     "benchmark_v1": Path(
         "evals/security_benchmark_v1.json"
     ),
@@ -503,6 +506,7 @@ if __name__ == "__main__":
     choices=[
         "development",
         "holdout",
+        "real",
         "benchmark_v1",
     ],
     default="development",

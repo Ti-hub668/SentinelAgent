@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "dataset": "development",
+    "prompt_version": "v5",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "total_cases": 8,
+    "successful_cases": 8,
+    "correct_cases": 8,
+    "schema_success_rate": 100.0,
+    "verdict_accuracy": 100.0,
+    "average_latency_seconds": 38.15,
+    "average_confidence": 0.89,
+    "evaluated_at": "2026-09-19T17:57:02"
+  },
+  "cases": [
+    {
+      "case_id": "case_001",
+      "title": "Wappalyzer Technology Detection",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 91.98,
+      "summary": "该发现属于技术栈识别，未发现直接的安全问题",
+      "risk_explanation": "Wappalyzer 技术检测属于信息收集类，仅识别了 Web 服务器技术指纹，未发现可利用的安全漏洞或配置缺陷",
+      "recommended_action": "无需特殊处置，建议定期进行资产扫描以保持技术栈信息更新",
+      "error": null
+    },
+    {
+      "case_id": "case_002",
+      "title": "Exposed Administration Panel",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 32.25,
+      "summary": "检测到管理面板接口暴露，存在安全风险",
+      "risk_explanation": "扫描器检测到管理登录页面可以被访问，说明存在管理接口暴露问题，这会增加攻击面，可能被攻击者利用进行横向渗透或提权",
+      "recommended_action": "立即限制管理接口仅允许受信任网络访问，并检查相关安全配置是否完善，建议进行渗透测试验证安全性",
+      "error": null
+    },
+    {
+      "case_id": "case_003",
+      "title": "Possible Sensitive File Exposure",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.75,
+      "correct": true,
+      "latency_seconds": 31.46,
+      "summary": "扫描器报告可能存在敏感文件暴露，但响应内容不足以确认敏感信息的实际暴露",
+      "risk_explanation": "当前证据仅显示HTTP响应成功，但未提供足够内容验证敏感信息是否真实暴露，因此无法确定该Finding的真实性",
+      "recommended_action": "手动验证返回内容，检查文件是否确实包含敏感信息，并确认文件访问权限配置是否合理",
+      "error": null
+    },
+    {
+      "case_id": "case_004",
+      "title": "Server Version Information",
+      "expected_verdict": "informational",
+      "actual_verdict": "informational",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 27.74,
+      "summary": "Web服务器暴露了产品名称和版本信息，属于信息泄露类资产指纹",
+      "risk_explanation": "该发现属于信息收集类，未发现可直接利用的安全漏洞，因此风险较低",
+      "recommended_action": "建议配置服务器隐藏版本信息，防止不必要的资产指纹暴露",
+      "error": null
+    },
+    {
+      "case_id": "case_005",
+      "title": "Known Vulnerable Component Detected",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 31.86,
+      "summary": "检测到已知漏洞组件版本匹配，存在安全风险",
+      "risk_explanation": "扫描器规则明确指出该组件版本与已知漏洞匹配，证据显示产品版本指纹符合漏洞检测规则，表明该组件确实存在已知漏洞",
+      "recommended_action": "验证组件版本并应用供应商的安全更新补丁，同时检查是否有相关CVE编号及修复方案",
+      "error": null
+    },
+    {
+      "case_id": "case_006",
+      "title": "Generic Error Page Detection",
+      "expected_verdict": "likely_false_positive",
+      "actual_verdict": "likely_false_positive",
+      "confidence": 0.85,
+      "correct": true,
+      "latency_seconds": 31.81,
+      "summary": "扫描器检测到响应中包含常见错误关键词，但未发现敏感信息或实际漏洞迹象",
+      "risk_explanation": "该发现属于误报，因为仅存在普通错误页面内容而没有实际安全风险或明确的漏洞证据",
+      "recommended_action": "建议检查相关错误页面内容是否为正常业务响应，确认是否存在异常错误信息泄露或潜在漏洞利用可能",
+      "error": null
+    },
+    {
+      "case_id": "case_007",
+      "title": "Potential Backup File Exposure",
+      "expected_verdict": "needs_review",
+      "actual_verdict": "needs_review",
+      "confidence": 0.75,
+      "correct": true,
+      "latency_seconds": 31.92,
+      "summary": "扫描器检测到可能的备份文件暴露，但响应内容未验证是否为真实备份文件",
+      "risk_explanation": "当前证据显示服务器返回成功响应，但无法确认响应体是否包含敏感备份数据，存在合理安全风险迹象但证据不足",
+      "recommended_action": "建议进一步验证该资源内容，检查是否存在敏感备份数据泄露，并采取相应防护措施。",
+      "error": null
+    },
+    {
+      "case_id": "case_008",
+      "title": "Accessible Debug Endpoint",
+      "expected_verdict": "likely_true_positive",
+      "actual_verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "correct": true,
+      "latency_seconds": 26.2,
+      "summary": "检测到调试接口暴露，返回诊断信息",
+      "risk_explanation": "扫描器确认调试接口可访问并返回诊断信息，证据支持该安全问题存在",
+      "recommended_action": "应禁用生产环境中的调试接口或限制访问权限",
+      "error": null
+    }
+  ]
+}
