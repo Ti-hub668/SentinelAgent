@@ -18,6 +18,11 @@ class AIAnalysisRecordResponse(BaseModel):
     risk_explanation: str
     recommended_action: str
 
+    # 新增：RAG Trace
+    use_rag: bool | None = None
+    rag_top_k: int | None = None
+    retrieved_context: str | None = None
+
     created_at: datetime
 
     model_config = ConfigDict(

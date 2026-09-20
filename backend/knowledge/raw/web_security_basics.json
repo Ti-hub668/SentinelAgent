@@ -1,0 +1,82 @@
+[
+  {
+    "id": "web_csp_001",
+    "title": "Content Security Policy Header",
+    "content": "Content-Security-Policy (CSP) is an HTTP response security header used to restrict which resources a browser is allowed to load. A missing CSP header may represent a security configuration weakness because CSP can reduce the impact of certain client-side attacks such as cross-site scripting. The absence of CSP should be distinguished from ordinary technology fingerprinting. Whether the finding is confirmed depends on whether the HTTP response evidence clearly demonstrates that the header is absent.",
+    "source": "sentinelagent_internal",
+    "category": "security_misconfiguration",
+    "metadata": {
+      "technology": "http",
+      "topic": "security_headers",
+      "tags": [
+        "csp",
+        "content-security-policy",
+        "http-header"
+      ]
+    }
+  },
+  {
+    "id": "web_headers_001",
+    "title": "Missing HTTP Security Headers",
+    "content": "HTTP security headers provide browser-side security controls. Examples include Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options and frame protection policies. A scanner may report missing security headers, but the evidence should identify which expected header is absent before a specific configuration weakness is considered confirmed. If the scanner reports missing headers while the stored evidence does not identify the missing header or otherwise demonstrate the configuration defect, additional review may be required.",
+    "source": "sentinelagent_internal",
+    "category": "security_misconfiguration",
+    "metadata": {
+      "technology": "http",
+      "topic": "security_headers",
+      "tags": [
+        "http-header",
+        "security-header",
+        "misconfiguration"
+      ]
+    }
+  },
+  {
+    "id": "web_api_docs_001",
+    "title": "Public API Documentation",
+    "content": "Swagger UI, OpenAPI documents and ReDoc interfaces expose API documentation and endpoint metadata. Their presence can be useful for asset discovery and attack-surface mapping, but public API documentation is not automatically a vulnerability. Security impact depends on deployment context, exposed operations, authentication requirements and whether sensitive internal information is disclosed.",
+    "source": "sentinelagent_internal",
+    "category": "information_observation",
+    "metadata": {
+      "technology": "web_api",
+      "topic": "api_documentation",
+      "tags": [
+        "swagger",
+        "openapi",
+        "redoc"
+      ]
+    }
+  },
+  {
+    "id": "web_metrics_001",
+    "title": "Prometheus Metrics Exposure",
+    "content": "Prometheus metrics endpoints can expose runtime, process, application and infrastructure telemetry. If a metrics endpoint is accessible without intended access controls and returns operational metrics, the exposure may reveal information useful for reconnaissance or disclose sensitive operational details. The security impact depends on the content of the metrics and the intended accessibility of the endpoint.",
+    "source": "sentinelagent_internal",
+    "category": "exposure",
+    "metadata": {
+      "technology": "prometheus",
+      "topic": "metrics_exposure",
+      "tags": [
+        "prometheus",
+        "metrics",
+        "exposure"
+      ]
+    }
+  },
+  {
+    "id": "web_tech_001",
+    "title": "Technology Detection",
+    "content": "Technology detection identifies software products, frameworks, servers or other technologies used by a target. A confirmed technology fingerprint is generally an informational observation rather than direct evidence of a vulnerability. The detected technology may provide useful context for later vulnerability assessment, but technology identification alone does not demonstrate exploitability or a security defect.",
+    "source": "sentinelagent_internal",
+    "category": "information_observation",
+    "metadata": {
+      "technology": "generic",
+      "topic": "technology_detection",
+      "tags": [
+        "fingerprinting",
+        "technology",
+        "wappalyzer"
+      ]
+    }
+  }
+]

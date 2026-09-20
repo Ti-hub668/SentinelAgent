@@ -1,0 +1,87 @@
+[
+  {
+    "id": "web_cors_001",
+    "title": "CORS Misconfiguration",
+    "content": "Cross-Origin Resource Sharing (CORS) controls whether web resources can be accessed by scripts from other origins. A permissive CORS policy may become a security weakness when untrusted origins are allowed to read sensitive responses, especially when credentials or authenticated user data are involved. The presence of an Access-Control-Allow-Origin header alone does not confirm a vulnerability. Evidence should demonstrate the relevant origin policy, credential behavior, and whether sensitive resources can actually be accessed from an unintended origin. If these conditions are not shown, additional validation may be required.",
+    "source": "sentinelagent_internal",
+    "category": "security_misconfiguration",
+    "metadata": {
+      "technology": "http",
+      "topic": "cors",
+      "tags": [
+        "cors",
+        "http",
+        "misconfiguration",
+        "cross-origin"
+      ]
+    }
+  },
+  {
+    "id": "web_debug_001",
+    "title": "Debug Interface Exposure",
+    "content": "Debug interfaces and development endpoints may expose application internals, diagnostic information, environment details, stack traces or administrative functionality. A publicly reachable debug endpoint can represent an exposure when it returns operational or sensitive debugging information without intended access controls. Merely detecting a route or endpoint name is not sufficient to confirm the issue. Evidence should show that the endpoint is accessible and returns debugging information or functionality that was not intended for public access.",
+    "source": "sentinelagent_internal",
+    "category": "exposure",
+    "metadata": {
+      "technology": "web",
+      "topic": "debug_interface",
+      "tags": [
+        "debug",
+        "development",
+        "exposure",
+        "diagnostics"
+      ]
+    }
+  },
+  {
+    "id": "web_sensitive_files_001",
+    "title": "Sensitive File Exposure",
+    "content": "Web-accessible sensitive files may disclose credentials, secrets, configuration values, source information or internal application details. Examples can include environment files, configuration backups, repository metadata and other files not intended for public access. A filename or HTTP route match alone does not prove sensitive information disclosure. Evidence should demonstrate that the file is accessible and that the returned content contains information that is actually sensitive or security-relevant. Empty, generic or unrelated responses may require additional review.",
+    "source": "sentinelagent_internal",
+    "category": "sensitive_information",
+    "metadata": {
+      "technology": "web",
+      "topic": "sensitive_files",
+      "tags": [
+        "sensitive-file",
+        "configuration",
+        "secret",
+        "information-disclosure"
+      ]
+    }
+  },
+  {
+    "id": "web_directory_listing_001",
+    "title": "Directory Listing Exposure",
+    "content": "Directory listing occurs when a web server exposes a browsable index of files and directories instead of serving an intended application page or denying access. This can reveal file names, directory structures, backups or other resources useful for reconnaissance. A directory path being reachable does not by itself confirm directory listing. Evidence should show an actual generated directory index or equivalent listing of server-side files. The security impact depends on the files and information exposed by the listing.",
+    "source": "sentinelagent_internal",
+    "category": "exposure",
+    "metadata": {
+      "technology": "web",
+      "topic": "directory_listing",
+      "tags": [
+        "directory-listing",
+        "index",
+        "exposure",
+        "reconnaissance"
+      ]
+    }
+  },
+  {
+    "id": "web_default_credentials_001",
+    "title": "Default Credentials",
+    "content": "Default credentials are vendor-provided, installation-default or commonly documented username and password combinations that remain valid on a deployed service. The existence of a login page, product fingerprint or known default credential pair does not by itself confirm that default credentials are active. Confirmation requires authorized evidence that the default credentials are accepted by the target or equivalent direct authentication evidence. Without authentication evidence, the finding should not be treated as a confirmed default-credential weakness.",
+    "source": "sentinelagent_internal",
+    "category": "authentication",
+    "metadata": {
+      "technology": "web",
+      "topic": "default_credentials",
+      "tags": [
+        "authentication",
+        "default-credentials",
+        "login",
+        "access-control"
+      ]
+    }
+  }
+]

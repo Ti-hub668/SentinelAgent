@@ -61,7 +61,19 @@ class AIAnalysis(Base):
         Text,
         nullable=False
     )
+    use_rag: Mapped[bool | None] = mapped_column(
+    nullable=True
+    )
 
+    rag_top_k: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True
+    )
+
+    retrieved_context: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.now,

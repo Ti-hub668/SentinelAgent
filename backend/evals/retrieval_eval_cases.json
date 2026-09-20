@@ -1,0 +1,80 @@
+[
+  {
+    "id": "retrieval_001",
+    "query": "The HTTP response does not contain a Content-Security-Policy header.",
+    "expected_document_id": "web_csp_001",
+    "category": "security_misconfiguration"
+  },
+  {
+    "id": "retrieval_002",
+    "query": "Nuclei reports missing HTTP security headers, but the retained evidence does not identify which specific security header is absent.",
+    "expected_document_id": "web_headers_001",
+    "category": "security_misconfiguration"
+  },
+  {
+    "id": "retrieval_003",
+    "query": "Swagger API documentation is publicly accessible on the target.",
+    "expected_document_id": "web_api_docs_001",
+    "category": "information_observation"
+  },
+  {
+    "id": "retrieval_004",
+    "query": "The target exposes an OpenAPI specification document through openapi.json.",
+    "expected_document_id": "web_api_docs_001",
+    "category": "information_observation"
+  },
+  {
+    "id": "retrieval_005",
+    "query": "ReDoc API documentation is publicly accessible without authentication.",
+    "expected_document_id": "web_api_docs_001",
+    "category": "information_observation"
+  },
+  {
+    "id": "retrieval_006",
+    "query": "A Prometheus metrics endpoint returns runtime, process and application metrics without authentication.",
+    "expected_document_id": "web_metrics_001",
+    "category": "exposure"
+  },
+  {
+    "id": "retrieval_007",
+    "query": "Wappalyzer detected the technologies and frameworks used by the target.",
+    "expected_document_id": "web_tech_001",
+    "category": "information_observation"
+  },
+  {
+    "id": "retrieval_008",
+    "query": "The scanner identified the web server and application technology stack, but no vulnerability was demonstrated.",
+    "expected_document_id": "web_tech_001",
+    "category": "information_observation"
+  },
+{
+  "id": "retrieval_009",
+  "query": "The application allows cross-origin requests from an untrusted origin and may expose authenticated responses through a permissive CORS policy.",
+  "expected_document_id": "web_cors_001",
+  "category": "security_misconfiguration"
+},
+{
+  "id": "retrieval_010",
+  "query": "A publicly accessible development endpoint returns stack traces, diagnostic details and internal application debugging information.",
+  "expected_document_id": "web_debug_001",
+  "category": "exposure"
+},
+{
+  "id": "retrieval_011",
+  "query": "A web-accessible configuration file returns secrets and sensitive application configuration values.",
+  "expected_document_id": "web_sensitive_files_001",
+  "category": "sensitive_information"
+},
+{
+  "id": "retrieval_012",
+  "query": "The web server exposes a browsable directory index containing file names and server-side directory contents.",
+  "expected_document_id": "web_directory_listing_001",
+  "category": "exposure"
+},
+{
+  "id": "retrieval_013",
+  "query": "The deployed service accepts the vendor default username and password for authentication.",
+  "expected_document_id": "web_default_credentials_001",
+  "category": "authentication"
+}
+]

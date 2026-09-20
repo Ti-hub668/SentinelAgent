@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,7 +12,9 @@ from app.ai.prompt_builder import PROMPT_VERSION
 from app.models.ai_analysis import AIAnalysis
 from app.core.config import settings
 from app.schemas.ai_analysis_record import AIAnalysisRecordResponse
-
+from app.rag.query_builder import build_finding_query
+from app.rag.retriever import SecurityKnowledgeRetriever
+from app.rag.context_builder import build_rag_context
 
 
 router = APIRouter(
@@ -52,7 +55,8 @@ def get_finding(
 )
 def analyze_finding_endpoint(
     finding_id: int,
-    db: Session = Depends(get_db)
+    use_rag: bool = True,
+    db: Session = Depends(get_db),
 ):
     finding = db.get(Finding, finding_id)
 
@@ -77,7 +81,63 @@ def analyze_finding_endpoint(
         risk_reason=finding.risk_reason
     )
 
-    result = analyze_finding(analysis_input)
+    # --------------------------------
+    # RAG Retrieval
+    # --------------------------------
+
+    rag_context = None
+    retrieval_results = []
+    rag_top_k = None
+
+    if use_rag:
+        rag_top_k = 1
+
+        query = build_finding_query(
+            analysis_input
+        )
+
+        retriever = SecurityKnowledgeRetriever()
+
+        retrieval_results = retriever.retrieve(
+            query=query,
+            top_k=rag_top_k,
+        )
+
+        rag_context = build_rag_context(
+            retrieval_results
+        )
+
+    # --------------------------------
+    # AI Analysis
+    # --------------------------------
+
+    result = analyze_finding(
+        analysis_input,
+        rag_context=rag_context,
+    )
+
+    # --------------------------------
+    # RAG Trace
+    # --------------------------------
+
+    retrieved_context = None
+
+    if use_rag:
+        retrieved_context = json.dumps(
+            [
+                {
+                    "document_id": item.document.id,
+                    "title": item.document.title,
+                    "score": round(item.score, 4),
+                }
+                for item in retrieval_results
+            ],
+            ensure_ascii=False,
+        )
+
+    # --------------------------------
+    # LLM Model
+    # --------------------------------
 
     if settings.LLM_PROVIDER == "ollama":
         model_name = settings.OLLAMA_MODEL
@@ -88,6 +148,9 @@ def analyze_finding_endpoint(
     else:
         model_name = "unknown"
 
+    # --------------------------------
+    # Save AI Analysis
+    # --------------------------------
 
     analysis_record = AIAnalysis(
         finding_id=finding.id,
@@ -98,7 +161,10 @@ def analyze_finding_endpoint(
         confidence=result.confidence,
         summary=result.summary,
         risk_explanation=result.risk_explanation,
-        recommended_action=result.recommended_action
+        recommended_action=result.recommended_action,
+        use_rag=use_rag,
+        rag_top_k=rag_top_k,
+        retrieved_context=retrieved_context,
     )
 
     db.add(analysis_record)

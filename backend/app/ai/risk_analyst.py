@@ -30,13 +30,17 @@ def clean_llm_json(raw_text: str) -> str:
 
 
 def analyze_finding(
-    data: AIAnalysisInput
+    data: AIAnalysisInput,
+    rag_context: str | None = None,
 ) -> AIAnalysisResult:
     """
     调用 LLM 对 Finding 进行安全风险分析。
     """
 
-    prompt = build_risk_analysis_prompt(data)
+    prompt = build_risk_analysis_prompt(
+    data,
+    rag_context=rag_context,
+)
 
     raw_response = call_llm(prompt)
 

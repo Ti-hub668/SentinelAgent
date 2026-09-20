@@ -5,8 +5,46 @@ PROMPT_VERSION = "v5"
 
 
 def build_risk_analysis_prompt(
-    data: AIAnalysisInput
+    data: AIAnalysisInput,
+    rag_context: str | None = None,
 ) -> str:
+
+    rag_section = ""
+
+    if rag_context and rag_context.strip():
+        rag_section = f"""
+==================================================
+五、检索到的安全知识
+==================
+
+以下内容来自 SentinelAgent 安全知识库的语义检索结果。
+
+这些知识只能作为辅助分析上下文，不属于当前 Finding 的直接证据。
+
+你必须遵守以下规则：
+
+1. 当前 Finding 的 Evidence 优先级高于检索知识。
+
+2. 不得因为知识库描述某类漏洞、配置缺陷或暴露通常存在，
+   就推断当前目标一定存在该问题。
+
+3. 检索知识用于帮助理解：
+   - Finding 的安全语义
+   - 常见安全配置
+   - 暴露类型
+   - 判断该类 Finding 通常需要什么证据
+
+4. 如果检索知识与当前 Evidence 不一致，
+   应优先依据当前 Finding 的实际 Evidence。
+
+5. 检索结果中的 Similarity 只表示语义相似度，
+   不代表 Finding 为真的概率，也不代表风险严重程度。
+
+Retrieved Security Knowledge:
+
+{rag_context}
+"""
+
     return f"""
 你是一名安全运营中心（SOC）的安全分析专家。
 
@@ -391,9 +429,11 @@ Rule-based Risk Level:
 Rule-based Risk Reason:
 {data.risk_reason or "N/A"}
 
+{rag_section}
+
 ==================================================
-五、重要约束
-==================================================
+六、重要约束
+======
 
 severity 和 risk_score 只能作为辅助信息。
 
@@ -415,7 +455,7 @@ severity 和 risk_score 只能作为辅助信息。
 - 未提供的攻击证据
 
 ==================================================
-六、输出要求
+七、输出要求
 ==================================================
 
 只返回合法 JSON。
