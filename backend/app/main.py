@@ -10,7 +10,10 @@ from app.models.vulnerability import Vulnerability
 from app.models.finding import Finding
 from app.api.vulnerabilities import router as vulnerabilities_router
 from app.api.findings import router as findings_router
+from app.api.agent import router as agent_router
 from app.models.ai_analysis import AIAnalysis
+from app.models.agent_decision import AgentDecision
+
 
 app = FastAPI(
     title="SentinelAgent",
@@ -26,6 +29,8 @@ app.include_router(assets_router)
 app.include_router(scans_router)
 app.include_router(vulnerabilities_router)
 app.include_router(findings_router)
+app.include_router(agent_router)
+
 
 @app.get("/")
 def root():
