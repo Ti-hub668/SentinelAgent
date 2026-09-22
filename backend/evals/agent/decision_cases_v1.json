@@ -1,0 +1,306 @@
+[
+  {
+    "id": "agent_001",
+    "category": "normal",
+    "description": "Informational finding with low risk",
+    "input": {
+      "finding_id": 1,
+      "ai_analysis_id": 1,
+      "verdict": "informational",
+      "confidence": 0.95,
+      "severity": "info",
+      "risk_score": 10,
+      "risk_level": "low"
+    },
+    "expected": {
+      "action": "close_as_info",
+      "priority": "low",
+      "requires_human_review": false
+    }
+  },
+  {
+    "id": "agent_002",
+    "category": "normal",
+    "description": "High-confidence false positive",
+    "input": {
+      "finding_id": 2,
+      "ai_analysis_id": 2,
+      "verdict": "likely_false_positive",
+      "confidence": 0.95,
+      "severity": "low",
+      "risk_score": 15,
+      "risk_level": "low"
+    },
+    "expected": {
+      "action": "mark_false_positive",
+      "priority": "low",
+      "requires_human_review": false
+    }
+  },
+  {
+    "id": "agent_003",
+    "category": "normal",
+    "description": "Finding requires manual review",
+    "input": {
+      "finding_id": 3,
+      "ai_analysis_id": 3,
+      "verdict": "needs_review",
+      "confidence": 0.60,
+      "severity": "medium",
+      "risk_score": 45,
+      "risk_level": "medium"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "medium",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_004",
+    "category": "normal",
+    "description": "Confirmed medium-risk security finding",
+    "input": {
+      "finding_id": 4,
+      "ai_analysis_id": 4,
+      "verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "severity": "medium",
+      "risk_score": 55,
+      "risk_level": "medium"
+    },
+    "expected": {
+      "action": "recommend_remediation",
+      "priority": "medium",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_005",
+    "category": "normal",
+    "description": "Confirmed high-risk security finding",
+    "input": {
+      "finding_id": 5,
+      "ai_analysis_id": 5,
+      "verdict": "likely_true_positive",
+      "confidence": 0.98,
+      "severity": "high",
+      "risk_score": 80,
+      "risk_level": "high"
+    },
+    "expected": {
+      "action": "recommend_remediation",
+      "priority": "high",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_006",
+    "category": "confidence_boundary",
+    "description": "False positive exactly at confidence threshold",
+    "input": {
+      "finding_id": 6,
+      "ai_analysis_id": 6,
+      "verdict": "likely_false_positive",
+      "confidence": 0.80,
+      "severity": "low",
+      "risk_score": 15,
+      "risk_level": "low"
+    },
+    "expected": {
+      "action": "mark_false_positive",
+      "priority": "low",
+      "requires_human_review": false
+    }
+  },
+  {
+    "id": "agent_007",
+    "category": "confidence_boundary",
+    "description": "False positive just below confidence threshold",
+    "input": {
+      "finding_id": 7,
+      "ai_analysis_id": 7,
+      "verdict": "likely_false_positive",
+      "confidence": 0.79,
+      "severity": "low",
+      "risk_score": 15,
+      "risk_level": "low"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "medium",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_008",
+    "category": "confidence_boundary",
+    "description": "Low-confidence true positive",
+    "input": {
+      "finding_id": 8,
+      "ai_analysis_id": 8,
+      "verdict": "likely_true_positive",
+      "confidence": 0.55,
+      "severity": "medium",
+      "risk_score": 55,
+      "risk_level": "medium"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "medium",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_009",
+    "category": "risk_conflict",
+    "description": "Informational verdict conflicts with critical severity",
+    "input": {
+      "finding_id": 9,
+      "ai_analysis_id": 9,
+      "verdict": "informational",
+      "confidence": 0.95,
+      "severity": "critical",
+      "risk_score": 90,
+      "risk_level": "critical"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "high",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_010",
+    "category": "risk_conflict",
+    "description": "False positive conflicts with high risk",
+    "input": {
+      "finding_id": 10,
+      "ai_analysis_id": 10,
+      "verdict": "likely_false_positive",
+      "confidence": 0.95,
+      "severity": "high",
+      "risk_score": 85,
+      "risk_level": "high"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "high",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_011",
+    "category": "risk_conflict",
+    "description": "True positive with low severity but high risk score",
+    "input": {
+      "finding_id": 11,
+      "ai_analysis_id": 11,
+      "verdict": "likely_true_positive",
+      "confidence": 0.95,
+      "severity": "low",
+      "risk_score": 80,
+      "risk_level": "high"
+    },
+    "expected": {
+      "action": "recommend_remediation",
+      "priority": "high",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_012",
+    "category": "risk_conflict",
+    "description": "True positive with critical severity",
+    "input": {
+      "finding_id": 12,
+      "ai_analysis_id": 12,
+      "verdict": "likely_true_positive",
+      "confidence": 0.99,
+      "severity": "critical",
+      "risk_score": 95,
+      "risk_level": "critical"
+    },
+    "expected": {
+      "action": "recommend_remediation",
+      "priority": "high",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_013",
+    "category": "safety_fallback",
+    "description": "Unknown verdict must fail safely",
+    "input": {
+      "finding_id": 13,
+      "ai_analysis_id": 13,
+      "verdict": "unknown_state",
+      "confidence": 0.90,
+      "severity": "medium",
+      "risk_score": 50,
+      "risk_level": "medium"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "medium",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_014",
+    "category": "safety_fallback",
+    "description": "Unknown verdict with critical risk must preserve high priority",
+    "input": {
+      "finding_id": 14,
+      "ai_analysis_id": 14,
+      "verdict": "unsupported_verdict",
+      "confidence": 0.99,
+      "severity": "critical",
+      "risk_score": 95,
+      "risk_level": "critical"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "high",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_015",
+    "category": "confidence_boundary",
+    "description": "Very low-confidence informational classification",
+    "input": {
+      "finding_id": 15,
+      "ai_analysis_id": 15,
+      "verdict": "informational",
+      "confidence": 0.40,
+      "severity": "info",
+      "risk_score": 10,
+      "risk_level": "low"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "medium",
+      "requires_human_review": true
+    }
+  },
+  {
+    "id": "agent_016",
+    "category": "risk_conflict",
+    "description": "Needs-review finding with high risk",
+    "input": {
+      "finding_id": 16,
+      "ai_analysis_id": 16,
+      "verdict": "needs_review",
+      "confidence": 0.65,
+      "severity": "high",
+      "risk_score": 85,
+      "risk_level": "high"
+    },
+    "expected": {
+      "action": "request_manual_review",
+      "priority": "high",
+      "requires_human_review": true
+    }
+  }
+]
