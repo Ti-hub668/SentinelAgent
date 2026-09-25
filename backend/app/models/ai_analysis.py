@@ -74,6 +74,53 @@ class AIAnalysis(Base):
         Text,
         nullable=True
     )
+    # --------------------------------
+    # Stage 1 Evidence Assessment Trace
+    # --------------------------------
+
+    finding_category: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    evidence_status: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    preliminary_verdict: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    evidence_confidence: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
+    evidence_reason: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    # --------------------------------
+    # Stage 2 Risk Enrichment Trace
+    # --------------------------------
+
+    priority: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
+    # --------------------------------
+    # Structured Intelligence Trace
+    # --------------------------------
+
+    structured_intelligence: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.now,

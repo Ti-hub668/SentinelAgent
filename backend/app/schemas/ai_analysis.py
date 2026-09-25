@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -20,7 +22,12 @@ class AIAnalysisInput(BaseModel):
 
 
 class AIAnalysisResult(BaseModel):
-    verdict: str
+    verdict: Literal[
+        "informational",
+        "likely_true_positive",
+        "likely_false_positive",
+        "needs_review",
+    ]
 
     confidence: float = Field(
         ge=0.0,

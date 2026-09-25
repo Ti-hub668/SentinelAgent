@@ -68,6 +68,20 @@ class Finding(Base):
         nullable=True
     )
 
+    template_id: Mapped[str | None] = mapped_column(
+    String(255),
+    nullable=True
+    )
+
+    cve_ids: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
+
+    cwe_ids: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
     status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,

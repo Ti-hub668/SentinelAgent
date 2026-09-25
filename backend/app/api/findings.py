@@ -7,15 +7,19 @@ from app.db.database import get_db
 from app.models.finding import Finding
 from app.schemas.finding import FindingResponse
 from app.schemas.ai_analysis import AIAnalysisInput, AIAnalysisResult
-from app.ai.risk_analyst import analyze_finding
-from app.ai.prompt_builder import PROMPT_VERSION
+from app.ai.two_stage_analyzer import (
+    analyze_finding_two_stage,
+    TWO_STAGE_ANALYZER_VERSION,
+)
 from app.models.ai_analysis import AIAnalysis
 from app.core.config import settings
 from app.schemas.ai_analysis_record import AIAnalysisRecordResponse
 from app.rag.query_builder import build_finding_query
 from app.rag.retriever import SecurityKnowledgeRetriever
 from app.rag.context_builder import build_rag_context
-
+from app.intelligence.structured_enricher import (
+    StructuredIntelligenceEnricher,
+)
 
 router = APIRouter(
     prefix="/api/findings",
@@ -106,16 +110,47 @@ def analyze_finding_endpoint(
         rag_context = build_rag_context(
             retrieval_results
         )
-
     # --------------------------------
-    # AI Analysis
+    # Structured Intelligence
     # --------------------------------
 
-    result = analyze_finding(
-        analysis_input,
-        rag_context=rag_context,
+    structured_intelligence = None
+
+    enricher = StructuredIntelligenceEnricher()
+
+    intelligence_result = enricher.enrich(
+        finding
     )
 
+    cve_ids = intelligence_result[
+        "identifiers"
+    ]["cve_ids"]
+
+    if cve_ids:
+        structured_intelligence = json.dumps(
+            intelligence_result,
+            ensure_ascii=False,
+            indent=2,
+        )
+    # --------------------------------
+    # Two-Stage AI Analysis
+    # --------------------------------
+
+    evidence_result, enrichment_result = (
+        analyze_finding_two_stage(
+            analysis_input,
+            structured_intelligence=structured_intelligence,
+            rag_context=rag_context,
+        )
+    )
+
+    result = AIAnalysisResult(
+        verdict=enrichment_result.final_verdict,
+        confidence=enrichment_result.confidence,
+        summary=enrichment_result.summary,
+        risk_explanation=enrichment_result.risk_explanation,
+        recommended_action=enrichment_result.recommended_action,
+    )
     # --------------------------------
     # RAG Trace
     # --------------------------------
@@ -151,20 +186,36 @@ def analyze_finding_endpoint(
     # --------------------------------
     # Save AI Analysis
     # --------------------------------
-
     analysis_record = AIAnalysis(
         finding_id=finding.id,
         provider=settings.LLM_PROVIDER,
         model=model_name,
-        prompt_version=PROMPT_VERSION,
+        prompt_version=TWO_STAGE_ANALYZER_VERSION,
+
+        # Final Analysis
         verdict=result.verdict,
         confidence=result.confidence,
         summary=result.summary,
         risk_explanation=result.risk_explanation,
         recommended_action=result.recommended_action,
+
+        # RAG Trace
         use_rag=use_rag,
         rag_top_k=rag_top_k,
         retrieved_context=retrieved_context,
+
+        # Stage 1 Evidence Assessment Trace
+        finding_category=evidence_result.finding_category,
+        evidence_status=evidence_result.evidence_status,
+        preliminary_verdict=evidence_result.preliminary_verdict,
+        evidence_confidence=evidence_result.confidence,
+        evidence_reason=evidence_result.reason,
+
+        # Stage 2 Risk Enrichment Trace
+        priority=enrichment_result.priority,
+
+        # Structured Intelligence Trace
+        structured_intelligence=structured_intelligence,
     )
 
     db.add(analysis_record)

@@ -1,10 +1,17 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
 
 class ScanCreate(BaseModel):
     asset_id: int
+
+    scan_profile: Literal[
+        "fast",
+        "security",
+        "full",
+    ] = "fast"
 
 
 class PortResponse(BaseModel):

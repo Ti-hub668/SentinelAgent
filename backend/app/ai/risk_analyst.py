@@ -6,7 +6,7 @@ from app.ai.llm_client import call_llm
 from app.ai.prompt_builder import build_risk_analysis_prompt
 from app.schemas.ai_analysis import (
     AIAnalysisInput,
-    AIAnalysisResult
+    AIAnalysisResult,
 )
 
 
@@ -14,7 +14,6 @@ def clean_llm_json(raw_text: str) -> str:
     """
     清理模型可能返回的 Markdown JSON 代码块。
     """
-
     text = raw_text.strip()
 
     if text.startswith("```json"):
@@ -32,15 +31,16 @@ def clean_llm_json(raw_text: str) -> str:
 def analyze_finding(
     data: AIAnalysisInput,
     rag_context: str | None = None,
+    structured_intelligence: str | None = None,
 ) -> AIAnalysisResult:
     """
     调用 LLM 对 Finding 进行安全风险分析。
     """
-
     prompt = build_risk_analysis_prompt(
-    data,
-    rag_context=rag_context,
-)
+        data,
+        rag_context=rag_context,
+        structured_intelligence=structured_intelligence,
+    )
 
     raw_response = call_llm(prompt)
 

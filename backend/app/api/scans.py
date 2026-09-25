@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -22,7 +23,10 @@ router = APIRouter(
 )
 
 
-@router.post("", response_model=ScanResponse)
+@router.post(
+    "",
+    response_model=ScanResponse
+)
 def create_scan(
     scan_data: ScanCreate,
     db: Session = Depends(get_db)
@@ -52,12 +56,12 @@ def create_scan(
     scan_task_id = scan_task.id
 
     try:
-        # 1. Nmap 扫描
+        # 1. 使用 Nmap 扫描资产
         scan_results = run_nmap(
             asset.target
         )
 
-        # 2. 保存端口
+        # 2. 保存开放端口
         for result in scan_results:
             port = Port(
                 scan_task_id=scan_task_id,
@@ -73,41 +77,41 @@ def create_scan(
 
         db.commit()
 
-        # 3. 根据端口生成 Web URL
+        # 3. 根据开放端口生成 Web URL
         web_targets = build_web_targets(
             scan_results
         )
 
-        # 4. 对 Web 服务运行 Nuclei
+        # 4. 对每个 Web 服务运行 Nuclei
         for target in web_targets:
             nuclei_results = run_nuclei(
-                target
+                target=target,
+                profile=scan_data.scan_profile
             )
 
-            # 5. 保存漏洞
-        for nuclei_finding in nuclei_results:
-            vulnerability = Vulnerability(
-                scan_task_id=scan_task_id,
-                target=nuclei_finding["target"],
-                template_id=nuclei_finding["template_id"],
-                name=nuclei_finding["name"],
-                severity=nuclei_finding["severity"],
-                matched_at=nuclei_finding["matched_at"],
-                description=nuclei_finding["description"],
-                remediation=nuclei_finding["remediation"]
-            )
+            # 5. 保存当前 Web 目标的 Nuclei 结果
+            for nuclei_finding in nuclei_results:
+                vulnerability = Vulnerability(
+                    scan_task_id=scan_task_id,
+                    target=nuclei_finding["target"],
+                    template_id=nuclei_finding["template_id"],
+                    name=nuclei_finding["name"],
+                    severity=nuclei_finding["severity"],
+                    matched_at=nuclei_finding["matched_at"],
+                    description=nuclei_finding["description"],
+                    remediation=nuclei_finding["remediation"]
+                )
 
-            db.add(vulnerability)
+                db.add(vulnerability)
 
-            risk = calculate_risk(
+                risk = calculate_risk(
                 severity=nuclei_finding["severity"],
                 finding_type="vulnerability",
                 source="nuclei",
                 title=nuclei_finding["name"],
-                evidence=nuclei_finding["matched_at"]
-            )
-
-            security_finding = Finding(
+                evidence=nuclei_finding["evidence"]
+                )
+                security_finding = Finding(
                 scan_task_id=scan_task_id,
                 asset_id=asset.id,
                 source="nuclei",
@@ -116,15 +120,28 @@ def create_scan(
                 severity=nuclei_finding["severity"],
                 target=nuclei_finding["target"],
                 description=nuclei_finding["description"],
-                evidence=nuclei_finding["matched_at"],
+                evidence=nuclei_finding["evidence"],
                 remediation=nuclei_finding["remediation"],
+
+                template_id=nuclei_finding["template_id"],
+
+                cve_ids=json.dumps(
+                    nuclei_finding["cve_ids"],
+                    ensure_ascii=False,
+                ),
+
+                cwe_ids=json.dumps(
+                    nuclei_finding["cwe_ids"],
+                    ensure_ascii=False,
+                ),
+
                 status="open",
                 risk_score=risk["risk_score"],
                 risk_level=risk["risk_level"],
                 risk_reason=risk["risk_reason"]
             )
 
-            db.add(security_finding)
+                db.add(security_finding)
 
         db.commit()
 

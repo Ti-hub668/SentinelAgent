@@ -1,0 +1,113 @@
+[
+  {
+    "id": "intel_001",
+    "category": "kev_evidence_boundary",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Possible CVE-2026-7273",
+    "severity": "high",
+    "target": "127.0.0.1",
+    "description": "Scanner reports a possible match for CVE-2026-7273.",
+    "evidence": "Target responded to a network request, but no affected product version or vulnerability condition was confirmed.",
+    "remediation": "Verify the affected product, version, and vulnerability condition.",
+    "risk_score": 80,
+    "risk_level": "high",
+    "risk_reason": "A potentially serious CVE was reported, but the current evidence is insufficient to confirm the vulnerability.",
+    "template_id": "CVE-2026-7273",
+    "cve_ids": [
+      "CVE-2026-7273"
+    ],
+    "cwe_ids": [
+      "CWE-121"
+    ],
+    "expected_verdict": "needs_review"
+  },
+  {
+    "id": "intel_002",
+    "category": "kev_confirmed_evidence",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "CVE-2026-7273 Vulnerability Detection",
+    "severity": "high",
+    "target": "127.0.0.1",
+    "description": "The scanner identified the affected product and version and matched the vulnerability detection condition for CVE-2026-7273.",
+    "evidence": "The detected product and version matched the scanner rule for CVE-2026-7273, and the vulnerability-specific detection condition was confirmed.",
+    "remediation": "Apply the appropriate vendor remediation.",
+    "risk_score": 90,
+    "risk_level": "critical",
+    "risk_reason": "The vulnerability-specific detection condition was confirmed.",
+    "template_id": "CVE-2026-7273",
+    "cve_ids": [
+      "CVE-2026-7273"
+    ],
+    "cwe_ids": [
+      "CWE-121"
+    ],
+    "expected_verdict": "likely_true_positive"
+  },
+  {
+    "id": "intel_003",
+    "category": "kev_contradicted_evidence",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Possible CVE-2026-7273",
+    "severity": "high",
+    "target": "127.0.0.1",
+    "description": "The scanner initially reported a possible match for CVE-2026-7273.",
+    "evidence": "Manual verification identified a different product that is not the affected product described by the scanner rule. The original match came from a generic response pattern.",
+    "remediation": "Review the scanner rule and suppress the false match if appropriate.",
+    "risk_score": 40,
+    "risk_level": "medium",
+    "risk_reason": "Follow-up evidence contradicts the scanner's vulnerability match.",
+    "template_id": "CVE-2026-7273",
+    "cve_ids": [
+      "CVE-2026-7273"
+    ],
+    "cwe_ids": [
+      "CWE-121"
+    ],
+    "expected_verdict": "likely_false_positive"
+  },
+  {
+    "id": "intel_004",
+    "category": "unknown_cve_no_kev_match",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Possible CVE-2099-999999",
+    "severity": "high",
+    "target": "127.0.0.1",
+    "description": "Scanner reports a possible vulnerability identifier.",
+    "evidence": "The target responded, but no affected product version or vulnerability-specific condition was confirmed.",
+    "remediation": "Verify the scanner result and affected software.",
+    "risk_score": 70,
+    "risk_level": "high",
+    "risk_reason": "The current evidence is insufficient to confirm the reported vulnerability.",
+    "template_id": "CVE-2099-999999",
+    "cve_ids": [
+      "CVE-2099-999999"
+    ],
+    "cwe_ids": [],
+    "expected_verdict": "needs_review"
+  },
+  {
+    "id": "intel_005",
+    "category": "nvd_evidence_boundary",
+    "source": "nuclei",
+    "finding_type": "vulnerability",
+    "title": "Possible CVE-2026-15144",
+    "severity": "high",
+    "target": "127.0.0.1",
+    "description": "Scanner reports a possible match for CVE-2026-15144.",
+    "evidence": "The target responded to the scanner request, but the affected product, affected version, and vulnerability-specific condition were not confirmed.",
+    "remediation": "Verify the installed product and version and confirm the vulnerability-specific condition.",
+    "risk_score": 80,
+    "risk_level": "high",
+    "risk_reason": "A potentially serious vulnerability was reported, but the available target evidence is insufficient to confirm that the target is affected.",
+    "template_id": "CVE-2026-15144",
+    "cve_ids": [
+      "CVE-2026-15144"
+    ],
+    "cwe_ids": [],
+    "expected_verdict": "needs_review"
+  }
+]

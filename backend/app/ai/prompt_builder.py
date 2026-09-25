@@ -1,18 +1,117 @@
 from app.schemas.ai_analysis import AIAnalysisInput
 
 
-PROMPT_VERSION = "v5"
+PROMPT_VERSION = "v5.1"
 
 
 def build_risk_analysis_prompt(
     data: AIAnalysisInput,
     rag_context: str | None = None,
+    structured_intelligence: str | None = None,
 ) -> str:
 
-    rag_section = ""
+   structured_intelligence_section = ""
 
-    if rag_context and rag_context.strip():
-        rag_section = f"""
+   if (
+      structured_intelligence
+      and structured_intelligence.strip()
+   ):
+      structured_intelligence_section = f"""
+==================================================
+四、结构化安全情报
+==================================================
+
+以下内容来自 SentinelAgent 对当前 Finding 中明确安全标识符
+进行的结构化安全情报精确查询。
+
+当前可能包含的情报来源包括：
+
+- CISA KEV
+- NVD
+
+这些信息属于外部安全情报，
+不属于当前目标的直接扫描证据。
+
+你必须遵守以下规则：
+
+1. 当前 Finding 的 Evidence 优先级高于结构化安全情报。
+
+2. 只有当前 Finding 明确提供了对应 CVE 等标识符时，
+   才能使用与该标识符精确匹配的安全情报。
+
+3. CISA KEV 中 known_exploited=true 表示该 CVE
+   已进入 Known Exploited Vulnerabilities Catalog。
+
+   它说明该漏洞存在已知现实利用情况，
+   但不代表当前目标已经遭到利用，
+   也不能单独证明当前目标存在该漏洞。
+
+4. NVD 中的 CVE 描述、CVSS、Severity、CWE、
+   affected configuration 和 references
+   描述的是该漏洞本身的公开安全信息。
+
+   NVD 中存在某个 CVE 记录，
+   不代表当前目标一定存在该漏洞。
+
+5. NVD 中的 affected configuration
+   表示该漏洞已知的适用或受影响配置范围。
+
+   除非当前 Finding 的 Evidence 已经确认
+   当前目标的产品、版本或其他必要条件与之匹配，
+   否则不得假设当前目标属于该 affected configuration。
+
+6. NVD CVSS 和 Severity 描述漏洞本身的严重程度，
+   不表示当前 Finding 已经被证实，
+   也不得直接替代 SentinelAgent 的 Rule-based Risk Score。
+
+7. CISA KEV 未匹配或 NVD 本地记录未匹配，
+   都不能作为该 Finding 为假的直接证据。
+
+   “本地情报中没有匹配记录”
+   不等于
+   “漏洞不存在”或“扫描结果一定是误报”。
+
+8. 是否将 Finding 判断为 likely_true_positive，
+   仍然必须依据当前 Finding 的 Evidence
+   是否足以支持该 Finding。
+
+9. 如果 Evidence 已经支持该漏洞 Finding，
+   NVD、CISA KEV 等情报可以进一步用于：
+
+   - 理解漏洞机制
+   - 补充漏洞严重程度背景
+   - 判断现实利用背景
+   - 辅助处置优先级
+   - 提供修复建议
+
+10. 不得根据结构化安全情报虚构当前目标的：
+
+   - 产品
+   - 版本
+   - 配置
+   - 攻击行为
+   - 利用成功情况
+   - 其他未提供的 Evidence
+
+特别注意：
+
+Structured Intelligence 描述的是
+“这个漏洞是什么”。
+
+Finding Evidence 描述的是
+“当前目标上实际观察到了什么”。
+
+不得用前者替代后者。
+
+Structured Security Intelligence:
+
+{structured_intelligence}
+"""
+
+   rag_section = ""
+
+   if rag_context and rag_context.strip():
+            rag_section = f"""
 ==================================================
 五、检索到的安全知识
 ==================
@@ -45,7 +144,7 @@ Retrieved Security Knowledge:
 {rag_context}
 """
 
-    return f"""
+   return f"""
 你是一名安全运营中心（SOC）的安全分析专家。
 
 你的任务是根据扫描发现及已有证据，对该 Finding 进行安全研判。
@@ -389,9 +488,19 @@ confidence 必须在 0.0 到 1.0 之间。
 
 不要在证据不足时轻易给出 0.95 或更高的置信度。
 
+{structured_intelligence_section}
+
+{rag_section}
+
 ==================================================
-四、当前 Finding
+六、当前 Finding
 ==================================================
+
+以下内容是当前目标的实际 Finding 数据。
+
+在最终选择 verdict 时，
+必须优先依据这里的 Evidence，
+不得让前面的外部安全情报替代当前目标的实际证据。
 
 Finding ID:
 {data.finding_id}
@@ -429,10 +538,8 @@ Rule-based Risk Level:
 Rule-based Risk Reason:
 {data.risk_reason or "N/A"}
 
-{rag_section}
-
 ==================================================
-六、重要约束
+七、重要约束
 ======
 
 severity 和 risk_score 只能作为辅助信息。
@@ -455,7 +562,7 @@ severity 和 risk_score 只能作为辅助信息。
 - 未提供的攻击证据
 
 ==================================================
-七、输出要求
+八、输出要求
 ==================================================
 
 只返回合法 JSON。
@@ -471,15 +578,30 @@ likely_true_positive
 likely_false_positive
 needs_review
 
-输出结构：
+输出 JSON 必须包含以下五个字段：
 
-{{
-  "verdict": "informational",
-  "confidence": 0.0,
-  "summary": "对当前发现进行简要总结",
-  "risk_explanation": "说明为什么做出该风险判断",
-  "recommended_action": "给出下一步安全处置建议"
-}}
+- verdict
+- confidence
+- summary
+- risk_explanation
+- recommended_action
+
+其中：
+
+verdict 必须根据当前 Finding 的实际分析结果，
+从前述四种合法值中选择。
+
+confidence 必须根据当前证据充分程度进行评估，
+不得使用固定默认值。
+
+summary、risk_explanation 和 recommended_action
+必须与最终 verdict 保持语义一致。
+
+特别注意：
+
+不得复制固定的 verdict 或 confidence 作为输出模板。
+
+如果分析认为“证据不足，需要进一步验证”，
+则 verdict 应与这一判断保持一致，
+不得输出与分析理由相矛盾的 verdict。
 """.strip()
-
-    return prompt
