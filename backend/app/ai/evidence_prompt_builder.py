@@ -1,7 +1,7 @@
 from app.schemas.ai_analysis import AIAnalysisInput
 
 
-EVIDENCE_PROMPT_VERSION = "v1.3"
+EVIDENCE_PROMPT_VERSION = "v1.5.1"
 
 
 def build_evidence_assessment_prompt(
@@ -49,10 +49,32 @@ Finding 声称存在：
 - 缺失的安全配置
 - 错误配置
 - 不安全配置
+- HTTP 安全响应头缺失
+- TLS / HTTPS 配置问题
+- Cookie 安全属性问题
+- 认证或访问控制配置问题
 - 目录浏览
 - Debug 配置
-- Cookie 安全属性问题
+- 默认或弱安全配置
 - 其他配置安全问题
+
+这类 Finding 描述的是“安全配置状态存在问题”，
+而不是具体软件漏洞本身。
+
+即使原始 finding_type = vulnerability，
+只要 Title、Description 和 Evidence 实际表达的是：
+
+- Missing Security Headers
+- Missing Content-Security-Policy
+- Missing HSTS
+- Missing X-Frame-Options
+- Missing X-Content-Type-Options
+- Missing Secure / HttpOnly / SameSite Cookie 属性
+- 其他明确的安全配置缺失
+
+则 Finding Category 应优先判断为：
+
+security_misconfiguration
 
 3. exposure
 
@@ -161,6 +183,52 @@ Finding Category 与 Evidence Status 必须严格分离。
    - 漏洞检测结果
 
    则 Finding Category 应为 vulnerability。
+   这是 Finding Category 的强约束规则：
+
+   如果 Title 或 Description 已经明确声称存在具体漏洞、
+   CVE 或 vulnerability condition，
+   则不得因为 Evidence：
+
+   - contradicted
+   - insufficient
+   - 指向其他产品
+   - 指向其他版本
+   - 证明扫描结果可能是误报
+   - 证明目标不满足漏洞条件
+
+   而将 finding_category 改成 ambiguous_security_signal。
+
+   这些情况只影响：
+
+   - evidence_status
+   - preliminary_verdict
+
+   不影响 Finding 原本的 Category。
+
+   例如：
+
+   Finding 声称：
+   "CVE-XXXX-XXXX Vulnerability Detected"
+
+   但 Evidence 表明：
+   目标产品或版本并不受影响。
+
+   正确结果必须是：
+
+   finding_category = vulnerability
+   evidence_status = contradicted
+   preliminary_verdict = likely_false_positive
+
+   而不是：
+
+   finding_category = ambiguous_security_signal
+   只要 Finding 本身已经明确声称 vulnerability、
+   exposure、security_misconfiguration
+   或 information_observation 中的一类，
+   就不得使用 ambiguous_security_signal。
+
+   Evidence 是否支持该 Finding，
+   不能作为选择 ambiguous_security_signal 的理由。
 
    即使 Evidence：
    - insufficient
@@ -207,6 +275,149 @@ Finding Category 与 Evidence Status 必须严格分离。
 
 来表达，而不是通过 Finding Category 表达。
 
+==================================================
+一-A、缺失型配置问题的特殊判断
+==================================================
+
+某些安全问题的成立依据不是：
+
+“Evidence 中出现了危险内容”
+
+而是：
+
+“预期的安全配置没有出现在完整或足够充分的配置证据中”。
+
+典型情况包括：
+
+- HTTP Missing Security Headers
+- Missing Content-Security-Policy
+- Missing Strict-Transport-Security
+- Missing X-Frame-Options
+- Missing X-Content-Type-Options
+- 缺失 Secure / HttpOnly / SameSite Cookie 属性
+- 缺失必要的认证、访问控制或其他安全配置
+
+对于这类 Finding，必须遵守以下规则：
+
+1. 如果 Finding 明确声称的是某项安全配置缺失，
+   Finding Category 应优先归类为：
+
+   security_misconfiguration
+
+   不得仅因为 finding_type = vulnerability，
+   就将其归类为 vulnerability。
+
+2. 对于“缺失型问题”，
+   缺失本身可以构成 Evidence。
+
+   如果 Evidence 提供了足够完整的：
+
+   - HTTP Response Headers
+   - 配置快照
+   - Cookie 属性
+   - 服务配置
+   - 其他可验证配置内容
+
+   并且 Finding 声称缺失的目标配置确实没有出现，
+   则可以判断：
+
+   evidence_status = confirmed
+
+3. 不要因为 Evidence 中存在其他安全配置，
+   就自动认为当前 Finding 证据不足。
+
+   例如：
+
+   Evidence 中存在：
+
+   X-Content-Type-Options: nosniff
+   X-Frame-Options: SAMEORIGIN
+
+   但不存在：
+
+   Content-Security-Policy
+
+   那么对于泛化 Finding：
+
+   "HTTP Missing Security Headers"
+
+   仍然可以确认至少存在一项安全响应头缺失。
+
+4. 对于泛化标题：
+
+   "HTTP Missing Security Headers"
+
+   不要求所有 HTTP 安全头都缺失。
+
+   只要 Evidence 足以确认至少一个相关且预期存在的安全头缺失，
+   就可以认为 Finding 所描述的配置问题成立。
+
+5. 必须严格依据 Evidence 中实际出现的 Header 或配置。
+
+   如果某个 Header 没有出现在 Evidence 中，
+   不得描述为“该 Header 已存在”。
+
+   必须区分：
+
+   - 明确存在
+   - 明确未出现
+   - Evidence 不足以判断
+
+6. 如果 Evidence 只是截断片段，
+   无法确认它是否包含完整响应头或完整配置，
+   则不要仅根据“没看到某字段”
+   自动判断 confirmed。
+
+   此时应根据证据完整性判断是否为：
+
+   insufficient
+
+7. 对 HTTP Header 类 Evidence 必须做字面核验。
+
+   只有当 HTTP Response Evidence 中明确出现：
+
+   Header-Name: value
+
+   才能判断该 Header 存在。
+
+   如果 HTTP Response Evidence 中没有出现该 Header，
+   不得声称该 Header 已存在。
+
+8. 如果 Nuclei Evidence 同时提供：
+
+   - Template ID: http-missing-security-headers
+   - Matcher Name: 某个具体安全 Header
+   - Scanner Match Condition 明确说明该 missing-header matcher 被命中
+   - HTTP Response Evidence 中确实没有该 Header
+
+   则这构成对“该安全 Header 缺失”的直接扫描证据。
+
+   此时应优先判断：
+
+   evidence_status = confirmed
+
+9. 不得凭借 RAG、常识或模型记忆，
+   把 Evidence 中没有出现的 Header 补写成“已存在”。
+
+   必须严格依据 HTTP Response Evidence 原文。
+
+示例：
+
+如果 Evidence 中包含：
+
+Matcher Name: content-security-policy
+
+Scanner Match Condition:
+Nuclei reported the missing-header matcher
+'content-security-policy' as matched.
+
+并且 HTTP Response Evidence 中没有：
+
+Content-Security-Policy:
+
+那么不得声称 Content-Security-Policy 已存在。
+
+应判断该缺失型配置 Finding 已得到扫描证据支持。
 ==================================================
 二、Evidence Status
 ==================================================

@@ -183,25 +183,112 @@ def run_nuclei(
 
 def build_nuclei_evidence(
     data: dict,
-    max_response_chars: int = 3000
+    max_response_chars: int = 3000,
+    max_request_chars: int = 1200,
 ) -> str:
     """
     从 Nuclei 原始 JSON 结果中构造适合保存和 AI 分析的证据。
 
-    保留匹配位置和有限长度的 HTTP 响应，
-    避免将过大的原始响应直接写入数据库和 Prompt。
+    优先保留扫描器真实输出的匹配元数据，
+    再附加有限长度的 HTTP Request / Response。
+    不推断或伪造 Nuclei 未提供的信息。
     """
 
+    info = data.get("info", {}) or {}
+
+    template_id = data.get("template-id", "")
+    template_name = info.get("name", "")
     matched_at = data.get("matched-at", "")
+
+    matcher_name = data.get("matcher-name", "")
+    extractor_name = data.get("extractor-name", "")
+    extracted_results = data.get(
+        "extracted-results",
+        [],
+    ) or []
+
+    request = data.get("request", "")
     response = data.get("response", "")
 
     evidence_parts = []
 
+    # 1. 扫描器匹配元数据
+    metadata_parts = []
+
+    if template_id:
+        metadata_parts.append(
+            f"Template ID: {template_id}"
+        )
+
+    if template_name:
+        metadata_parts.append(
+            f"Template Name: {template_name}"
+        )
+
+    if matcher_name:
+        metadata_parts.append(
+            f"Matcher Name: {matcher_name}"
+        )
+
+    if template_id == "http-missing-security-headers":
+        metadata_parts.append(
+            "Scanner Match Condition: "
+            f"Nuclei reported the missing-header matcher "
+            f"'{matcher_name}' as matched."
+        )
+
+    if extractor_name:
+        metadata_parts.append(
+            f"Extractor Name: {extractor_name}"
+        )
+
+    if extracted_results:
+        if not isinstance(
+            extracted_results,
+            list,
+        ):
+            extracted_results = [
+                extracted_results
+            ]
+
+        extracted_text = "\n".join(
+            f"- {item}"
+            for item in extracted_results
+        )
+
+        metadata_parts.append(
+            "Extracted Results:\n"
+            + extracted_text
+        )
+
+    if metadata_parts:
+        evidence_parts.append(
+            "Nuclei Match Metadata:\n"
+            + "\n".join(metadata_parts)
+        )
+
+    # 2. 匹配位置
     if matched_at:
         evidence_parts.append(
             f"Matched At: {matched_at}"
         )
 
+    # 3. HTTP Request
+    if request:
+        request = request.strip()
+
+        if len(request) > max_request_chars:
+            request = (
+                request[:max_request_chars]
+                + "\n...[request truncated]"
+            )
+
+        evidence_parts.append(
+            "HTTP Request Evidence:\n"
+            + request
+        )
+
+    # 4. HTTP Response
     if response:
         response = response.strip()
 
@@ -217,7 +304,6 @@ def build_nuclei_evidence(
         )
 
     return "\n\n".join(evidence_parts)
-
 
 def parse_nuclei_jsonl(
     output: str

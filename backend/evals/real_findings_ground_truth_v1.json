@@ -1,0 +1,32 @@
+[
+  {
+    "case_id": "real_gt_001",
+    "finding_id": 44,
+    "title": "Public Swagger API - Detect",
+    "expected_category": "exposure",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "Swagger/API documentation endpoint is directly accessible and confirmed by HTTP response evidence."
+  },
+  {
+    "case_id": "real_gt_002",
+    "finding_id": 59,
+    "title": "HTTP Missing Security Headers",
+    "expected_category": "security_misconfiguration",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "The captured HTTP response confirms that some expected security headers are absent. This is a configuration issue rather than a software vulnerability."
+  },
+  {
+    "case_id": "real_gt_003",
+    "finding_id": 46,
+    "title": "Prometheus Metrics - Detect",
+    "expected_category": "exposure",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "The /metrics endpoint returns HTTP 200 and exposes Prometheus metrics data without access restriction."
+  }
+]
