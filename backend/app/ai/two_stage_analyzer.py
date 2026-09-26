@@ -7,7 +7,7 @@ from app.schemas.risk_enrichment import (
     RiskEnrichmentResult,
 )
 
-TWO_STAGE_ANALYZER_VERSION = "2stage-v1.5.3"
+TWO_STAGE_ANALYZER_VERSION = "2stage-v1.5.4"
 
 def analyze_finding_two_stage(
     data: AIAnalysisInput,

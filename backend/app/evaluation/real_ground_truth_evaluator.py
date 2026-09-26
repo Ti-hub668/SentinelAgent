@@ -1,6 +1,6 @@
 import json
 import time
-
+import argparse
 import httpx
 from pathlib import Path
 
@@ -14,18 +14,53 @@ from app.rag.retriever import SecurityKnowledgeRetriever
 from app.schemas.ai_analysis import AIAnalysisInput
 
 
-GROUND_TRUTH_FILE = Path(
-    "evals/real_findings_ground_truth_v1.json"
-)
+BASE_DIR = Path(__file__).resolve().parents[2]
 
+GROUND_TRUTH_FILES = {
+    "v1": BASE_DIR
+    / "evals"
+    / "real_findings_ground_truth_v1.json",
 
-def load_ground_truth() -> list[dict]:
-    with GROUND_TRUTH_FILE.open(
+    "v2": BASE_DIR
+    / "evals"
+    / "real_findings_ground_truth_v2.json",
+}
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description=(
+            "SentinelAgent Real Ground Truth Evaluation"
+        )
+    )
+
+    parser.add_argument(
+        "--dataset",
+        choices=["v1", "v2"],
+        default="v1",
+        help=(
+            "选择真实 Ground Truth 数据集版本，"
+            "默认使用 v1"
+        ),
+    )
+
+    return parser.parse_args()
+
+def load_ground_truth(dataset_version: str):
+    path = GROUND_TRUTH_FILES[dataset_version]
+
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Ground Truth dataset not found: {path}"
+        )
+
+    with open(
+        path,
         "r",
         encoding="utf-8",
-    ) as file:
-        return json.load(file)
+    ) as f:
+        cases = json.load(f)
 
+    return path, cases
 
 def build_analysis_input(
     finding: Finding,
@@ -111,7 +146,11 @@ def run_two_stage_with_retry(
     raise last_error
 
 def evaluate() -> None:
-    cases = load_ground_truth()
+    args = parse_args()
+
+    dataset_path, cases = load_ground_truth(
+        args.dataset
+    )
 
     db = SessionLocal()
 
@@ -128,13 +167,14 @@ def evaluate() -> None:
     print("=" * 72)
     print("SentinelAgent Real Ground Truth Evaluation")
     print("=" * 72)
-    print(f"Dataset : {GROUND_TRUTH_FILE}")
+    print(f"Dataset : {dataset_path}")
+    print(f"Version : {args.dataset}")
     print(f"Cases   : {len(cases)}")
     print()
 
     try:
         for case in cases:
-            case_id = case["case_id"]
+            case_id = case.get("case_id") or case.get("id")
             finding_id = case["finding_id"]
 
             print("-" * 72)

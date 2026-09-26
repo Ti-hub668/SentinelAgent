@@ -1,0 +1,52 @@
+[
+  {
+    "case_id": "real_gt_v2_001",
+    "finding_id": 60,
+    "title": "Prometheus Metrics - Detect",
+    "expected_category": "exposure",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "The Prometheus metrics endpoint is accessible and the captured response evidence confirms that metrics data is exposed."
+  },
+  {
+    "case_id": "real_gt_v2_002",
+    "finding_id": 61,
+    "title": "Public Swagger API - Detect",
+    "expected_category": "exposure",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "Swagger/API documentation is directly accessible and confirmed by the captured HTTP response evidence."
+  },
+  {
+    "case_id": "real_gt_v2_003",
+    "finding_id": 62,
+    "title": "OpenAPI - Detect",
+    "expected_category": "exposure",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "The OpenAPI documentation or schema is accessible and its exposure is confirmed by the captured response evidence."
+  },
+  {
+    "case_id": "real_gt_v2_004",
+    "finding_id": 63,
+    "title": "HTTP Missing Security Headers",
+    "expected_category": "security_misconfiguration",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "The captured HTTP response confirms that an expected security header is absent. This is treated as a security misconfiguration rather than a software vulnerability."
+  },
+  {
+    "case_id": "real_gt_v2_005",
+    "finding_id": 64,
+    "title": "ReDoc API Docs - Detect",
+    "expected_category": "exposure",
+    "expected_evidence_status": "confirmed",
+    "expected_preliminary_verdict": "likely_true_positive",
+    "expected_final_verdict": "likely_true_positive",
+    "notes": "The ReDoc API documentation endpoint is accessible and confirmed by the captured HTTP response evidence."
+  }
+]

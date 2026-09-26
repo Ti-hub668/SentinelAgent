@@ -340,5 +340,23 @@
   "expected_finding_category": "exposure",
   "expected_evidence_status": "confirmed",
   "expected_verdict": "likely_true_positive"
+},
+{
+  "id": "evidence_020",
+  "category": "real_world_regression",
+  "source": "nuclei",
+  "finding_type": "vulnerability",
+  "title": "OpenAPI - Detect",
+  "severity": "info",
+  "target": "127.0.0.1",
+  "description": "OpenAPI was detected.",
+  "evidence": "Nuclei Match Metadata:\nTemplate ID: openapi\nTemplate Name: OpenAPI - Detect\nMatched At: http://127.0.0.1:8000/openapi.json\n\nHTTP Request Evidence:\nGET /openapi.json HTTP/1.1\nHost: 127.0.0.1:8000\n\nHTTP Response Evidence:\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"openapi\":\"3.1.0\",\"info\":{\"title\":\"SentinelAgent\",\"version\":\"0.1.0\"},\"paths\":{\"/api/assets\":{\"get\":{}},\"/api/scans\":{\"post\":{}},\"/api/findings\":{\"get\":{}}}}",
+  "remediation": "",
+  "risk_score": 10,
+  "risk_level": "low",
+  "risk_reason": "Publicly accessible OpenAPI schema exposes API structure.",
+  "expected_finding_category": "exposure",
+  "expected_evidence_status": "confirmed",
+  "expected_verdict": "likely_true_positive"
 }
 ]

@@ -62,11 +62,16 @@ def apply_api_docs_exposure_guardrail(
     result: EvidenceAssessmentResult,
 ) -> EvidenceAssessmentResult:
     """
-    对公开 API 文档暴露类 Finding 做确定性核验。
+    对公开 API 文档 / API Schema 暴露类 Finding 做确定性核验。
 
-    仅当 Finding 明确属于 Swagger / ReDoc / API Docs，
-    且 Evidence 证明对应资源可正常访问时，
-    修正为 exposure / confirmed / likely_true_positive。
+    仅当：
+    1. Finding 明确属于 Swagger / ReDoc / OpenAPI / API Docs；
+    2. Evidence 中包含真实 HTTP Response；
+    3. HTTP Response 返回成功状态；
+    4. 响应内容包含 API 文档或 API Schema 特征；
+
+    才修正为：
+    exposure / confirmed / likely_true_positive。
     """
 
     title = (data.title or "").lower()
@@ -78,6 +83,7 @@ def apply_api_docs_exposure_guardrail(
         for keyword in [
             "swagger",
             "redoc",
+            "openapi",
             "api docs",
             "api documentation",
         ]
@@ -86,15 +92,36 @@ def apply_api_docs_exposure_guardrail(
     if not api_docs_signal:
         return result
 
-    accessible_signal = (
-        "http/1.1 200 ok" in evidence_lower
-        or "http/2 200" in evidence_lower
-        or "swagger" in evidence_lower
-        or "redoc" in evidence_lower
-        or "openapi" in evidence_lower
+    # 必须存在实际捕获的 HTTP Response，
+    # 不能仅根据模板名称或 Finding 标题确认暴露。
+    if "http response evidence:" not in evidence_lower:
+        return result
+
+    response_evidence = evidence_lower.split(
+        "http response evidence:",
+        1,
+    )[1]
+
+    successful_response = (
+        "http/1.1 200 ok" in response_evidence
+        or "http/2 200" in response_evidence
+        or "http/2.0 200" in response_evidence
     )
 
-    if not accessible_signal:
+    if not successful_response:
+        return result
+
+    api_content_signal = any(
+        marker in response_evidence
+        for marker in [
+            '"openapi"',
+            "swagger",
+            "swagger-ui",
+            "redoc",
+        ]
+    )
+
+    if not api_content_signal:
         return result
 
     return result.model_copy(
@@ -104,10 +131,11 @@ def apply_api_docs_exposure_guardrail(
             "preliminary_verdict":
                 "likely_true_positive",
             "reason": (
-                "The Finding reports publicly accessible "
-                "API documentation, and the captured "
-                "evidence confirms that the Swagger/ReDoc/"
-                "API documentation resource is accessible."
+                "The Finding reports an API documentation "
+                "or API schema resource, and the captured "
+                "HTTP response confirms that the resource "
+                "is directly accessible and contains "
+                "Swagger, ReDoc, or OpenAPI content."
             ),
         }
     )
