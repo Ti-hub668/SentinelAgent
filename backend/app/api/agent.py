@@ -2,6 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.agent.decision_agent import make_security_decision
+from app.agent.orchestrator import (
+    execute_workflow_tools,
+    get_workflow_summary,
+    resolve_workflow_approval,
+    start_agent_workflow,
+)
 from app.db.database import get_db
 from app.models.ai_analysis import AIAnalysis
 from app.models.agent_decision import AgentDecision
@@ -10,11 +16,17 @@ from app.schemas.agent_decision import (
     AgentDecisionInput,
     AgentDecisionOutput,
 )
-
+from app.schemas.agent_workflow import (
+    AgentWorkflowSummary,
+    ApprovalReviewInput,
+)
+from app.schemas.tool_broker import (
+    ToolBrokerBatchResult,
+)
 
 router = APIRouter(
     prefix="/api/agent",
-    tags=["agent"],
+    tags=["AI Agent"],
 )
 
 @router.post(
@@ -123,3 +135,166 @@ def list_finding_decisions(
     )
 
     return decisions
+
+# =========================================================
+# Unified Agent Workflow API
+# =========================================================
+
+
+@router.post(
+    "/investigate/{finding_id}",
+    response_model=AgentWorkflowSummary,
+)
+def investigate_finding_workflow(
+    finding_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Start the complete SentinelAgent workflow:
+
+    Finding
+      -> Investigation
+      -> Grounding
+      -> Response
+      -> Policy
+      -> Human Approval
+    """
+
+    try:
+        return start_agent_workflow(
+            db,
+            finding_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Agent workflow failed: "
+                f"{type(exc).__name__}: {exc}"
+            ),
+        ) from exc
+
+
+@router.get(
+    "/runs/{run_id}",
+    response_model=AgentWorkflowSummary,
+)
+def get_agent_workflow_run(
+    run_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Restore the latest workflow state
+    from Investigation Ledger.
+    """
+
+    try:
+        return get_workflow_summary(
+            db,
+            run_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+
+@router.post(
+    "/runs/{run_id}/approvals/{request_index}/approve",
+    response_model=AgentWorkflowSummary,
+)
+def approve_agent_workflow_action(
+    run_id: int,
+    request_index: int,
+    data: ApprovalReviewInput,
+    db: Session = Depends(get_db),
+):
+    """
+    Explicitly approve one Policy Engine gated action.
+
+    Approval itself does NOT execute the tool.
+    """
+
+    try:
+        return resolve_workflow_approval(
+            db,
+            run_id=run_id,
+            request_index=request_index,
+            approved=True,
+            reviewer=data.reviewer,
+            reason=data.reason,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@router.post(
+    "/runs/{run_id}/approvals/{request_index}/reject",
+    response_model=AgentWorkflowSummary,
+)
+def reject_agent_workflow_action(
+    run_id: int,
+    request_index: int,
+    data: ApprovalReviewInput,
+    db: Session = Depends(get_db),
+):
+    """
+    Explicitly reject one Policy Engine gated action.
+    """
+
+    try:
+        return resolve_workflow_approval(
+            db,
+            run_id=run_id,
+            request_index=request_index,
+            approved=False,
+            reviewer=data.reviewer,
+            reason=data.reason,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@router.post(
+    "/runs/{run_id}/execute",
+    response_model=ToolBrokerBatchResult,
+)
+def execute_agent_workflow_actions(
+    run_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Send authorized actions through Tool Broker.
+
+    Current implementation is dry-run/mock only.
+    No real SOAR side effects occur.
+    """
+
+    try:
+        return execute_workflow_tools(
+            db,
+            run_id=run_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc

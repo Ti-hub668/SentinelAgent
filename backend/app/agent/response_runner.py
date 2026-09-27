@@ -89,6 +89,8 @@ def run_response_pipeline(
                 plan.requires_human_review,
             "dry_run":
                 plan.dry_run,
+            "response_plan":
+                plan.model_dump(),
             "tool_requests": [
                 request.model_dump()
                 for request
@@ -126,6 +128,8 @@ def run_response_pipeline(
                 evaluation.deny_count,
             "approval_count":
                 evaluation.approval_count,
+            "policy_evaluation":
+                evaluation.model_dump(),
             "results": [
                 result.model_dump()
                 for result
@@ -164,6 +168,8 @@ def run_response_pipeline(
                     approval.policy_reason,
                 "approval_status":
                     approval.status,
+                "approval":
+                    approval.model_dump(),
             },
         )
 
@@ -225,6 +231,8 @@ def resolve_approval_with_ledger(
                 resolved.policy_reason,
             "approval_status":
                 resolved.status,
+            "approval":
+                resolved.model_dump(),
             "reviewer":
                 resolved.reviewer,
             "review_reason":

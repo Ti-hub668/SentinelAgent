@@ -345,6 +345,8 @@ def execute_policy_evaluation_with_ledger(
                     result.message,
                 "output":
                     result.output,
+                "execution_result":
+                    result.model_dump(),
             },
         )
 
