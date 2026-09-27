@@ -1,0 +1,16 @@
+email-validator==2.3.0
+fastapi==0.141.1
+fastapi-cli==0.0.32
+fastapi-cloud-cli==0.26.0
+httptools==0.8.0
+Jinja2==3.1.6
+langgraph==1.2.12
+openai==3.13.0
+pip==26.2.1
+pydantic-extra-types==2.11.1
+pydantic-settings==2.15.0
+PyMySQL==1.2.0
+pytest==9.1.1
+python-multipart==0.0.32
+SQLAlchemy==2.0.52
+watchfiles==1.2.0
