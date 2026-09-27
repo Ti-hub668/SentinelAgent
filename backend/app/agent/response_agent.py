@@ -17,6 +17,7 @@ from app.schemas.agent_decision import (
 )
 from app.schemas.response_plan import (
     ResponsePlan,
+    ToolRequest,
 )
 
 
@@ -215,9 +216,13 @@ def generate_response_plan(
         }
     )
 
-    # If grounding requires human review,
-    # aggressive tool requests must not survive.
-    if grounding.requires_human_review:
+       # --------------------------------------------------
+    # Deterministic response safety guardrails
+    # --------------------------------------------------
+
+    # Human-review-required plans must never retain
+    # disruptive containment requests.
+    if plan.requires_human_review:
         safe_requests = [
             request
             for request in plan.tool_requests
@@ -231,8 +236,50 @@ def generate_response_plan(
 
         plan = plan.model_copy(
             update={
-                "tool_requests":
-                    safe_requests,
+                "tool_requests": safe_requests,
+            }
+        )
+
+    # --------------------------------------------------
+    # Human review must be represented explicitly.
+    #
+    # Do not rely on the LLM to remember to generate
+    # a manual_review ToolRequest.
+    # --------------------------------------------------
+
+    if (
+        plan.requires_human_review
+        and not any(
+            request.tool_name
+            == "manual_review"
+            for request in plan.tool_requests
+        )
+    ):
+        manual_review_request = ToolRequest(
+            tool_name="manual_review",
+            target=(
+                f"finding:{context.finding.id}"
+            ),
+            reason=(
+                "The grounded investigation or "
+                "decision policy requires explicit "
+                "human security review before further "
+                "response actions are released."
+            ),
+            parameters={
+                "finding_id":
+                    context.finding.id,
+                "grounded_verdict":
+                    grounding.grounded_verdict,
+            },
+        )
+
+        plan = plan.model_copy(
+            update={
+                "tool_requests": [
+                    *plan.tool_requests,
+                    manual_review_request,
+                ]
             }
         )
 
