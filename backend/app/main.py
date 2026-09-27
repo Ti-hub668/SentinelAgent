@@ -3,17 +3,20 @@ from fastapi import FastAPI
 from app.api.scans import router as scans_router
 from app.api.assets import router as assets_router
 from app.db.database import Base, engine
+
 from app.models.asset import Asset
 from app.models.scan_task import ScanTask
 from app.models.port import Port
 from app.models.vulnerability import Vulnerability
 from app.models.finding import Finding
+from app.models.ai_analysis import AIAnalysis
+from app.models.agent_decision import AgentDecision
+from app.models.investigation_run import InvestigationRun
+from app.models.investigation_event import InvestigationEvent
+
 from app.api.vulnerabilities import router as vulnerabilities_router
 from app.api.findings import router as findings_router
 from app.api.agent import router as agent_router
-from app.models.ai_analysis import AIAnalysis
-from app.models.agent_decision import AgentDecision
-
 
 app = FastAPI(
     title="SentinelAgent",
