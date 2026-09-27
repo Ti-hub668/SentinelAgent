@@ -177,13 +177,57 @@ def main():
         "[PASS] risk enrichment"
     )
 
+     # --------------------------------------------------
+    # Grounding Validation
+    # --------------------------------------------------
+
+    assert (
+        "grounding_result"
+        in result
+    )
+
+    grounding = result[
+        "grounding_result"
+    ]
+
+    assert (
+        grounding.finding_id
+        == TEST_FINDING_ID
+    )
+
+    assert (
+        grounding.status
+        in {
+            "supported",
+            "partially_supported",
+            "unsupported",
+        }
+    )
+
+    assert (
+        0.0
+        <= grounding.score
+        <= 1.0
+    )
+
+    assert (
+        grounding.original_verdict
+        == result[
+            "risk_enrichment"
+        ].final_verdict
+    )
+
+    print(
+        "[PASS] grounding validation"
+    )
+
     # --------------------------------------------------
     # Final Workflow State
     # --------------------------------------------------
 
     assert (
         result["status"]
-        == "analysis_completed"
+        == "grounding_completed"
     )
 
     assert (
@@ -203,7 +247,6 @@ def main():
     print(
         "\nInvestigation Graph evaluation PASSED"
     )
-
 
 if __name__ == "__main__":
     main()

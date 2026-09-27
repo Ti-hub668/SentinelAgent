@@ -13,7 +13,9 @@ from app.schemas.investigation_context import (
 from app.schemas.risk_enrichment import (
     RiskEnrichmentResult,
 )
-
+from app.schemas.grounding import (
+    GroundingResult,
+)
 
 class SentinelInvestigationState(TypedDict):
     """
@@ -45,6 +47,10 @@ class SentinelInvestigationState(TypedDict):
         RiskEnrichmentResult
     ]
 
+    # Grounding validation
+    grounding_result: NotRequired[
+        GroundingResult
+    ]
     # Workflow
     status: NotRequired[str]
 

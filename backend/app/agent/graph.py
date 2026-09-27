@@ -12,6 +12,9 @@ from app.agent.tools.intelligence_tool import (
 from app.agent.tools.rag_tool import (
     retrieve_context_knowledge,
 )
+from app.agent.grounding_validator import (
+    validate_grounding,
+)
 from app.ai.two_stage_analyzer import (
     analyze_finding_two_stage,
 )
@@ -277,6 +280,23 @@ def analyze_node(
         "error": None,
     }
 
+def grounding_node(
+    state: SentinelInvestigationState,
+) -> dict:
+    """
+    Validate whether AI conclusions are grounded
+    in investigation evidence and intelligence.
+    """
+
+    grounding_result = validate_grounding(
+        state
+    )
+
+    return {
+        "grounding_result": grounding_result,
+        "status": "grounding_completed",
+        "error": None,
+    }
 
 def route_after_triage(
     state: SentinelInvestigationState,
@@ -325,9 +345,9 @@ def build_investigation_graph():
 
     builder.add_node(
     "build_context",
-    safe_node(
-        "build_context",
-        build_context_node,
+        safe_node(
+            "build_context",
+            build_context_node,
         ),
     )
 
@@ -352,6 +372,14 @@ def build_investigation_graph():
         safe_node(
             "analyze",
             analyze_node,
+        ),
+    )
+
+    builder.add_node(
+    "grounding",
+        safe_node(
+            "grounding",
+            grounding_node,
         ),
     )
 
@@ -387,8 +415,17 @@ def build_investigation_graph():
         },
     )
 
-    builder.add_edge(
+    builder.add_conditional_edges(
         "analyze",
+        route_after_node,
+        {
+            "continue": "grounding",
+            "end": END,
+        },
+    )
+
+    builder.add_edge(
+        "grounding",
         END,
     )
 
