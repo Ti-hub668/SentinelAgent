@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.agent.ledger import get_investigation_trace
 from app.agent.decision_agent import make_security_decision
 from app.agent.orchestrator import (
     execute_workflow_tools,
@@ -19,6 +20,9 @@ from app.schemas.agent_decision import (
 from app.schemas.agent_workflow import (
     AgentWorkflowSummary,
     ApprovalReviewInput,
+)
+from app.schemas.investigation_ledger import (
+    InvestigationTrace,
 )
 from app.schemas.tool_broker import (
     ToolBrokerBatchResult,
@@ -186,6 +190,31 @@ def investigate_finding_workflow(
     "/runs/{run_id}",
     response_model=AgentWorkflowSummary,
 )
+@router.get(
+    "/runs/{run_id}/trace",
+    response_model=InvestigationTrace,
+)
+def get_agent_workflow_trace(
+    run_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Return the complete ordered Investigation Ledger
+    trace for one Agent workflow run.
+    """
+
+    try:
+        return get_investigation_trace(
+            db,
+            run_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
 def get_agent_workflow_run(
     run_id: int,
     db: Session = Depends(get_db),
