@@ -31,6 +31,7 @@ def validate_cve_id(cve_id: str) -> str:
 
 def download_cve(
     cve_id: str,
+    timeout: float = 30.0,
 ) -> dict:
     cve_id = validate_cve_id(cve_id)
 
@@ -52,7 +53,7 @@ def download_cve(
 
     with urllib.request.urlopen(
         request,
-        timeout=30,
+        timeout=timeout,
     ) as response:
         return json.load(response)
 

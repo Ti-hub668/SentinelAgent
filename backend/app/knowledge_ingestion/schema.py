@@ -105,3 +105,36 @@ class SecurityKnowledgeRecord(BaseModel):
     metadata: dict[str, Any] = Field(
         default_factory=dict
     )
+
+class EPSSRecord(BaseModel):
+    """
+    Normalized FIRST EPSS exploitation probability record.
+
+    EPSS is structured exploitation intelligence rather than
+    a semantic knowledge document, so it is intentionally
+    modeled separately from SecurityKnowledgeRecord.
+    """
+
+    cve_id: str
+
+    epss_score: float = Field(
+        ge=0.0,
+        le=1.0,
+    )
+
+    percentile: float = Field(
+        ge=0.0,
+        le=1.0,
+    )
+
+    score_date: str | None = None
+
+    retrieved_at: str | None = None
+
+    source: Literal[
+        "first_epss"
+    ] = "first_epss"
+
+    source_url: str = (
+        "https://api.first.org/data/v1/epss"
+    )
