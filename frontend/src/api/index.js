@@ -37,6 +37,14 @@ export const startInvestigation = (
     config,
   )
 
+export const getInvestigationRuns = (
+  config = {},
+) =>
+  request.get(
+    '/agent/runs',
+    config,
+  )
+
 export const getInvestigationRun = (
   runId,
   config = {},

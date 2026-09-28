@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.investigation_event import (
@@ -11,6 +12,7 @@ from app.models.investigation_run import (
 )
 from app.schemas.investigation_ledger import (
     InvestigationEventRecord,
+    InvestigationRunListItem,
     InvestigationRunRecord,
     InvestigationTrace,
 )
@@ -143,6 +145,69 @@ def fail_investigation_run(
         run
     )
 
+def list_investigation_runs(
+    db: Session,
+    *,
+    limit: int = 100,
+) -> list[InvestigationRunListItem]:
+    """
+    List recent investigation runs with event counts.
+    """
+
+    runs = (
+        db.query(InvestigationRun)
+        .order_by(
+            InvestigationRun.id.desc()
+        )
+        .limit(limit)
+        .all()
+    )
+
+    if not runs:
+        return []
+
+    run_ids = [
+        run.id
+        for run in runs
+    ]
+
+    event_counts = dict(
+        db.query(
+            InvestigationEvent.run_id,
+            func.count(
+                InvestigationEvent.id
+            ),
+        )
+        .filter(
+            InvestigationEvent.run_id.in_(
+                run_ids
+            )
+        )
+        .group_by(
+            InvestigationEvent.run_id
+        )
+        .all()
+    )
+
+    results = []
+
+    for run in runs:
+        record = (
+            InvestigationRunRecord
+            .model_validate(run)
+        )
+
+        results.append(
+            InvestigationRunListItem(
+                **record.model_dump(),
+                event_count=event_counts.get(
+                    run.id,
+                    0,
+                ),
+            )
+        )
+
+    return results
 
 def get_investigation_trace(
     db: Session,

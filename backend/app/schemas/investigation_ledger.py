@@ -46,6 +46,12 @@ class InvestigationRunRecord(BaseModel):
         "from_attributes": True,
     }
 
+class InvestigationRunListItem(InvestigationRunRecord):
+    """
+    Lightweight run summary used by Audit Center.
+    """
+
+    event_count: int = 0
 
 class InvestigationTrace(BaseModel):
     """

@@ -1,7 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+)
 from sqlalchemy.orm import Session
 
-from app.agent.ledger import get_investigation_trace
+from app.agent.ledger import (
+    get_investigation_trace,
+    list_investigation_runs,
+)
 from app.agent.decision_agent import make_security_decision
 from app.agent.orchestrator import (
     execute_workflow_tools,
@@ -22,6 +30,7 @@ from app.schemas.agent_workflow import (
     ApprovalReviewInput,
 )
 from app.schemas.investigation_ledger import (
+    InvestigationRunListItem,
     InvestigationTrace,
 )
 from app.schemas.tool_broker import (
@@ -103,6 +112,7 @@ def create_agent_decision(
     db.refresh(record)
 
     return decision
+
 @router.get("/decisions")
 def list_agent_decisions(
     db: Session = Depends(get_db),
@@ -185,6 +195,30 @@ def investigate_finding_workflow(
             ),
         ) from exc
 
+
+@router.get(
+    "/runs",
+    response_model=list[
+        InvestigationRunListItem
+    ],
+)
+def list_agent_workflow_runs(
+    limit: int = Query(
+        default=100,
+        ge=1,
+        le=200,
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    List recent Investigation Ledger runs
+    for Audit Center.
+    """
+
+    return list_investigation_runs(
+        db,
+        limit=limit,
+    )
 
 @router.get(
     "/runs/{run_id}",
