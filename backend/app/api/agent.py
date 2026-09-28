@@ -190,6 +190,28 @@ def investigate_finding_workflow(
     "/runs/{run_id}",
     response_model=AgentWorkflowSummary,
 )
+def get_agent_workflow_run(
+    run_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Restore the latest workflow state
+    from Investigation Ledger.
+    """
+
+    try:
+        return get_workflow_summary(
+            db,
+            run_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+
 @router.get(
     "/runs/{run_id}/trace",
     response_model=InvestigationTrace,
@@ -214,28 +236,6 @@ def get_agent_workflow_trace(
             status_code=404,
             detail=str(exc),
         ) from exc
-
-def get_agent_workflow_run(
-    run_id: int,
-    db: Session = Depends(get_db),
-):
-    """
-    Restore the latest workflow state
-    from Investigation Ledger.
-    """
-
-    try:
-        return get_workflow_summary(
-            db,
-            run_id,
-        )
-
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=str(exc),
-        ) from exc
-
 
 @router.post(
     "/runs/{run_id}/approvals/{request_index}/approve",

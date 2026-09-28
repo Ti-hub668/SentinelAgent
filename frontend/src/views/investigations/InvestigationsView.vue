@@ -1044,11 +1044,28 @@ onMounted(async () => {
               }}
             </p>
 
+            <div class="approval-footer">
             <small>
-              Day32 将在 Response Center
-              接入 Approve / Reject /
-              Tool Broker。
+              审批、拒绝与 Tool Broker 执行
+              请在 Response Center 完成。
             </small>
+
+            <el-button
+              type="primary"
+              plain
+              @click="
+                router.push({
+                  name: 'response',
+                  query: {
+                    run_id: workflow.run_id,
+                    finding_id: workflow.finding_id,
+                  },
+                })
+              "
+            >
+              进入 Response Center
+            </el-button>
+          </div>
           </section>
         </div>
       </div>
@@ -1482,6 +1499,18 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.approval-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.approval-footer small {
+  flex: 1;
 }
 
 @media (max-width: 1100px) {
