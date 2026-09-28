@@ -207,6 +207,47 @@ def create_scan(
     "/{scan_id}",
     response_model=ScanResponse
 )
+@router.get(
+    "",
+    response_model=list[ScanResponse],
+)
+def get_scans(
+    db: Session = Depends(get_db),
+):
+    result = db.execute(
+        select(ScanTask)
+        .order_by(ScanTask.id.desc())
+    )
+
+    scan_tasks = result.scalars().all()
+
+    response = []
+
+    for scan_task in scan_tasks:
+        port_result = db.execute(
+            select(Port).where(
+                Port.scan_task_id == scan_task.id
+            )
+        )
+
+        ports = port_result.scalars().all()
+
+        response.append(
+            {
+                "id": scan_task.id,
+                "asset_id": scan_task.asset_id,
+                "scanner": scan_task.scanner,
+                "status": scan_task.status,
+                "error_message": scan_task.error_message,
+                "created_at": scan_task.created_at,
+                "started_at": scan_task.started_at,
+                "finished_at": scan_task.finished_at,
+                "ports": ports,
+            }
+        )
+
+    return response
+
 def get_scan(
     scan_id: int,
     db: Session = Depends(get_db)
