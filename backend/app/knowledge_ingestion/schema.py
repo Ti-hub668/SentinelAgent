@@ -7,6 +7,7 @@ KnowledgeSource = Literal[
     "nvd",
     "cisa_kev",
     "cwe",
+    "capec",
     "mitre_attack",
 ]
 
@@ -15,6 +16,7 @@ KnowledgeType = Literal[
     "vulnerability",
     "weakness",
     "known_exploited_vulnerability",
+    "attack_pattern",
     "attack_technique",
 ]
 

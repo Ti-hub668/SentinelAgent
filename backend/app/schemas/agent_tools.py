@@ -17,6 +17,36 @@ class SecurityKnowledgeItem(BaseModel):
         default_factory=dict
     )
 
+class SecurityKnowledgeEvidence(BaseModel):
+    """
+    Compact provenance record for one retrieved
+    security knowledge chunk.
+
+    This structure is designed for the
+    Investigation Ledger.
+    """
+
+    document_id: str
+
+    parent_id: str | None = None
+
+    source_id: str | None = None
+
+    title: str
+
+    source: str
+
+    category: str
+
+    score: float
+
+    match_type: str
+
+    chunk_index: int | None = None
+
+    source_url: str | None = None
+
+    content_sha256: str
 
 class RAGToolResult(BaseModel):
     finding_id: int
@@ -28,6 +58,29 @@ class RAGToolResult(BaseModel):
     )
 
     prompt_context: str
+
+    # ---------- Retrieval provenance ----------
+
+    index_path: str | None = None
+
+    retrieval_strategy: str = (
+        "hybrid_v2"
+    )
+
+    top_k: int = Field(
+        default=3,
+        ge=1,
+    )
+
+    retrieved_sources: list[str] = Field(
+        default_factory=list
+    )
+
+    evidence: list[
+        SecurityKnowledgeEvidence
+    ] = Field(
+        default_factory=list
+    )
 
 
 class KEVRecordContext(BaseModel):

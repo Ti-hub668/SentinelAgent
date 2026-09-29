@@ -30,7 +30,7 @@ def build_rag_context(
             f"Title: {document.title}\n"
             f"Category: {document.category}\n"
             f"Source: {document.source}\n"
-            f"Similarity: {result.score:.4f}\n"
+            f"Retrieval Score: {result.score:.4f}\n"
             f"Content: {content}"
         )
 

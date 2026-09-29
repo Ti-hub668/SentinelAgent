@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.rag.document import SecurityDocument
-from app.rag.embedding import embed_text
+from app.rag.embedding import (
+    embed_text,
+    embed_texts,
+)
 
 
 @dataclass
@@ -71,13 +74,71 @@ class InMemoryVectorStore:
     def add_documents(
         self,
         documents: list[SecurityDocument],
+        batch_size: int = 32,
     ) -> None:
         """
-        批量加入文档。
+        Add documents using batched Ollama embeddings.
         """
 
-        for document in documents:
-            self.add_document(document)
+        if batch_size <= 0:
+            raise ValueError(
+                "batch_size must be "
+                "greater than 0."
+            )
+
+        if not documents:
+            return
+
+        total = len(
+            documents
+        )
+
+        for start in range(
+            0,
+            total,
+            batch_size,
+        ):
+            batch = documents[
+                start:
+                start + batch_size
+            ]
+
+            texts = [
+                document.content
+                for document in batch
+            ]
+
+            vectors = embed_texts(
+                texts
+            )
+
+            if len(vectors) != len(
+                batch
+            ):
+                raise RuntimeError(
+                    "Embedding batch size "
+                    "mismatch."
+                )
+
+            for (
+                document,
+                vector,
+            ) in zip(
+                batch,
+                vectors,
+            ):
+                self._items.append(
+                    (
+                        document,
+                        vector,
+                    )
+                )
+
+            print(
+                "Embedded: "
+                f"{min(start + batch_size, total)}"
+                f"/{total}"
+            )
 
     def search(
         self,
@@ -147,6 +208,22 @@ class InMemoryVectorStore:
                 file,
                 ensure_ascii=False,
             )
+
+    def documents(
+        self,
+    ) -> list[SecurityDocument]:
+        """
+        Return documents currently stored
+        in the vector store.
+        """
+
+        return [
+            document
+            for (
+                document,
+                _,
+            ) in self._items
+        ]
 
     @classmethod
     def load(

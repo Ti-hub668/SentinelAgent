@@ -92,6 +92,7 @@ def run_investigation_with_ledger(
         rag_result = result.get(
             "rag_result"
         )
+
         intelligence_result = result.get(
             "intelligence_result"
         )
@@ -100,6 +101,123 @@ def run_investigation_with_ledger(
             rag_result is not None
             or intelligence_result is not None
         ):
+            rag_evidence = []
+
+            if rag_result is not None:
+                rag_evidence = [
+                    item.model_dump(
+                        mode="json"
+                    )
+                    for item
+                    in rag_result.evidence
+                ]
+
+            research_metadata = {
+                "rag_used": (
+                    rag_result
+                    is not None
+                ),
+
+                "intelligence_used": (
+                    intelligence_result
+                    is not None
+                ),
+
+                "rag_query": (
+                    rag_result.query
+                    if rag_result
+                    is not None
+                    else None
+                ),
+
+                "rag_index_path": (
+                    rag_result.index_path
+                    if rag_result
+                    is not None
+                    else None
+                ),
+
+                "retrieval_strategy": (
+                    rag_result.retrieval_strategy
+                    if rag_result
+                    is not None
+                    else None
+                ),
+
+                "top_k": (
+                    rag_result.top_k
+                    if rag_result
+                    is not None
+                    else None
+                ),
+
+                "retrieved_sources": (
+                    rag_result.retrieved_sources
+                    if rag_result
+                    is not None
+                    else []
+                ),
+
+                "retrieved_count": (
+                    len(
+                        rag_result.results
+                    )
+                    if rag_result
+                    is not None
+                    else 0
+                ),
+
+                "evidence": (
+                    rag_evidence
+                ),
+
+                "intelligence": (
+                    {
+                        "template_id": (
+                            intelligence_result
+                            .template_id
+                        ),
+
+                        "cve_ids": (
+                            intelligence_result
+                            .cve_ids
+                        ),
+
+                        "cwe_ids": (
+                            intelligence_result
+                            .cwe_ids
+                        ),
+
+                        "kev_matched": (
+                            intelligence_result
+                            .kev_matched
+                        ),
+
+                        "kev_record_count": (
+                            len(
+                                intelligence_result
+                                .kev_records
+                            )
+                        ),
+
+                        "nvd_matched": (
+                            intelligence_result
+                            .nvd_matched
+                        ),
+
+                        "nvd_record_count": (
+                            len(
+                                intelligence_result
+                                .nvd_records
+                            )
+                        ),
+                    }
+                    if intelligence_result
+                    is not None
+                    else None
+                ),
+            }
+
             record_investigation_event(
                 db,
                 run_id=run.id,
@@ -107,17 +225,12 @@ def run_investigation_with_ledger(
                 node_name="research",
                 summary=(
                     "Security research tools "
-                    "completed."
+                    "completed with auditable "
+                    "evidence provenance."
                 ),
-                event_metadata={
-                    "rag_used": (
-                        rag_result is not None
-                    ),
-                    "intelligence_used": (
-                        intelligence_result
-                        is not None
-                    ),
-                },
+                event_metadata=(
+                    research_metadata
+                ),
             )
 
         # Evidence Assessment
@@ -163,14 +276,14 @@ def run_investigation_with_ledger(
                     "Risk synthesis completed."
                 ),
                 event_metadata={
-                    "final_verdict": (
-                        enrichment.final_verdict
+                    "priority": (
+                        enrichment.priority
                     ),
                     "confidence": (
                         enrichment.confidence
                     ),
-                    "priority": (
-                        enrichment.priority
+                    "final_verdict": (
+                        enrichment.final_verdict
                     ),
                 },
             )
