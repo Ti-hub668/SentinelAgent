@@ -187,6 +187,8 @@ def _determine_workflow_status(
     approvals: list[HumanApprovalRequest],
     tool_results: list[ToolExecutionResult],
 ) -> str:
+    if run_status == "running":
+        return "running"
     if run_status == "failed":
         return "failed"
 
@@ -268,6 +270,47 @@ def get_workflow_summary(
         ),
     )
 
+def run_existing_agent_workflow(
+    db: Session,
+    *,
+    finding_id: int,
+    run_id: int,
+) -> AgentWorkflowSummary:
+    """
+    Continue the complete SentinelAgent workflow
+    from an already-created InvestigationRun.
+
+    This entry point is designed for asynchronous
+    / background execution.
+    """
+
+    state, run = (
+        run_investigation_with_ledger(
+            db,
+            finding_id,
+            run_id=run_id,
+        )
+    )
+
+    if (
+        state.get("status")
+        != "grounding_completed"
+    ):
+        return get_workflow_summary(
+            db,
+            run.id,
+        )
+
+    run_response_pipeline(
+        db,
+        run_id=run.id,
+        state=state,
+    )
+
+    return get_workflow_summary(
+        db,
+        run.id,
+    )
 
 def start_agent_workflow(
     db: Session,

@@ -13,6 +13,7 @@ from app.schemas.tool_broker import (
 
 
 WorkflowStatus = Literal[
+    "running",
     "failed",
     "investigation_completed",
     "awaiting_approval",
@@ -21,6 +22,23 @@ WorkflowStatus = Literal[
     "dry_run_executed",
 ]
 
+class AgentWorkflowStartResponse(BaseModel):
+    """
+    Lightweight response returned immediately
+    after an Agent workflow has been scheduled.
+    """
+
+    run_id: int
+
+    finding_id: int
+
+    run_status: Literal[
+        "running"
+    ] = "running"
+
+    workflow_status: Literal[
+        "running"
+    ] = "running"
 
 class ApprovalReviewInput(BaseModel):
     reviewer: str = Field(

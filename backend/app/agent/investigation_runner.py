@@ -4,6 +4,7 @@ from app.agent.graph import investigation_graph
 from app.agent.ledger import (
     complete_investigation_run,
     fail_investigation_run,
+    get_investigation_trace,
     record_investigation_event,
     start_investigation_run,
 )
@@ -12,10 +13,377 @@ from app.schemas.investigation_ledger import (
     InvestigationRunRecord,
 )
 
+def _record_progress_events(
+    db: Session,
+    *,
+    run_id: int,
+    result: SentinelInvestigationState,
+    recorded_event_types: set[str],
+) -> None:
+    """
+    Persist newly available LangGraph state into
+    Investigation Ledger.
+
+    This function is called after every streamed
+    LangGraph state update.
+
+    recorded_event_types prevents duplicate events
+    when later states still contain earlier results.
+    """
+
+    # --------------------------------
+    # Context
+    # --------------------------------
+
+    context = result.get(
+        "context"
+    )
+
+    if (
+        context is not None
+        and "context_built"
+        not in recorded_event_types
+    ):
+        record_investigation_event(
+            db,
+            run_id=run_id,
+            event_type="context_built",
+            node_name="build_context",
+            summary=(
+                "Investigation context "
+                "successfully built."
+            ),
+            event_metadata={
+                "finding_id": (
+                    context.finding.id
+                ),
+                "asset_id": (
+                    context.finding.asset_id
+                ),
+                "scan_task_id": (
+                    context.finding.scan_task_id
+                ),
+                "port_count": len(
+                    context.open_ports
+                ),
+                "related_finding_count": len(
+                    context.related_findings
+                ),
+            },
+        )
+
+        recorded_event_types.add(
+            "context_built"
+        )
+
+    # --------------------------------
+    # Triage
+    # --------------------------------
+
+    if (
+        "needs_research" in result
+        and "triage_completed"
+        not in recorded_event_types
+    ):
+        record_investigation_event(
+            db,
+            run_id=run_id,
+            event_type="triage_completed",
+            node_name="triage",
+            summary=(
+                "Investigation triage "
+                "completed."
+            ),
+            event_metadata={
+                "needs_research": result.get(
+                    "needs_research"
+                ),
+                "triage_reason": result.get(
+                    "triage_reason"
+                ),
+            },
+        )
+
+        recorded_event_types.add(
+            "triage_completed"
+        )
+
+    # --------------------------------
+    # Research
+    # --------------------------------
+
+    rag_result = result.get(
+        "rag_result"
+    )
+
+    intelligence_result = result.get(
+        "intelligence_result"
+    )
+
+    if (
+        (
+            rag_result is not None
+            or intelligence_result is not None
+        )
+        and "research_completed"
+        not in recorded_event_types
+    ):
+        rag_evidence = []
+
+        if rag_result is not None:
+            rag_evidence = [
+                item.model_dump(
+                    mode="json"
+                )
+                for item
+                in rag_result.evidence
+            ]
+
+        research_metadata = {
+            "rag_used": (
+                rag_result is not None
+            ),
+
+            "intelligence_used": (
+                intelligence_result
+                is not None
+            ),
+
+            "rag_query": (
+                rag_result.query
+                if rag_result is not None
+                else None
+            ),
+
+            "rag_index_path": (
+                rag_result.index_path
+                if rag_result is not None
+                else None
+            ),
+
+            "retrieval_strategy": (
+                rag_result.retrieval_strategy
+                if rag_result is not None
+                else None
+            ),
+
+            "top_k": (
+                rag_result.top_k
+                if rag_result is not None
+                else None
+            ),
+
+            "retrieved_sources": (
+                rag_result.retrieved_sources
+                if rag_result is not None
+                else []
+            ),
+
+            "retrieved_count": (
+                len(
+                    rag_result.results
+                )
+                if rag_result is not None
+                else 0
+            ),
+
+            "evidence": (
+                rag_evidence
+            ),
+
+            "intelligence": (
+                {
+                    "template_id": (
+                        intelligence_result
+                        .template_id
+                    ),
+
+                    "cve_ids": (
+                        intelligence_result
+                        .cve_ids
+                    ),
+
+                    "cwe_ids": (
+                        intelligence_result
+                        .cwe_ids
+                    ),
+
+                    "kev_matched": (
+                        intelligence_result
+                        .kev_matched
+                    ),
+
+                    "kev_record_count": (
+                        len(
+                            intelligence_result
+                            .kev_records
+                        )
+                    ),
+
+                    "nvd_matched": (
+                        intelligence_result
+                        .nvd_matched
+                    ),
+
+                    "nvd_record_count": (
+                        len(
+                            intelligence_result
+                            .nvd_records
+                        )
+                    ),
+                }
+                if intelligence_result
+                is not None
+                else None
+            ),
+        }
+
+        record_investigation_event(
+            db,
+            run_id=run_id,
+            event_type="research_completed",
+            node_name="research",
+            summary=(
+                "Security research tools "
+                "completed with auditable "
+                "evidence provenance."
+            ),
+            event_metadata=(
+                research_metadata
+            ),
+        )
+
+        recorded_event_types.add(
+            "research_completed"
+        )
+
+    # --------------------------------
+    # Evidence Assessment
+    # --------------------------------
+
+    evidence = result.get(
+        "evidence_assessment"
+    )
+
+    if (
+        evidence is not None
+        and "evidence_assessed"
+        not in recorded_event_types
+    ):
+        record_investigation_event(
+            db,
+            run_id=run_id,
+            event_type="evidence_assessed",
+            node_name="analyze",
+            summary=(
+                "Finding evidence "
+                "assessment completed."
+            ),
+            event_metadata={
+                "evidence_status": (
+                    evidence.evidence_status
+                ),
+                "preliminary_verdict": (
+                    evidence.preliminary_verdict
+                ),
+                "confidence": (
+                    evidence.confidence
+                ),
+            },
+        )
+
+        recorded_event_types.add(
+            "evidence_assessed"
+        )
+
+    # --------------------------------
+    # Risk Enrichment
+    # --------------------------------
+
+    enrichment = result.get(
+        "risk_enrichment"
+    )
+
+    if (
+        enrichment is not None
+        and "risk_enriched"
+        not in recorded_event_types
+    ):
+        record_investigation_event(
+            db,
+            run_id=run_id,
+            event_type="risk_enriched",
+            node_name="analyze",
+            summary=(
+                "Risk synthesis completed."
+            ),
+            event_metadata={
+                "priority": (
+                    enrichment.priority
+                ),
+                "confidence": (
+                    enrichment.confidence
+                ),
+                "final_verdict": (
+                    enrichment.final_verdict
+                ),
+            },
+        )
+
+        recorded_event_types.add(
+            "risk_enriched"
+        )
+
+    # --------------------------------
+    # Grounding
+    # --------------------------------
+
+    grounding = result.get(
+        "grounding_result"
+    )
+
+    if (
+        grounding is not None
+        and "grounding_validated"
+        not in recorded_event_types
+    ):
+        record_investigation_event(
+            db,
+            run_id=run_id,
+            event_type="grounding_validated",
+            node_name="grounding",
+            summary=(
+                "Final analysis passed "
+                "through grounding validation."
+            ),
+            event_metadata={
+                "grounding_status": (
+                    grounding.status
+                ),
+                "grounding_score": (
+                    grounding.score
+                ),
+                "original_verdict": (
+                    grounding.original_verdict
+                ),
+                "grounded_verdict": (
+                    grounding.grounded_verdict
+                ),
+                "requires_human_review": (
+                    grounding.requires_human_review
+                ),
+            },
+        )
+
+        recorded_event_types.add(
+            "grounding_validated"
+        )
 
 def run_investigation_with_ledger(
     db: Session,
     finding_id: int,
+    *,
+    run_id: int | None = None,
 ) -> tuple[
     SentinelInvestigationState,
     InvestigationRunRecord,
@@ -25,301 +393,72 @@ def run_investigation_with_ledger(
     an auditable investigation trace.
     """
 
-    run = start_investigation_run(
-        db,
-        finding_id,
-    )
+    if run_id is None:
+        run = start_investigation_run(
+            db,
+            finding_id,
+        )
+
+    else:
+        trace = get_investigation_trace(
+            db,
+            run_id,
+        )
+
+        run = trace.run
+
+        if run.finding_id != finding_id:
+            raise ValueError(
+                "Investigation run does not belong "
+                f"to finding {finding_id}: "
+                f"run_id={run_id}"
+            )
+
+        if run.status != "running":
+            raise ValueError(
+                "Investigation run is not runnable: "
+                f"run_id={run_id}, "
+                f"status={run.status}"
+            )
 
     try:
-        result = investigation_graph.invoke(
-            {
-                "finding_id": finding_id,
-                "status": "pending",
-            }
+        initial_state: SentinelInvestigationState = {
+            "finding_id": finding_id,
+            "status": "pending",
+        }
+
+        result: SentinelInvestigationState = (
+            initial_state
         )
 
-        # Context
-        context = result.get("context")
-
-        if context is not None:
-            record_investigation_event(
+        existing_trace = (
+            get_investigation_trace(
                 db,
-                run_id=run.id,
-                event_type="context_built",
-                node_name="build_context",
-                summary=(
-                    "Investigation context "
-                    "successfully built."
-                ),
-                event_metadata={
-                    "finding_id": finding_id,
-                    "asset_id": (
-                        context.finding.asset_id
-                    ),
-                    "scan_task_id": (
-                        context.finding.scan_task_id
-                    ),
-                    "port_count": len(
-                        context.open_ports
-                    ),
-                    "related_finding_count": len(
-                        context.related_findings
-                    ),
-                },
+                run.id,
             )
-        # Triage
-        if "needs_research" in result:
-            record_investigation_event(
-                db,
-                run_id=run.id,
-                event_type="triage_completed",
-                node_name="triage",
-                summary=(
-                    "Investigation triage "
-                    "completed."
-                ),
-                event_metadata={
-                    "needs_research": result.get(
-                        "needs_research"
-                    ),
-                    "triage_reason": result.get(
-                        "triage_reason"
-                    ),
-                },
-            )
-
-        # Research
-        rag_result = result.get(
-            "rag_result"
         )
 
-        intelligence_result = result.get(
-            "intelligence_result"
-        )
+        recorded_event_types = {
+            event.event_type
+            for event
+            in existing_trace.events
+        }
 
-        if (
-            rag_result is not None
-            or intelligence_result is not None
+        for streamed_state in (
+            investigation_graph.stream(
+                initial_state,
+                stream_mode="values",
+            )
         ):
-            rag_evidence = []
+            result = streamed_state
 
-            if rag_result is not None:
-                rag_evidence = [
-                    item.model_dump(
-                        mode="json"
-                    )
-                    for item
-                    in rag_result.evidence
-                ]
-
-            research_metadata = {
-                "rag_used": (
-                    rag_result
-                    is not None
-                ),
-
-                "intelligence_used": (
-                    intelligence_result
-                    is not None
-                ),
-
-                "rag_query": (
-                    rag_result.query
-                    if rag_result
-                    is not None
-                    else None
-                ),
-
-                "rag_index_path": (
-                    rag_result.index_path
-                    if rag_result
-                    is not None
-                    else None
-                ),
-
-                "retrieval_strategy": (
-                    rag_result.retrieval_strategy
-                    if rag_result
-                    is not None
-                    else None
-                ),
-
-                "top_k": (
-                    rag_result.top_k
-                    if rag_result
-                    is not None
-                    else None
-                ),
-
-                "retrieved_sources": (
-                    rag_result.retrieved_sources
-                    if rag_result
-                    is not None
-                    else []
-                ),
-
-                "retrieved_count": (
-                    len(
-                        rag_result.results
-                    )
-                    if rag_result
-                    is not None
-                    else 0
-                ),
-
-                "evidence": (
-                    rag_evidence
-                ),
-
-                "intelligence": (
-                    {
-                        "template_id": (
-                            intelligence_result
-                            .template_id
-                        ),
-
-                        "cve_ids": (
-                            intelligence_result
-                            .cve_ids
-                        ),
-
-                        "cwe_ids": (
-                            intelligence_result
-                            .cwe_ids
-                        ),
-
-                        "kev_matched": (
-                            intelligence_result
-                            .kev_matched
-                        ),
-
-                        "kev_record_count": (
-                            len(
-                                intelligence_result
-                                .kev_records
-                            )
-                        ),
-
-                        "nvd_matched": (
-                            intelligence_result
-                            .nvd_matched
-                        ),
-
-                        "nvd_record_count": (
-                            len(
-                                intelligence_result
-                                .nvd_records
-                            )
-                        ),
-                    }
-                    if intelligence_result
-                    is not None
-                    else None
-                ),
-            }
-
-            record_investigation_event(
+            _record_progress_events(
                 db,
                 run_id=run.id,
-                event_type="research_completed",
-                node_name="research",
-                summary=(
-                    "Security research tools "
-                    "completed with auditable "
-                    "evidence provenance."
+                result=result,
+                recorded_event_types=(
+                    recorded_event_types
                 ),
-                event_metadata=(
-                    research_metadata
-                ),
-            )
-
-        # Evidence Assessment
-        evidence = result.get(
-            "evidence_assessment"
-        )
-
-        if evidence is not None:
-            record_investigation_event(
-                db,
-                run_id=run.id,
-                event_type="evidence_assessed",
-                node_name="analyze",
-                summary=(
-                    "Finding evidence "
-                    "assessment completed."
-                ),
-                event_metadata={
-                    "evidence_status": (
-                        evidence.evidence_status
-                    ),
-                    "preliminary_verdict": (
-                        evidence.preliminary_verdict
-                    ),
-                    "confidence": (
-                        evidence.confidence
-                    ),
-                },
-            )
-
-        # Risk Enrichment
-        enrichment = result.get(
-            "risk_enrichment"
-        )
-
-        if enrichment is not None:
-            record_investigation_event(
-                db,
-                run_id=run.id,
-                event_type="risk_enriched",
-                node_name="analyze",
-                summary=(
-                    "Risk synthesis completed."
-                ),
-                event_metadata={
-                    "priority": (
-                        enrichment.priority
-                    ),
-                    "confidence": (
-                        enrichment.confidence
-                    ),
-                    "final_verdict": (
-                        enrichment.final_verdict
-                    ),
-                },
-            )
-
-        # Grounding
-        grounding = result.get(
-            "grounding_result"
-        )
-
-        if grounding is not None:
-            record_investigation_event(
-                db,
-                run_id=run.id,
-                event_type="grounding_validated",
-                node_name="grounding",
-                summary=(
-                    "Final analysis passed "
-                    "through grounding validation."
-                ),
-                event_metadata={
-                    "grounding_status": (
-                        grounding.status
-                    ),
-                    "grounding_score": (
-                        grounding.score
-                    ),
-                    "original_verdict": (
-                        grounding.original_verdict
-                    ),
-                    "grounded_verdict": (
-                        grounding.grounded_verdict
-                    ),
-                    "requires_human_review": (
-                        grounding.requires_human_review
-                    ),
-                },
             )
 
         # Graph-level failure
@@ -349,6 +488,14 @@ def run_investigation_with_ledger(
             return result, failed_run
 
         # Successful completion
+        grounding = result.get(
+            "grounding_result"
+        )
+
+        enrichment = result.get(
+            "risk_enrichment"
+        )
+
         final_verdict = (
             grounding.grounded_verdict
             if grounding is not None

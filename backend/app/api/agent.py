@@ -4,18 +4,28 @@ from fastapi import (
     HTTPException,
     Query,
 )
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+)
+from app.agent.background_runner import (
+    run_agent_workflow_background,
+)
 from sqlalchemy.orm import Session
 
 from app.agent.ledger import (
     get_investigation_trace,
     list_investigation_runs,
+    start_investigation_run,
 )
 from app.agent.decision_agent import make_security_decision
 from app.agent.orchestrator import (
     execute_workflow_tools,
     get_workflow_summary,
     resolve_workflow_approval,
-    start_agent_workflow,
 )
 from app.db.database import get_db
 from app.models.ai_analysis import AIAnalysis
@@ -26,6 +36,7 @@ from app.schemas.agent_decision import (
     AgentDecisionOutput,
 )
 from app.schemas.agent_workflow import (
+    AgentWorkflowStartResponse,
     AgentWorkflowSummary,
     ApprovalReviewInput,
 )
@@ -157,27 +168,53 @@ def list_finding_decisions(
 
 @router.post(
     "/investigate/{finding_id}",
-    response_model=AgentWorkflowSummary,
+    response_model=AgentWorkflowStartResponse,
+    status_code=202,
 )
 def investigate_finding_workflow(
     finding_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """
-    Start the complete SentinelAgent workflow:
+    Schedule the complete SentinelAgent workflow.
 
-    Finding
-      -> Investigation
-      -> Grounding
-      -> Response
-      -> Policy
-      -> Human Approval
+    The HTTP request returns immediately after an
+    InvestigationRun has been created.
+
+    Workflow execution continues in a FastAPI
+    background task using its own database session.
     """
 
+    finding = (
+        db.query(Finding)
+        .filter(
+            Finding.id == finding_id
+        )
+        .first()
+    )
+
+    if finding is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Finding not found",
+        )
+
     try:
-        return start_agent_workflow(
+        run = start_investigation_run(
             db,
             finding_id,
+        )
+
+        background_tasks.add_task(
+            run_agent_workflow_background,
+            run_id=run.id,
+            finding_id=finding_id,
+        )
+
+        return AgentWorkflowStartResponse(
+            run_id=run.id,
+            finding_id=finding_id,
         )
 
     except ValueError as exc:
@@ -190,7 +227,7 @@ def investigate_finding_workflow(
         raise HTTPException(
             status_code=500,
             detail=(
-                "Agent workflow failed: "
+                "Failed to schedule Agent workflow: "
                 f"{type(exc).__name__}: {exc}"
             ),
         ) from exc

@@ -1,4 +1,7 @@
-from datetime import datetime
+from datetime import (
+    datetime,
+    timedelta,
+)
 from typing import Any
 
 from sqlalchemy import func
@@ -250,3 +253,134 @@ def get_investigation_trace(
             for event in events
         ],
     )
+def recover_stale_investigation_runs(
+    db: Session,
+    *,
+    older_than_minutes: int = 30,
+) -> list[InvestigationRunRecord]:
+    """
+    Recover abandoned InvestigationRuns that were
+    left in a running state after an interrupted
+    process or development restart.
+
+    Safety conditions:
+
+    1. Run is still marked as running.
+    2. Run is older than the configured threshold.
+    3. Run has no persisted investigation events.
+
+    Existing audit history is never deleted.
+    """
+
+    if older_than_minutes <= 0:
+        raise ValueError(
+            "older_than_minutes must be greater than 0."
+        )
+
+    cutoff = (
+        datetime.utcnow()
+        - timedelta(
+            minutes=older_than_minutes
+        )
+    )
+
+    candidates = (
+        db.query(
+            InvestigationRun
+        )
+        .filter(
+            InvestigationRun.status
+            == "running",
+            InvestigationRun.started_at
+            < cutoff,
+        )
+        .order_by(
+            InvestigationRun.id.asc()
+        )
+        .all()
+    )
+
+    recovered: list[
+        InvestigationRunRecord
+    ] = []
+
+    for run in candidates:
+        existing_event = (
+            db.query(
+                InvestigationEvent.id
+            )
+            .filter(
+                InvestigationEvent.run_id
+                == run.id
+            )
+            .first()
+        )
+
+        # A run with audit activity may simply be a
+        # long-running investigation. Leave it alone.
+        if existing_event is not None:
+            continue
+
+        # Refresh immediately before mutation in case
+        # another worker completed the run.
+        db.refresh(
+            run
+        )
+
+        if run.status != "running":
+            continue
+
+        error_message = (
+            "Stale investigation recovered after "
+            "interrupted execution."
+        )
+
+        recovery_event = (
+            InvestigationEvent(
+                run_id=run.id,
+                event_type=(
+                    "stale_run_recovered"
+                ),
+                node_name=(
+                    "stale_run_recovery"
+                ),
+                status="failed",
+                summary=error_message,
+                event_metadata={
+                    "previous_status": (
+                        "running"
+                    ),
+                    "recovery_threshold_minutes": (
+                        older_than_minutes
+                    ),
+                    "started_at": (
+                        run.started_at.isoformat()
+                    ),
+                },
+            )
+        )
+
+        run.status = "failed"
+        run.error_message = (
+            error_message
+        )
+        run.finished_at = (
+            datetime.utcnow()
+        )
+
+        db.add(
+            recovery_event
+        )
+
+        db.commit()
+        db.refresh(
+            run
+        )
+
+        recovered.append(
+            InvestigationRunRecord.model_validate(
+                run
+            )
+        )
+
+    return recovered
