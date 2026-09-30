@@ -1,7 +1,8 @@
 <script setup>
 import {
   computed,
-  onMounted,
+  onBeforeUnmount,
+  watch,
   ref,
 } from 'vue'
 
@@ -20,7 +21,6 @@ import {
   Search,
   WarningFilled,
   Check,
-  Clock,
   Connection,
   Document,
 } from '@element-plus/icons-vue'
@@ -48,18 +48,50 @@ const loadingRun = ref(false)
 const runIdInput = ref('')
 
 const selectedEvent = ref(null)
+const polling = ref(false)
+const pollError = ref('')
+const lastUpdated = ref(null)
+let generation = 0
+let controller = null
+let pollTimer = null
 
-const findingId = computed(() => {
-  const value =
-    finding.value?.id ||
-    route.query.finding_id
+const runStatus = computed(() => workflow.value?.run_status || trace.value?.run?.status)
+const busy = computed(() => investigating.value || polling.value || runStatus.value === 'running')
+const failureMessage = computed(() => trace.value?.run?.error_message ||
+  events.value.findLast(event => event.status === 'failed')?.summary || '调查执行失败，请查看审计事件。')
 
-  if (!value) {
-    return null
-  }
+function validId(value) {
+  return /^\d+$/.test(String(value)) && Number.isSafeInteger(Number(value)) && Number(value) > 0
+}
 
-  return Number(value)
-})
+// Run completion precedes the response pipeline in the existing backend.
+// Wait for policy and all requested approvals before stopping the live view.
+function isSettled(run) {
+  if (run.run_status === 'failed') return true
+  if (run.run_status !== 'completed' || !run.policy_evaluation) return false
+  return (run.approvals?.length || 0) >= (run.policy_evaluation.approval_count || 0)
+}
+
+function cancelRequests() {
+  generation += 1
+  clearTimeout(pollTimer)
+  controller?.abort()
+  controller = new AbortController()
+  polling.value = false
+  investigating.value = false
+  loadingFinding.value = false
+  loadingRun.value = false
+  return generation
+}
+
+function clearRun() {
+  workflow.value = null
+  trace.value = null
+  selectedEvent.value = null
+  runIdInput.value = ''
+  pollError.value = ''
+  lastUpdated.value = null
+}
 
 const events = computed(
   () => trace.value?.events || [],
@@ -84,6 +116,7 @@ const workflowStatusLabel = computed(() => {
     workflow.value?.workflow_status
 
   const labels = {
+    running: 'Running',
     failed: 'Failed',
     investigation_completed:
       'Investigation Completed',
@@ -198,8 +231,9 @@ function eventLabel(event) {
     tool_execution_simulated:
       'Tool Broker',
 
-    investigation_failed:
-      'Investigation Failed',
+    investigation_failed: 'Investigation Failed',
+    workflow_failed: 'Workflow Failed',
+    stale_run_recovered: 'Stale Run Recovered',
   }
 
   return (
@@ -249,243 +283,140 @@ function eventStatusClass(status) {
   return `event-${status || 'unknown'}`
 }
 
-async function loadFinding(id) {
-  if (!id) {
-    return
-  }
-
+async function loadFinding(id, token = generation) {
   loadingFinding.value = true
-
   try {
-    finding.value =
-      await getFinding(id, {
-        silent: true,
-      })
-
-    findingIdInput.value =
-      String(id)
+    const result = await getFinding(id, { silent: true, signal: controller.signal })
+    if (token !== generation) return
+    finding.value = result
+    findingIdInput.value = String(id)
   } catch (error) {
-    console.error(error)
-
-    ElMessage.error(
-      'Finding 加载失败',
-    )
+    if (token === generation) ElMessage.error('Finding 加载失败，请重新加载')
   } finally {
-    loadingFinding.value = false
+    if (token === generation) loadingFinding.value = false
   }
 }
 
-async function loadTrace(runId) {
+async function pollRun(runId, token, failures = 0) {
+  if (token !== generation) return
+  loadingRun.value = true
+  polling.value = true
+  let retry = true
+  let nextFailures = 0
   try {
-    trace.value =
-      await getInvestigationTrace(
-        runId,
-        {
-          silent: true,
-        },
-      )
-
-    if (
-      trace.value?.events?.length
-    ) {
-      selectedEvent.value =
-        trace.value.events[
-          trace.value.events.length - 1
-        ]
+    const config = { silent: true, signal: controller.signal }
+    const result = await getInvestigationRun(runId, config)
+    if (token !== generation) return
+    workflow.value = result
+    // Fetch trace after the summary so a terminal summary has its final events.
+    const latestTrace = await getInvestigationTrace(runId, config)
+    if (token !== generation) return
+    trace.value = latestTrace
+    selectedEvent.value = latestTrace.events.find(event => event.id === selectedEvent.value?.id)
+      || latestTrace.events.at(-1) || null
+    lastUpdated.value = new Date().toISOString()
+    pollError.value = ''
+    retry = !isSettled(result)
+    if (finding.value?.id !== result.finding_id) {
+      finding.value = null
+      await loadFinding(result.finding_id, token)
     }
   } catch (error) {
-    console.error(error)
-
-    ElMessage.error(
-      'Investigation Trace 加载失败',
-    )
+    if (token !== generation) return
+    nextFailures = failures + 1
+    retry = nextFailures < 3 && ![401, 403, 404].includes(error.response?.status)
+    pollError.value = retry
+      ? '进度获取失败，正在自动重试；后台任务不会因此停止。'
+      : '进度刷新已暂停，请点击刷新 Run 重试；这不代表后台任务失败。'
+  } finally {
+    if (token === generation) {
+      loadingRun.value = false
+      polling.value = retry
+      if (retry) pollTimer = setTimeout(() => pollRun(runId, token, nextFailures), 2500)
+    }
   }
 }
 
 async function loadRun(runId) {
-  if (!runId) {
-    return
+  if (!validId(runId)) return
+  const token = cancelRequests()
+  if (workflow.value?.run_id !== Number(runId)) {
+    clearRun()
+    finding.value = null
   }
-
-  loadingRun.value = true
-
-  try {
-    workflow.value =
-      await getInvestigationRun(
-        runId,
-        {
-          silent: true,
-        },
-      )
-
-    runIdInput.value =
-      String(runId)
-
-    await loadTrace(runId)
-
-    if (
-      workflow.value?.finding_id &&
-      !finding.value
-    ) {
-      await loadFinding(
-        workflow.value.finding_id,
-      )
-    }
-  } catch (error) {
-    console.error(error)
-
-    ElMessage.error(
-      'Investigation Run 加载失败',
-    )
-  } finally {
-    loadingRun.value = false
-  }
+  runIdInput.value = String(runId)
+  await pollRun(Number(runId), token)
 }
 
 async function investigate() {
-  const id = Number(
-    findingId.value ||
-    findingIdInput.value,
-  )
-
-  if (!id) {
-    ElMessage.warning(
-      '请先选择 Finding',
-    )
-
+  if (busy.value || loadingFinding.value) return
+  const id = finding.value?.id
+  if (!validId(id)) {
+    ElMessage.warning('请先加载有效 Finding')
     return
   }
-
+  const token = cancelRequests()
+  clearRun()
   investigating.value = true
-
   try {
-    ElMessage.info(
-      'Agent Investigation 已启动，本地模型分析可能需要一些时间',
-    )
-
-    workflow.value =
-      await startInvestigation(
-        id,
-        {
-          timeout: 600000,
-        },
-      )
-
-    runIdInput.value =
-      String(
-        workflow.value.run_id,
-      )
-
-    await loadTrace(
-      workflow.value.run_id,
-    )
-
-    await router.replace({
-      name: 'investigations',
-
-      query: {
-        finding_id: id,
-        run_id:
-          workflow.value.run_id,
-      },
-    })
-
-    ElMessage.success(
-      `Investigation Run #${workflow.value.run_id} 已完成`,
-    )
+    const started = await startInvestigation(id, { signal: controller.signal })
+    if (token !== generation) return
+    workflow.value = started
+    runIdInput.value = String(started.run_id)
+    ElMessage.success('Investigation Run #' + started.run_id + ' 已启动')
+    await router.replace({ name: 'investigations', query: { finding_id: id, run_id: started.run_id } })
   } catch (error) {
-    console.error(error)
+    // The shared request interceptor displays submission errors.
+    if (token === generation) console.error(error)
   } finally {
-    investigating.value = false
+    if (token === generation) investigating.value = false
   }
 }
 
 async function searchFinding() {
-  const id =
-    Number(findingIdInput.value)
-
-  if (!id) {
-    ElMessage.warning(
-      '请输入有效 Finding ID',
-    )
-
+  if (!validId(findingIdInput.value)) {
+    ElMessage.warning('请输入有效 Finding ID')
     return
   }
-
-  workflow.value = null
-  trace.value = null
-  selectedEvent.value = null
-
-  await loadFinding(id)
-
-  await router.replace({
-    name: 'investigations',
-
-    query: {
-      finding_id: id,
-    },
-  })
+  const id = Number(findingIdInput.value)
+  if (!route.query.run_id && Number(route.query.finding_id) === id) {
+    const token = cancelRequests()
+    clearRun()
+    finding.value = null
+    await loadFinding(id, token)
+  } else {
+    await router.replace({ name: 'investigations', query: { finding_id: id } })
+  }
 }
 
 async function searchRun() {
-  const id =
-    Number(runIdInput.value)
-
-  if (!id) {
-    ElMessage.warning(
-      '请输入有效 Run ID',
-    )
-
+  if (!validId(runIdInput.value)) {
+    ElMessage.warning('请输入有效 Run ID')
     return
   }
-
-  await loadRun(id)
-
-  await router.replace({
-    name: 'investigations',
-
-    query: {
-      finding_id:
-        workflow.value?.finding_id ||
-        finding.value?.id,
-      run_id: id,
-    },
-  })
+  const id = Number(runIdInput.value)
+  if (Number(route.query.run_id) === id) await loadRun(id)
+  else await router.replace({ name: 'investigations', query: { run_id: id } })
 }
 
-async function refreshCurrentRun() {
-  if (!workflow.value?.run_id) {
-    return
-  }
-
-  await loadRun(
-    workflow.value.run_id,
-  )
+function refreshCurrentRun() {
+  return loadRun(workflow.value?.run_id || route.query.run_id)
 }
 
-onMounted(async () => {
-  const queryFinding =
-    Number(
-      route.query.finding_id,
-    )
-
-  const queryRun =
-    Number(
-      route.query.run_id,
-    )
-
-  if (queryFinding) {
-    await loadFinding(
-      queryFinding,
-    )
+watch(() => [route.query.finding_id, route.query.run_id], async ([findingId, runId]) => {
+  if (validId(runId)) {
+    await loadRun(runId)
+  } else {
+    const token = cancelRequests()
+    clearRun()
+    finding.value = null
+    findingIdInput.value = ''
+    if (validId(findingId)) await loadFinding(Number(findingId), token)
+    if (runId || (findingId && !validId(findingId))) ElMessage.warning('链接中的 ID 无效')
   }
+}, { immediate: true })
 
-  if (queryRun) {
-    await loadRun(
-      queryRun,
-    )
-  }
-})
+onBeforeUnmount(cancelRequests)
 </script>
 
 <template>
@@ -506,7 +437,7 @@ onMounted(async () => {
       </div>
 
       <el-button
-        v-if="workflow"
+        v-if="workflow || route.query.run_id"
         :icon="Refresh"
         :loading="loadingRun"
         @click="refreshCurrentRun"
@@ -613,17 +544,26 @@ onMounted(async () => {
         type="primary"
         :icon="Cpu"
         :loading="investigating"
+        :disabled="busy || loadingFinding"
         @click="investigate"
       >
         {{
           investigating
-            ? 'Agent 调查中...'
+            ? '正在提交...'
             : '启动 AI Investigation'
         }}
       </el-button>
     </section>
 
+    <el-alert v-if="pollError" :title="pollError" type="warning" :closable="false" show-icon />
+
     <template v-if="workflow">
+      <div class="run-progress" role="status" aria-live="polite">
+        <el-tag :type="statusType(runStatus)">Run: {{ runStatus }}</el-tag>
+        <span>{{ polling ? (runStatus === 'completed' ? '调查分析已完成，正在同步 Response / Policy / Approval…' : '正在实时更新调查进度…') : (pollError ? '自动刷新已暂停' : '本次执行已结束，自动刷新已停止') }}</span>
+        <small v-if="lastUpdated">最近同步：{{ formatDate(lastUpdated) }}</small>
+      </div>
+      <el-alert v-if="runStatus === 'failed'" :title="failureMessage" type="error" :closable="false" show-icon />
       <div class="summary-grid">
         <section class="panel summary-card">
           <span>
@@ -692,7 +632,7 @@ onMounted(async () => {
           </span>
 
           <strong>
-            {{ workflow.event_count }}
+            {{ events.length }}
           </strong>
 
           <small>
@@ -788,7 +728,7 @@ onMounted(async () => {
 
           <el-empty
             v-else
-            description="暂无 Trace Events"
+            :description="polling ? '任务已受理，等待首条 Ledger 事件…' : '暂无 Trace Events'"
           />
         </section>
 
@@ -1094,6 +1034,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.investigations-page > .panel,
+.summary-card,
+.trace-panel,
+.detail-column > .panel { padding: 20px; }
+.investigations-page .panel-heading { padding: 0; }
+.run-progress { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: #64748b; }
+.run-progress small { margin-left: auto; color: #94a3b8; }
+.timeline-item:focus-visible { outline: 2px solid #078fb9; }
+
 .investigations-page {
   display: flex;
   flex-direction: column;
