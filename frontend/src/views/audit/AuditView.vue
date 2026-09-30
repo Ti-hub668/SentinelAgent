@@ -321,6 +321,204 @@ const hasStructuredResearchMetadata =
       ),
   )
 
+const selectedMetadata = computed(
+  () =>
+    selectedEvent.value
+      ?.event_metadata || {},
+)
+
+const isResponseEvent = computed(
+  () =>
+    selectedEvent.value
+      ?.event_type ===
+    'response_planned',
+)
+
+const isPolicyEvent = computed(
+  () =>
+    selectedEvent.value
+      ?.event_type ===
+    'policy_evaluated',
+)
+
+const isApprovalEvent = computed(
+  () =>
+    [
+      'approval_requested',
+      'approval_resolved',
+    ].includes(
+      selectedEvent.value
+        ?.event_type,
+    ),
+)
+
+const isToolExecutionEvent = computed(
+  () =>
+    selectedEvent.value
+      ?.event_type
+      ?.startsWith(
+        'tool_execution',
+      ) || false,
+)
+
+const responsePlan = computed(
+  () => {
+    const metadata =
+      selectedMetadata.value
+
+    const nested =
+      metadata?.response_plan
+
+    return (
+      nested &&
+      typeof nested === 'object'
+        ? nested
+        : metadata
+    )
+  },
+)
+
+const responseToolRequests =
+  computed(
+    () => {
+      const value =
+        responsePlan.value
+          ?.tool_requests ||
+        selectedMetadata.value
+          ?.tool_requests
+
+      return Array.isArray(value)
+        ? value
+        : []
+    },
+  )
+
+const policyEvaluation = computed(
+  () => {
+    const metadata =
+      selectedMetadata.value
+
+    const nested =
+      metadata
+        ?.policy_evaluation
+
+    return (
+      nested &&
+      typeof nested === 'object'
+        ? nested
+        : metadata
+    )
+  },
+)
+
+const policyResults = computed(
+  () => {
+    const value =
+      policyEvaluation.value
+        ?.results ||
+      selectedMetadata.value
+        ?.results
+
+    return Array.isArray(value)
+      ? value
+      : []
+  },
+)
+
+const approvalRecord = computed(
+  () => {
+    const metadata =
+      selectedMetadata.value
+
+    const nested =
+      metadata?.approval
+
+    return {
+      ...metadata,
+
+      ...(
+        nested &&
+        typeof nested === 'object'
+          ? nested
+          : {}
+      ),
+    }
+  },
+)
+
+const approvalToolRequest =
+  computed(
+    () =>
+      approvalRecord.value
+        ?.tool_request ||
+      selectedMetadata.value
+        ?.tool_request ||
+      null,
+  )
+
+const executionRecord = computed(
+  () => {
+    const metadata =
+      selectedMetadata.value
+
+    const nested =
+      metadata
+        ?.execution_result
+
+    return {
+      ...metadata,
+
+      ...(
+        nested &&
+        typeof nested === 'object'
+          ? nested
+          : {}
+      ),
+    }
+  },
+)
+
+const executionToolRequest =
+  computed(
+    () =>
+      executionRecord.value
+        ?.tool_request ||
+      selectedMetadata.value
+        ?.tool_request ||
+      (
+        selectedMetadata.value
+          ?.tool_name
+          ? {
+              tool_name:
+                selectedMetadata
+                  .value
+                  .tool_name,
+
+              target:
+                selectedMetadata
+                  .value
+                  .target,
+
+              parameters: {},
+            }
+          : null
+      ),
+  )
+
+const isStructuredAuditEvent =
+  computed(
+    () =>
+      (
+        isResearchEvent.value &&
+        hasStructuredResearchMetadata
+          .value
+      ) ||
+      isResponseEvent.value ||
+      isPolicyEvent.value ||
+      isApprovalEvent.value ||
+      isToolExecutionEvent.value,
+  )
+
 function normalizeList(value) {
   if (Array.isArray(value)) {
     return value.filter(Boolean)
@@ -421,6 +619,80 @@ function formatDate(value) {
   }
 
   return date.toLocaleString()
+}
+
+function decisionTagType(value) {
+  if (value === 'ALLOW') {
+    return 'success'
+  }
+
+  if (value === 'DENY') {
+    return 'danger'
+  }
+
+  if (
+    value ===
+    'REQUIRE_APPROVAL'
+  ) {
+    return 'warning'
+  }
+
+  return 'info'
+}
+
+function approvalStatusTagType(
+  value,
+) {
+  if (value === 'approved') {
+    return 'success'
+  }
+
+  if (value === 'rejected') {
+    return 'danger'
+  }
+
+  if (value === 'pending') {
+    return 'warning'
+  }
+
+  return 'info'
+}
+
+function executionStatusTagType(
+  value,
+) {
+  if (
+    value === 'completed'
+  ) {
+    return 'success'
+  }
+
+  if (
+    value === 'simulated'
+  ) {
+    return 'warning'
+  }
+
+  if (
+    value === 'failed' ||
+    value === 'blocked'
+  ) {
+    return 'danger'
+  }
+
+  return 'info'
+}
+
+function yesNoLabel(value) {
+  if (value === true) {
+    return 'Yes'
+  }
+
+  if (value === false) {
+    return 'No'
+  }
+
+  return '—'
 }
 
 function formatTime(value) {
@@ -1865,26 +2137,997 @@ onMounted(async () => {
                   </div>
                 </section>
 
-                <el-collapse class="raw-metadata-collapse">
-                  <el-collapse-item name="raw-metadata">
-                    <template #title>
-                      <span class="raw-metadata-title">
-                        Raw Audit Metadata
-                      </span>
-                    </template>
 
-                    <pre class="metadata-block">{{
-                      JSON.stringify(
-                        selectedEvent
-                          .event_metadata,
-                        null,
-                        2,
-                      )
-                    }}</pre>
-                  </el-collapse-item>
-                </el-collapse>
               </div>
             </template>
+            <template
+  v-else-if="
+    isResponseEvent
+  "
+>
+  <div class="research-provenance">
+    <section class="provenance-section">
+      <div
+        class="provenance-section-heading"
+      >
+        <div>
+          <span
+            class="provenance-kicker"
+          >
+            RESPONSE PLAN
+          </span>
+
+          <strong>
+            Governed Response Proposal
+          </strong>
+        </div>
+
+        <el-tag
+          :type="
+            responsePlan.dry_run
+              ? 'warning'
+              : 'success'
+          "
+        >
+          {{
+            responsePlan.dry_run
+              ? 'DRY RUN'
+              : 'LIVE'
+          }}
+        </el-tag>
+      </div>
+
+      <div class="retrieval-grid">
+        <div>
+          <span>
+            Finding
+          </span>
+
+          <strong>
+            #{{
+              responsePlan
+                .finding_id ||
+              selectedRun
+                ?.finding_id ||
+              '—'
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Verdict
+          </span>
+
+          <strong>
+            {{
+              responsePlan
+                .grounded_verdict ||
+              '—'
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Action
+          </span>
+
+          <strong>
+            {{
+              responsePlan
+                .decision_action ||
+              '—'
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Priority
+          </span>
+
+          <strong>
+            {{
+              responsePlan
+                .priority ||
+              '—'
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Human Review
+          </span>
+
+          <strong>
+            {{
+              yesNoLabel(
+                responsePlan
+                  .requires_human_review,
+              )
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Tool Requests
+          </span>
+
+          <strong>
+            {{
+              responseToolRequests
+                .length
+            }}
+          </strong>
+        </div>
+      </div>
+
+      <div
+        v-if="
+          responsePlan.summary
+        "
+        class="governance-note"
+      >
+        <span>
+          Response Summary
+        </span>
+
+        <p>
+          {{
+            responsePlan.summary
+          }}
+        </p>
+      </div>
+    </section>
+
+    <section
+      v-if="
+        normalizeList(
+          responsePlan
+            .containment_plan,
+        ).length ||
+        normalizeList(
+          responsePlan
+            .remediation_plan,
+        ).length ||
+        normalizeList(
+          responsePlan
+            .verification_plan,
+        ).length
+      "
+      class="provenance-section"
+    >
+      <div
+        class="provenance-section-heading"
+      >
+        <div>
+          <span
+            class="provenance-kicker"
+          >
+            RESPONSE STEPS
+          </span>
+
+          <strong>
+            Contain · Remediate · Verify
+          </strong>
+        </div>
+      </div>
+
+      <div class="plan-grid">
+        <div class="plan-card">
+          <span>
+            Containment
+          </span>
+
+          <ul
+            v-if="
+              normalizeList(
+                responsePlan
+                  .containment_plan,
+              ).length
+            "
+          >
+            <li
+              v-for="(
+                item,
+                index
+              ) in normalizeList(
+                responsePlan
+                  .containment_plan,
+              )"
+              :key="index"
+            >
+              {{ item }}
+            </li>
+          </ul>
+
+          <small v-else>
+            No containment action
+          </small>
+        </div>
+
+        <div class="plan-card">
+          <span>
+            Remediation
+          </span>
+
+          <ul
+            v-if="
+              normalizeList(
+                responsePlan
+                  .remediation_plan,
+              ).length
+            "
+          >
+            <li
+              v-for="(
+                item,
+                index
+              ) in normalizeList(
+                responsePlan
+                  .remediation_plan,
+              )"
+              :key="index"
+            >
+              {{ item }}
+            </li>
+          </ul>
+
+          <small v-else>
+            No remediation step
+          </small>
+        </div>
+
+        <div class="plan-card">
+          <span>
+            Verification
+          </span>
+
+          <ul
+            v-if="
+              normalizeList(
+                responsePlan
+                  .verification_plan,
+              ).length
+            "
+          >
+            <li
+              v-for="(
+                item,
+                index
+              ) in normalizeList(
+                responsePlan
+                  .verification_plan,
+              )"
+              :key="index"
+            >
+              {{ item }}
+            </li>
+          </ul>
+
+          <small v-else>
+            No verification step
+          </small>
+        </div>
+      </div>
+    </section>
+
+    <section
+      v-if="
+        responseToolRequests
+          .length
+      "
+      class="provenance-section"
+    >
+      <div
+        class="provenance-section-heading"
+      >
+        <div>
+          <span
+            class="provenance-kicker"
+          >
+            TOOL REQUESTS
+          </span>
+
+          <strong>
+            Proposed Agent Actions
+          </strong>
+        </div>
+      </div>
+
+      <div class="request-stack">
+        <article
+          v-for="(
+            request,
+            index
+          ) in responseToolRequests"
+          :key="
+            `${request.tool_name}-${index}`
+          "
+          class="evidence-card"
+        >
+          <div
+            class="evidence-card-heading"
+          >
+            <div>
+              <strong>
+                {{
+                  request
+                    .tool_name ||
+                  'Unknown tool'
+                }}
+              </strong>
+
+              <small>
+                {{
+                  request.target ||
+                  'No target'
+                }}
+              </small>
+            </div>
+
+            <el-tag
+              type="warning"
+              size="small"
+            >
+              REQUEST #{{ index }}
+            </el-tag>
+          </div>
+
+          <div
+            v-if="request.reason"
+            class="governance-note"
+          >
+            <span>
+              Reason
+            </span>
+
+            <p>
+              {{ request.reason }}
+            </p>
+          </div>
+
+          <pre
+            v-if="
+              request.parameters &&
+              Object.keys(
+                request.parameters,
+              ).length
+            "
+            class="mini-metadata"
+          >{{
+            JSON.stringify(
+              request.parameters,
+              null,
+              2,
+            )
+          }}</pre>
+        </article>
+      </div>
+    </section>
+  </div>
+</template>
+<template
+  v-else-if="
+    isPolicyEvent
+  "
+>
+  <div class="research-provenance">
+    <section class="provenance-section">
+      <div
+        class="provenance-section-heading"
+      >
+        <div>
+          <span
+            class="provenance-kicker"
+          >
+            POLICY DECISION
+          </span>
+
+          <strong>
+            Governance Evaluation
+          </strong>
+        </div>
+
+        <el-tag type="info">
+          {{
+            policyEvaluation
+              .dry_run
+              ? 'DRY RUN'
+              : 'POLICY'
+          }}
+        </el-tag>
+      </div>
+
+      <div class="retrieval-grid">
+        <div>
+          <span>
+            Finding
+          </span>
+
+          <strong>
+            #{{
+              policyEvaluation
+                .finding_id ||
+              selectedRun
+                ?.finding_id ||
+              '—'
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Verdict
+          </span>
+
+          <strong>
+            {{
+              policyEvaluation
+                .grounded_verdict ||
+              '—'
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            ALLOW
+          </span>
+
+          <strong>
+            {{
+              policyEvaluation
+                .allow_count ?? 0
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            DENY
+          </span>
+
+          <strong>
+            {{
+              policyEvaluation
+                .deny_count ?? 0
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            REQUIRE APPROVAL
+          </span>
+
+          <strong>
+            {{
+              policyEvaluation
+                .approval_count ??
+              0
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Evaluated Requests
+          </span>
+
+          <strong>
+            {{
+              policyResults.length
+            }}
+          </strong>
+        </div>
+      </div>
+    </section>
+
+    <section
+      v-if="
+        policyResults.length
+      "
+      class="provenance-section"
+    >
+      <div
+        class="provenance-section-heading"
+      >
+        <div>
+          <span
+            class="provenance-kicker"
+          >
+            DECISION RECORDS
+          </span>
+
+          <strong>
+            Per-request Policy Results
+          </strong>
+        </div>
+      </div>
+
+      <div class="request-stack">
+        <article
+          v-for="result in policyResults"
+          :key="
+            result.request_index
+          "
+          class="evidence-card"
+        >
+          <div
+            class="evidence-card-heading"
+          >
+            <div>
+              <strong>
+                {{
+                  result
+                    .tool_request
+                    ?.tool_name ||
+                  'Unknown tool'
+                }}
+              </strong>
+
+              <small>
+                Request
+                #{{
+                  result
+                    .request_index
+                }}
+                ·
+                {{
+                  result
+                    .tool_request
+                    ?.target ||
+                  'No target'
+                }}
+              </small>
+            </div>
+
+            <el-tag
+              :type="
+                decisionTagType(
+                  result.decision,
+                )
+              "
+            >
+              {{
+                result.decision
+              }}
+            </el-tag>
+          </div>
+
+          <div class="governance-note">
+            <span>
+              Policy Reason
+            </span>
+
+            <p>
+              {{
+                result.reason ||
+                'No policy reason recorded.'
+              }}
+            </p>
+          </div>
+
+          <div
+            class="governance-flags"
+          >
+            <span>
+              Human Approval
+            </span>
+
+            <strong>
+              {{
+                yesNoLabel(
+                  result
+                    .requires_human_approval,
+                )
+              }}
+            </strong>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</template>
+  <template
+    v-else-if="
+      isApprovalEvent
+    "
+  >
+    <div class="research-provenance">
+      <section class="provenance-section">
+        <div
+          class="provenance-section-heading"
+        >
+          <div>
+            <span
+              class="provenance-kicker"
+            >
+              HUMAN APPROVAL
+            </span>
+
+            <strong>
+              Governance Checkpoint
+            </strong>
+          </div>
+
+          <el-tag
+            :type="
+              approvalStatusTagType(
+                approvalRecord
+                  .status ||
+                approvalRecord
+                  .approval_status,
+              )
+            "
+          >
+            {{
+              (
+                approvalRecord
+                  .status ||
+                approvalRecord
+                  .approval_status ||
+                'unknown'
+              ).toUpperCase()
+            }}
+          </el-tag>
+        </div>
+
+        <div class="retrieval-grid">
+          <div>
+            <span>
+              Finding
+            </span>
+
+            <strong>
+              #{{
+                approvalRecord
+                  .finding_id ||
+                selectedRun
+                  ?.finding_id ||
+                '—'
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Request Index
+            </span>
+
+            <strong>
+              {{
+                approvalRecord
+                  .request_index ??
+                '—'
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Reviewer
+            </span>
+
+            <strong>
+              {{
+                approvalRecord
+                  .reviewer ||
+                '—'
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Tool
+            </span>
+
+            <strong>
+              {{
+                approvalToolRequest
+                  ?.tool_name ||
+                '—'
+              }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="governance-note">
+          <span>
+            Policy Reason
+          </span>
+
+          <p>
+            {{
+              approvalRecord
+                .policy_reason ||
+              '—'
+            }}
+          </p>
+        </div>
+
+        <div
+          v-if="
+            approvalRecord
+              .review_reason
+          "
+          class="governance-note"
+        >
+          <span>
+            Review Reason
+          </span>
+
+          <p>
+            {{
+              approvalRecord
+                .review_reason
+            }}
+          </p>
+        </div>
+      </section>
+
+      <section
+        v-if="
+          approvalToolRequest
+        "
+        class="provenance-section"
+      >
+        <div
+          class="provenance-section-heading"
+        >
+          <div>
+            <span
+              class="provenance-kicker"
+            >
+              APPROVAL SUBJECT
+            </span>
+
+            <strong>
+              Requested Tool Action
+            </strong>
+          </div>
+        </div>
+
+        <article class="evidence-card">
+          <div
+            class="evidence-card-heading"
+          >
+            <div>
+              <strong>
+                {{
+                  approvalToolRequest
+                    .tool_name
+                }}
+              </strong>
+
+              <small>
+                {{
+                  approvalToolRequest
+                    .target ||
+                  'No target'
+                }}
+              </small>
+            </div>
+          </div>
+
+          <div
+            v-if="
+              approvalToolRequest
+                .reason
+            "
+            class="governance-note"
+          >
+            <span>
+              Request Reason
+            </span>
+
+            <p>
+              {{
+                approvalToolRequest
+                  .reason
+              }}
+            </p>
+          </div>
+        </article>
+      </section>
+    </div>
+  </template>
+  <template
+    v-else-if="
+      isToolExecutionEvent
+    "
+  >
+    <div class="research-provenance">
+      <section class="provenance-section">
+        <div
+          class="provenance-section-heading"
+        >
+          <div>
+            <span
+              class="provenance-kicker"
+            >
+              TOOL BROKER
+            </span>
+
+            <strong>
+              Governed Tool Execution
+            </strong>
+          </div>
+
+          <el-tag
+            :type="
+              executionStatusTagType(
+                executionRecord
+                  .status ||
+                executionRecord
+                  .broker_status,
+              )
+            "
+          >
+            {{
+              (
+                executionRecord
+                  .status ||
+                executionRecord
+                  .broker_status ||
+                'unknown'
+              ).toUpperCase()
+            }}
+          </el-tag>
+        </div>
+
+        <div class="retrieval-grid">
+          <div>
+            <span>
+              Tool
+            </span>
+
+            <strong>
+              {{
+                executionToolRequest
+                  ?.tool_name ||
+                selectedMetadata
+                  .tool_name ||
+                '—'
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Target
+            </span>
+
+            <strong>
+              {{
+                executionToolRequest
+                  ?.target ||
+                selectedMetadata
+                  .target ||
+                '—'
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Policy
+            </span>
+
+            <strong>
+              {{
+                executionRecord
+                  .policy_decision ||
+                '—'
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Authorized
+            </span>
+
+            <strong>
+              {{
+                yesNoLabel(
+                  executionRecord
+                    .authorized,
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Executed
+            </span>
+
+            <strong>
+              {{
+                yesNoLabel(
+                  executionRecord
+                    .executed,
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Dry Run
+            </span>
+
+            <strong>
+              {{
+                yesNoLabel(
+                  executionRecord
+                    .dry_run,
+                )
+              }}
+            </strong>
+          </div>
+        </div>
+
+        <div
+          v-if="
+            executionRecord.message
+          "
+          class="governance-note"
+        >
+          <span>
+            Broker Message
+          </span>
+
+          <p>
+            {{
+              executionRecord
+                .message
+            }}
+          </p>
+        </div>
+      </section>
+
+      <section
+        v-if="
+          executionRecord.output &&
+          Object.keys(
+            executionRecord.output,
+          ).length
+        "
+        class="provenance-section"
+      >
+        <div
+          class="provenance-section-heading"
+        >
+          <div>
+            <span
+              class="provenance-kicker"
+            >
+              EXECUTION OUTPUT
+            </span>
+
+            <strong>
+              Tool Result
+            </strong>
+          </div>
+        </div>
+
+        <pre class="mini-metadata">{{
+          JSON.stringify(
+            executionRecord.output,
+            null,
+            2,
+          )
+        }}</pre>
+      </section>
+    </div>
+  </template>
 
             <template v-else>
               <div class="metadata-title">
@@ -1900,6 +3143,33 @@ onMounted(async () => {
                 )
               }}</pre>
             </template>
+            <el-collapse
+  v-if="
+    isStructuredAuditEvent
+  "
+  class="raw-metadata-collapse"
+>
+  <el-collapse-item
+    name="raw-metadata"
+  >
+    <template #title>
+      <span
+        class="raw-metadata-title"
+      >
+        Raw Audit Metadata
+      </span>
+    </template>
+
+    <pre class="metadata-block">{{
+      JSON.stringify(
+        selectedEvent
+          .event_metadata,
+        null,
+        2,
+      )
+    }}</pre>
+  </el-collapse-item>
+</el-collapse>
           </template>
         </section>
 
@@ -2500,6 +3770,32 @@ onMounted(async () => {
   gap: 8px;
 }
 
+.evidence-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.evidence-card-heading > div {
+  min-width: 0;
+}
+
+.evidence-card-heading strong {
+  display: block;
+  color: #334155;
+  font-size: 10px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.evidence-card-heading small {
+  display: block;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 8px;
+}
+
 .evidence-number {
   display: flex;
   width: 20px;
@@ -2718,6 +4014,120 @@ onMounted(async () => {
 
   .wide-field {
     grid-column: auto;
+  }
+}
+
+  .plan-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.plan-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid
+    var(--el-border-color-lighter);
+  border-radius: 10px;
+  background:
+    var(--el-fill-color-light);
+}
+
+.plan-card > span {
+  display: block;
+  margin-bottom: 10px;
+  color:
+    var(--el-text-color-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.plan-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.plan-card li + li {
+  margin-top: 6px;
+}
+
+.plan-card small {
+  color:
+    var(--el-text-color-secondary);
+}
+
+.request-stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.governance-note {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background:
+    var(--el-fill-color-light);
+}
+
+.governance-note > span {
+  display: block;
+  margin-bottom: 6px;
+  color:
+    var(--el-text-color-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.governance-note p {
+  margin: 0;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.governance-flags {
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid
+    var(--el-border-color-lighter);
+}
+
+.governance-flags span {
+  color:
+    var(--el-text-color-secondary);
+}
+
+.mini-metadata {
+  margin: 12px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 8px;
+  background:
+    var(--el-fill-color);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (
+  max-width: 1200px
+) {
+  .plan-grid {
+    grid-template-columns:
+      1fr;
   }
 }
 </style>
