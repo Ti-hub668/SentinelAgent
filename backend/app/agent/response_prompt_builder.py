@@ -1,3 +1,6 @@
+import json
+
+from app.agent.tool_registry import list_tool_capabilities
 from app.schemas.agent_decision import (
     AgentDecisionOutput,
 )
@@ -16,6 +19,7 @@ def build_response_prompt(
     risk_summary: str,
     recommended_action: str,
     decision: AgentDecisionOutput,
+    include_tool_capabilities: bool = False,
 ) -> str:
     """
     Build a constrained prompt for the Response Agent.
@@ -25,6 +29,18 @@ def build_response_prompt(
     """
 
     schema = ResponsePlan.model_json_schema()
+
+    capability_context = ""
+    if include_tool_capabilities:
+        descriptors = [item.model_dump(mode="json") for item in list_tool_capabilities()]
+        capability_context = (
+            "\nRegistered Tool Capabilities (planning guidance only):\n"
+            "Propose only tools listed here and follow their parameter schemas.\n"
+            "Metadata does not authorize execution. Policy Engine and human approval "
+            "remain authoritative; all tools are dry-run.\n"
+            + json.dumps(descriptors, ensure_ascii=False, indent=2)
+            + "\n"
+        )
 
     return f"""
 You are the Response Planning component of SentinelAgent.
@@ -79,7 +95,7 @@ reason={decision.reason}
 requires_human_review={decision.requires_human_review}
 recommended_next_step={decision.recommended_next_step}
 
-Return ONLY valid JSON matching this schema:
+{capability_context}Return ONLY valid JSON matching this schema:
 
 {schema}
 """.strip()

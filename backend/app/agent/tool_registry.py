@@ -9,6 +9,7 @@ from app.agent.executors.mock_executors import (
     simulate_manual_review,
     simulate_notify,
 )
+from app.schemas.tool_capability import ToolCapabilityDescriptor, ToolRiskLevel
 from app.schemas.response_plan import (
     ResponseActionType,
     ToolRequest,
@@ -48,6 +49,44 @@ class ToolDefinition:
     ]
 
     executor: ToolExecutor
+    description: str
+    risk_level: ToolRiskLevel
+    requires_target: bool
+    requires_approval: bool
+    governance_notes: str
+    capabilities: tuple[str, ...]
+    tags: tuple[str, ...]
+
+    def describe(self) -> ToolCapabilityDescriptor:
+        # Explicit allowlist: never serialize this dataclass or its executor.
+        # Contract docstrings can mention implementation details; omit them.
+        def public_schema(value):
+            if isinstance(value, dict):
+                return {
+                    key: public_schema(item)
+                    for key, item in value.items()
+                    if key != "description"
+                }
+            if isinstance(value, list):
+                return [public_schema(item) for item in value]
+            return value
+
+        return ToolCapabilityDescriptor(
+            name=self.name,
+            description=self.description,
+            risk_level=self.risk_level,
+            requires_target=self.requires_target,
+            requires_approval=self.requires_approval,
+            governance_notes=self.governance_notes,
+            capabilities=self.capabilities,
+            tags=self.tags,
+            parameter_contract=self.parameter_schema.__name__,
+            parameters_schema=public_schema(self.parameter_schema.model_json_schema()),
+        )
+
+    def validate_parameters(self, request: ToolRequest) -> ToolRequest:
+        parameters = self.parameter_schema.model_validate(request.parameters)
+        return request.model_copy(update={"parameters": parameters.model_dump()})
 
 
 TOOL_REGISTRY: dict[
@@ -60,6 +99,13 @@ TOOL_REGISTRY: dict[
             CreateTicketParameters
         ),
         executor=simulate_create_ticket,
+        description='Simulate a remediation ticket for the supplied target.',
+        risk_level='low',
+        requires_target=True,
+        requires_approval=False,
+        governance_notes='Human-review investigations require approval.',
+        capabilities=('ticketing',),
+        tags=('remediation', "dry_run"),
     ),
 
     "notify": ToolDefinition(
@@ -68,6 +114,13 @@ TOOL_REGISTRY: dict[
             NotifyParameters
         ),
         executor=simulate_notify,
+        description='Simulate a security notification for the supplied target.',
+        risk_level='low',
+        requires_target=True,
+        requires_approval=False,
+        governance_notes='Human-review investigations require approval.',
+        capabilities=('notification',),
+        tags=('communication', "dry_run"),
     ),
 
     "block_ip": ToolDefinition(
@@ -76,6 +129,13 @@ TOOL_REGISTRY: dict[
             BlockIpParameters
         ),
         executor=simulate_block_ip,
+        description='Simulate network containment for the supplied target.',
+        risk_level='high',
+        requires_target=True,
+        requires_approval=True,
+        governance_notes='Requires approval; denied while the investigation requires human review.',
+        capabilities=('network_containment',),
+        tags=('disruptive', "dry_run"),
     ),
 
     "manual_review": ToolDefinition(
@@ -84,12 +144,19 @@ TOOL_REGISTRY: dict[
             ManualReviewParameters
         ),
         executor=simulate_manual_review,
+        description='Simulate acknowledgement of a human security review.',
+        risk_level='low',
+        requires_target=True,
+        requires_approval=True,
+        governance_notes='Always enters the human approval workflow.',
+        capabilities=('human_review',),
+        tags=('review', "dry_run"),
     ),
 }
 
 
 def get_tool_definition(
-    tool_name: ResponseActionType,
+    tool_name: str,
 ) -> ToolDefinition | None:
     """
     Resolve one registered tool.
@@ -124,17 +191,15 @@ def validate_tool_request_parameters(
             f"for {request.tool_name}."
         )
 
-    validated_parameters = (
-        definition.parameter_schema
-        .model_validate(
-            request.parameters
-        )
-    )
+    return definition.validate_parameters(request)
 
-    return request.model_copy(
-        update={
-            "parameters":
-                validated_parameters
-                .model_dump(),
-        }
-    )
+
+def list_tool_capabilities() -> list[ToolCapabilityDescriptor]:
+    """Return fresh, detached public descriptions in stable name order."""
+    return [TOOL_REGISTRY[name].describe() for name in sorted(TOOL_REGISTRY)]
+
+
+def get_tool_capability(tool_name: str) -> ToolCapabilityDescriptor | None:
+    """Unknown names have no capability; discovery does not execute tools."""
+    definition = get_tool_definition(tool_name)
+    return definition.describe() if definition is not None else None

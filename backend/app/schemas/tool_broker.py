@@ -2,7 +2,16 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.schemas.response_plan import ToolRequest
+from app.schemas.execution import (
+    ExecutionIntent,
+    ExecutionReceipt,
+)
+from app.schemas.response_plan import (
+    ToolRequest,
+)
+from app.schemas.tool_capability import (
+    ToolRegistryAuditMetadata,
+)
 
 
 BrokerStatus = Literal[
@@ -31,6 +40,23 @@ class ToolExecutionResult(BaseModel):
 
     message: str
 
+    registry_metadata: (
+        ToolRegistryAuditMetadata
+        | None
+    ) = None
+
+    execution_intent: (
+        ExecutionIntent
+        | None
+    ) = None
+
+    execution_receipt: (
+        ExecutionReceipt
+        | None
+    ) = None
+
+    replayed: bool = False
+
     output: dict = Field(
         default_factory=dict
     )
@@ -39,11 +65,15 @@ class ToolExecutionResult(BaseModel):
 class ToolBrokerBatchResult(BaseModel):
     finding_id: int
 
-    results: list[ToolExecutionResult] = Field(
+    results: list[
+        ToolExecutionResult
+    ] = Field(
         default_factory=list
     )
 
     simulated_count: int = 0
+
+    replayed_count: int = 0
 
     blocked_count: int = 0
 

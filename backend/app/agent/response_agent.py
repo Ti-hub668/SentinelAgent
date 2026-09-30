@@ -110,6 +110,8 @@ def build_security_decision(
 
 def generate_response_plan(
     state: SentinelInvestigationState,
+    *,
+    include_tool_capabilities: bool = False,
 ) -> ResponsePlan:
     """
     Generate a dry-run response plan from a grounded
@@ -156,6 +158,7 @@ def generate_response_plan(
             enrichment.recommended_action
         ),
         decision=decision,
+        include_tool_capabilities=include_tool_capabilities,
     )
 
     raw_response = call_llm(

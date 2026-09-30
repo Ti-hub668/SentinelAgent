@@ -384,3 +384,167 @@ def recover_stale_investigation_runs(
         )
 
     return recovered
+
+def find_tool_execution_binding(
+    db: Session,
+    *,
+    run_id: int,
+    idempotency_key: str,
+) -> InvestigationEventRecord | None:
+    """
+    Find the most recent persisted execution attempt
+    bound to one idempotency key.
+
+    Successful, replayed, and failed executions all bind
+    the execution slot to the original request fingerprint.
+
+    Authorization/validation blocks do not bind a slot
+    because they never reached Execution Intent.
+    """
+
+    events = (
+        db.query(
+            InvestigationEvent
+        )
+        .filter(
+            InvestigationEvent.run_id
+            == run_id,
+            InvestigationEvent.event_type.in_(
+                [
+                    "tool_execution_simulated",
+                    "tool_execution_replayed",
+                    "tool_execution_failed",
+                ]
+            ),
+        )
+        .order_by(
+            InvestigationEvent.id.desc()
+        )
+        .all()
+    )
+
+    for event in events:
+        metadata = (
+            event.event_metadata
+            or {}
+        )
+
+        if (
+            metadata.get(
+                "idempotency_key"
+            )
+            == idempotency_key
+        ):
+            return (
+                InvestigationEventRecord
+                .model_validate(event)
+            )
+
+    return None
+
+def find_successful_tool_execution(
+    db: Session,
+    *,
+    run_id: int,
+    idempotency_key: str,
+) -> InvestigationEventRecord | None:
+    """
+    Find the most recent successful non-replayed
+    execution for one idempotency key.
+
+    Failed and blocked attempts are intentionally not
+    treated as successful execution receipts.
+    """
+
+    events = (
+        db.query(
+            InvestigationEvent
+        )
+        .filter(
+            InvestigationEvent.run_id
+            == run_id,
+            InvestigationEvent.event_type
+            == "tool_execution_simulated",
+        )
+        .order_by(
+            InvestigationEvent.id.desc()
+        )
+        .all()
+    )
+
+    for event in events:
+        metadata = (
+            event.event_metadata
+            or {}
+        )
+
+        if (
+            metadata.get(
+                "idempotency_key"
+            )
+            == idempotency_key
+            and not metadata.get(
+                "replayed",
+                False,
+            )
+        ):
+            return (
+                InvestigationEventRecord
+                .model_validate(
+                    event
+                )
+            )
+
+    return None
+
+
+def count_tool_execution_attempts(
+    db: Session,
+    *,
+    run_id: int,
+    idempotency_key: str,
+) -> int:
+    """
+    Count persisted attempts for one idempotency key.
+
+    This provides human-readable attempt numbering.
+    """
+
+    events = (
+        db.query(
+            InvestigationEvent
+        )
+        .filter(
+            InvestigationEvent.run_id
+            == run_id,
+            InvestigationEvent.event_type.in_(
+                [
+                    "tool_execution_simulated",
+                    "tool_execution_replayed",
+                    "tool_execution_failed",
+                ]
+            ),
+        )
+        .order_by(
+            InvestigationEvent.id.asc()
+        )
+        .all()
+    )
+
+    count = 0
+
+    for event in events:
+        metadata = (
+            event.event_metadata
+            or {}
+        )
+
+        if (
+            metadata.get(
+                "idempotency_key"
+            )
+            == idempotency_key
+        ):
+            count += 1
+
+    return count
