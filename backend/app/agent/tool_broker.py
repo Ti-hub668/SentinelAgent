@@ -1,10 +1,9 @@
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app.agent.executors.mock_executors import (
-    simulate_block_ip,
-    simulate_create_ticket,
-    simulate_manual_review,
-    simulate_notify,
+from app.agent.tool_registry import (
+    get_tool_definition,
+    validate_tool_request_parameters,
 )
 from app.agent.ledger import (
     record_investigation_event,
@@ -18,15 +17,6 @@ from app.schemas.tool_broker import (
     ToolBrokerBatchResult,
     ToolExecutionResult,
 )
-
-
-MOCK_EXECUTORS = {
-    "create_ticket": simulate_create_ticket,
-    "notify": simulate_notify,
-    "block_ip": simulate_block_ip,
-    "manual_review": simulate_manual_review,
-}
-
 
 def _find_matching_approval(
     policy_result: ToolPolicyResult,
@@ -156,11 +146,40 @@ def execute_policy_result(
             output={},
         )
 
-    executor = MOCK_EXECUTORS.get(
+    definition = get_tool_definition(
         policy_result.tool_request.tool_name
     )
 
-    if executor is None:
+    if definition is None:
+        return ToolExecutionResult(
+            finding_id=finding_id,
+
+            request_index=(
+                policy_result.request_index
+            ),
+
+            tool_request=(
+                policy_result.tool_request
+            ),
+
+            policy_decision=(
+                policy_result.decision
+            ),
+
+            authorized=False,
+            executed=False,
+            dry_run=True,
+
+            status="blocked",
+
+            message=(
+                "No registered tool definition exists "
+                "for "
+                f"{policy_result.tool_request.tool_name}."
+            ),
+
+            output={},
+        )
         return ToolExecutionResult(
             finding_id=finding_id,
             request_index=(
@@ -184,8 +203,62 @@ def execute_policy_result(
         )
 
     try:
-        output = executor(
-            policy_result.tool_request
+        validated_request = (
+            validate_tool_request_parameters(
+                policy_result.tool_request
+            )
+        )
+
+    except ValidationError as exc:
+        issues = "; ".join(
+            (
+                ".".join(
+                    str(part)
+                    for part
+                    in error["loc"]
+                )
+                + ": "
+                + error["msg"]
+            )
+            for error
+            in exc.errors(
+                include_url=False,
+                include_input=False,
+            )
+        )
+
+        return ToolExecutionResult(
+            finding_id=finding_id,
+
+            request_index=(
+                policy_result.request_index
+            ),
+
+            tool_request=(
+                policy_result.tool_request
+            ),
+
+            policy_decision=(
+                policy_result.decision
+            ),
+
+            authorized=False,
+            executed=False,
+            dry_run=True,
+
+            status="blocked",
+
+            message=(
+                "Tool parameter validation failed: "
+                f"{issues}"
+            ),
+
+            output={},
+        )
+
+    try:
+        output = definition.executor(
+            validated_request
         )
 
         return ToolExecutionResult(
@@ -193,9 +266,7 @@ def execute_policy_result(
             request_index=(
                 policy_result.request_index
             ),
-            tool_request=(
-                policy_result.tool_request
-            ),
+            tool_request=validated_request,
             policy_decision=(
                 policy_result.decision
             ),
@@ -219,9 +290,7 @@ def execute_policy_result(
             request_index=(
                 policy_result.request_index
             ),
-            tool_request=(
-                policy_result.tool_request
-            ),
+            tool_request=validated_request,
             policy_decision=(
                 policy_result.decision
             ),
