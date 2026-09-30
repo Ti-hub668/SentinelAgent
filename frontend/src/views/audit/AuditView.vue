@@ -253,6 +253,157 @@ const selectedRunDuration = computed(
   },
 )
 
+
+const isResearchEvent = computed(
+  () =>
+    selectedEvent.value
+      ?.event_type ===
+    'research_completed',
+)
+
+const researchMetadata = computed(
+  () =>
+    selectedEvent.value
+      ?.event_metadata || {},
+)
+
+const researchEvidence = computed(
+  () => {
+    const value =
+      researchMetadata.value
+        ?.evidence
+
+    return Array.isArray(value)
+      ? value
+      : []
+  },
+)
+
+const researchIntelligence = computed(
+  () => {
+    const value =
+      researchMetadata.value
+        ?.intelligence
+
+    return (
+      value &&
+      typeof value === 'object'
+        ? value
+        : null
+    )
+  },
+)
+
+const researchSources = computed(
+  () => {
+    const value =
+      researchMetadata.value
+        ?.retrieved_sources
+
+    return Array.isArray(value)
+      ? value
+      : []
+  },
+)
+
+const hasStructuredResearchMetadata =
+  computed(
+    () =>
+      Boolean(
+        researchMetadata.value
+          ?.retrieval_strategy ||
+        researchMetadata.value
+          ?.rag_query ||
+        researchMetadata.value
+          ?.rag_index_path ||
+        researchEvidence.value.length ||
+        researchIntelligence.value,
+      ),
+  )
+
+function normalizeList(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean)
+  }
+
+  if (
+    typeof value === 'string' &&
+    value.trim()
+  ) {
+    return [value.trim()]
+  }
+
+  return []
+}
+
+function formatScore(value) {
+  const score = Number(value)
+
+  if (Number.isNaN(score)) {
+    return '—'
+  }
+
+  return score.toFixed(4)
+}
+
+function matchTypeLabel(value) {
+  const labels = {
+    canonical_exact:
+      'Canonical Exact',
+    relationship:
+      'Relationship',
+    semantic:
+      'Semantic',
+  }
+
+  return (
+    labels[value] ||
+    value ||
+    'Unknown'
+  )
+}
+
+function matchTypeTagType(value) {
+  if (value === 'canonical_exact') {
+    return 'success'
+  }
+
+  if (value === 'relationship') {
+    return 'warning'
+  }
+
+  return 'info'
+}
+
+function compactHash(value) {
+  if (!value) {
+    return '—'
+  }
+
+  const textValue = String(value)
+
+  if (textValue.length <= 24) {
+    return textValue
+  }
+
+  return `${textValue.slice(
+    0,
+    12,
+  )}…${textValue.slice(-8)}`
+}
+
+function booleanLabel(value) {
+  if (value === true) {
+    return 'Matched'
+  }
+
+  if (value === false) {
+    return 'No match'
+  }
+
+  return '—'
+}
+
 function formatDate(value) {
   if (!value) {
     return '—'
@@ -1290,18 +1441,465 @@ onMounted(async () => {
                 .event_metadata
             "
           >
-            <div class="metadata-title">
-              Event Metadata
-            </div>
+            <template
+              v-if="
+                isResearchEvent &&
+                hasStructuredResearchMetadata
+              "
+            >
+              <div class="research-provenance">
+                <section class="provenance-section">
+                  <div class="provenance-section-heading">
+                    <div>
+                      <span class="provenance-kicker">
+                        RAG RETRIEVAL
+                      </span>
 
-            <pre class="metadata-block">{{
-              JSON.stringify(
-                selectedEvent
-                  .event_metadata,
-                null,
-                2,
-              )
-            }}</pre>
+                      <strong>
+                        Security Knowledge Search
+                      </strong>
+                    </div>
+
+                    <el-tag
+                      size="small"
+                      type="info"
+                    >
+                      {{
+                        researchMetadata
+                          .retrieval_strategy ||
+                        'retrieval'
+                      }}
+                    </el-tag>
+                  </div>
+
+                  <div class="retrieval-grid">
+                    <div>
+                      <span>Top K</span>
+                      <strong>
+                        {{
+                          researchMetadata
+                            .top_k ?? '—'
+                        }}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Retrieved</span>
+                      <strong>
+                        {{
+                          researchMetadata
+                            .retrieved_count ??
+                          researchEvidence.length
+                        }}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>RAG Used</span>
+                      <strong>
+                        {{
+                          researchMetadata
+                            .rag_used
+                            ? 'Yes'
+                            : 'No'
+                        }}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Intel Used</span>
+                      <strong>
+                        {{
+                          researchMetadata
+                            .intelligence_used
+                            ? 'Yes'
+                            : 'No'
+                        }}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="researchSources.length"
+                    class="source-tags"
+                  >
+                    <span>Sources</span>
+
+                    <div>
+                      <el-tag
+                        v-for="source in researchSources"
+                        :key="source"
+                        size="small"
+                        effect="plain"
+                      >
+                        {{ source }}
+                      </el-tag>
+                    </div>
+                  </div>
+
+                  <div class="provenance-query">
+                    <span>Query</span>
+
+                    <div class="query-block">
+                      {{
+                        researchMetadata
+                          .rag_query ||
+                        'No RAG query recorded.'
+                      }}
+                    </div>
+                  </div>
+
+                  <div class="provenance-index">
+                    <span>Index</span>
+                    <code>
+                      {{
+                        researchMetadata
+                          .rag_index_path ||
+                        '—'
+                      }}
+                    </code>
+                  </div>
+                </section>
+
+                <section class="provenance-section">
+                  <div class="provenance-section-heading">
+                    <div>
+                      <span class="provenance-kicker">
+                        RETRIEVED EVIDENCE
+                      </span>
+
+                      <strong>
+                        Auditable Knowledge Evidence
+                      </strong>
+                    </div>
+
+                    <el-tag
+                      size="small"
+                      type="success"
+                    >
+                      {{ researchEvidence.length }}
+                    </el-tag>
+                  </div>
+
+                  <div
+                    v-if="researchEvidence.length"
+                    class="evidence-list"
+                  >
+                    <article
+                      v-for="(
+                        evidence,
+                        index
+                      ) in researchEvidence"
+                      :key="
+                        evidence.document_id ||
+                        `${evidence.source_id}-${index}`
+                      "
+                      class="evidence-card"
+                    >
+                      <div class="evidence-head">
+                        <div class="evidence-number">
+                          {{ index + 1 }}
+                        </div>
+
+                        <div class="evidence-title">
+                          <strong>
+                            {{
+                              evidence.title ||
+                              evidence.source_id ||
+                              'Knowledge Evidence'
+                            }}
+                          </strong>
+
+                          <span>
+                            {{
+                              evidence.source ||
+                              'Unknown source'
+                            }}
+                            ·
+                            {{
+                              evidence.category ||
+                              'uncategorized'
+                            }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="evidence-badges">
+                        <el-tag
+                          size="small"
+                          :type="
+                            matchTypeTagType(
+                              evidence.match_type,
+                            )
+                          "
+                        >
+                          {{
+                            matchTypeLabel(
+                              evidence.match_type,
+                            )
+                          }}
+                        </el-tag>
+
+                        <span class="score-pill">
+                          score
+                          {{
+                            formatScore(
+                              evidence.score,
+                            )
+                          }}
+                        </span>
+                      </div>
+
+                      <div class="evidence-fields">
+                        <div>
+                          <span>Source ID</span>
+                          <strong>
+                            {{
+                              evidence.source_id ||
+                              '—'
+                            }}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Chunk</span>
+                          <strong>
+                            {{
+                              evidence.chunk_index ??
+                              '—'
+                            }}
+                          </strong>
+                        </div>
+
+                        <div class="wide-field">
+                          <span>Document ID</span>
+                          <code>
+                            {{
+                              evidence.document_id ||
+                              '—'
+                            }}
+                          </code>
+                        </div>
+
+                        <div class="wide-field">
+                          <span>Parent ID</span>
+                          <code>
+                            {{
+                              evidence.parent_id ||
+                              '—'
+                            }}
+                          </code>
+                        </div>
+
+                        <div class="wide-field">
+                          <span>Source URL</span>
+
+                          <a
+                            v-if="evidence.source_url"
+                            :href="evidence.source_url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Open authoritative source ↗
+                          </a>
+
+                          <strong v-else>
+                            —
+                          </strong>
+                        </div>
+
+                        <div class="wide-field">
+                          <span>Content SHA-256</span>
+                          <code
+                            :title="
+                              evidence.content_sha256 ||
+                              ''
+                            "
+                          >
+                            {{
+                              compactHash(
+                                evidence.content_sha256,
+                              )
+                            }}
+                          </code>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+
+                  <el-empty
+                    v-else
+                    :image-size="48"
+                    description="No provenance evidence recorded for this run"
+                  />
+                </section>
+
+                <section
+                  v-if="researchIntelligence"
+                  class="provenance-section"
+                >
+                  <div class="provenance-section-heading">
+                    <div>
+                      <span class="provenance-kicker">
+                        STRUCTURED INTELLIGENCE
+                      </span>
+
+                      <strong>
+                        Threat Intelligence Signals
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div class="intel-grid">
+                    <div>
+                      <span>Template</span>
+                      <strong>
+                        {{
+                          researchIntelligence
+                            .template_id ||
+                          '—'
+                        }}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>CISA KEV</span>
+                      <strong>
+                        {{
+                          booleanLabel(
+                            researchIntelligence
+                              .kev_matched,
+                          )
+                        }}
+                      </strong>
+                      <small>
+                        {{
+                          researchIntelligence
+                            .kev_record_count ??
+                          0
+                        }} record(s)
+                      </small>
+                    </div>
+
+                    <div>
+                      <span>NVD</span>
+                      <strong>
+                        {{
+                          booleanLabel(
+                            researchIntelligence
+                              .nvd_matched,
+                          )
+                        }}
+                      </strong>
+                      <small>
+                        {{
+                          researchIntelligence
+                            .nvd_record_count ??
+                          0
+                        }} record(s)
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="intel-identifiers">
+                    <div>
+                      <span>CVE IDs</span>
+
+                      <div
+                        v-if="
+                          normalizeList(
+                            researchIntelligence
+                              .cve_ids,
+                          ).length
+                        "
+                        class="identifier-tags"
+                      >
+                        <el-tag
+                          v-for="item in normalizeList(
+                            researchIntelligence
+                              .cve_ids,
+                          )"
+                          :key="item"
+                          size="small"
+                          effect="plain"
+                        >
+                          {{ item }}
+                        </el-tag>
+                      </div>
+
+                      <strong v-else>
+                        —
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>CWE IDs</span>
+
+                      <div
+                        v-if="
+                          normalizeList(
+                            researchIntelligence
+                              .cwe_ids,
+                          ).length
+                        "
+                        class="identifier-tags"
+                      >
+                        <el-tag
+                          v-for="item in normalizeList(
+                            researchIntelligence
+                              .cwe_ids,
+                          )"
+                          :key="item"
+                          size="small"
+                          type="warning"
+                          effect="plain"
+                        >
+                          {{ item }}
+                        </el-tag>
+                      </div>
+
+                      <strong v-else>
+                        —
+                      </strong>
+                    </div>
+                  </div>
+                </section>
+
+                <el-collapse class="raw-metadata-collapse">
+                  <el-collapse-item name="raw-metadata">
+                    <template #title>
+                      <span class="raw-metadata-title">
+                        Raw Audit Metadata
+                      </span>
+                    </template>
+
+                    <pre class="metadata-block">{{
+                      JSON.stringify(
+                        selectedEvent
+                          .event_metadata,
+                        null,
+                        2,
+                      )
+                    }}</pre>
+                  </el-collapse-item>
+                </el-collapse>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="metadata-title">
+                Event Metadata
+              </div>
+
+              <pre class="metadata-block">{{
+                JSON.stringify(
+                  selectedEvent
+                    .event_metadata,
+                  null,
+                  2,
+                )
+              }}</pre>
+            </template>
           </template>
         </section>
 
@@ -1752,6 +2350,306 @@ onMounted(async () => {
   text-transform: uppercase;
 }
 
+.research-provenance {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.provenance-section {
+  padding: 12px;
+  border: 1px solid #e5edf3;
+  border-radius: 9px;
+  background: #fbfdfe;
+}
+
+.provenance-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+
+.provenance-section-heading > div {
+  min-width: 0;
+}
+
+.provenance-section-heading strong {
+  display: block;
+  margin-top: 3px;
+  color: #334155;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.provenance-kicker {
+  display: block;
+  color: #299dbc;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.retrieval-grid,
+.intel-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.retrieval-grid > div,
+.intel-grid > div {
+  padding: 8px;
+  border: 1px solid #edf0f4;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.retrieval-grid span,
+.intel-grid span,
+.source-tags > span,
+.provenance-query > span,
+.provenance-index > span,
+.evidence-fields span,
+.intel-identifiers > div > span {
+  display: block;
+  color: #94a3b8;
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.retrieval-grid strong,
+.intel-grid strong {
+  display: block;
+  margin-top: 4px;
+  color: #475569;
+  font-size: 9px;
+  word-break: break-word;
+}
+
+.intel-grid small {
+  display: block;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 7px;
+}
+
+.source-tags,
+.provenance-query,
+.provenance-index {
+  margin-top: 10px;
+}
+
+.source-tags > div,
+.identifier-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.query-block {
+  max-height: 120px;
+  margin-top: 6px;
+  padding: 9px;
+  overflow: auto;
+  border: 1px solid #e8eef3;
+  border-radius: 7px;
+  color: #5e7085;
+  font-size: 8px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #fff;
+}
+
+.provenance-index code {
+  display: block;
+  margin-top: 6px;
+  color: #526377;
+  font-family:
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  font-size: 8px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.evidence-card {
+  padding: 10px;
+  border: 1px solid #e4ebf1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.evidence-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.evidence-number {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #247e97;
+  font-size: 8px;
+  font-weight: 700;
+  background: #ddf1f5;
+}
+
+.evidence-title {
+  min-width: 0;
+  flex: 1;
+}
+
+.evidence-title strong {
+  display: block;
+  color: #334155;
+  font-size: 9px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.evidence-title span {
+  display: block;
+  margin-top: 3px;
+  color: #8b98a8;
+  font-size: 7px;
+}
+
+.evidence-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.score-pill {
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #596b80;
+  font-family:
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  font-size: 7px;
+  background: #edf2f6;
+}
+
+.evidence-fields {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.evidence-fields > div {
+  min-width: 0;
+  padding: 7px;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.evidence-fields strong,
+.evidence-fields code,
+.evidence-fields a {
+  display: block;
+  margin-top: 4px;
+  color: #4c6075;
+  font-size: 8px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.evidence-fields code {
+  font-family:
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  word-break: break-all;
+}
+
+.evidence-fields a {
+  color: #258eaa;
+  text-decoration: none;
+}
+
+.evidence-fields a:hover {
+  text-decoration: underline;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.intel-identifiers {
+  display: grid;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.intel-identifiers > div {
+  padding: 8px;
+  border: 1px solid #edf0f4;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.intel-identifiers strong {
+  display: block;
+  margin-top: 5px;
+  color: #475569;
+  font-size: 9px;
+}
+
+.raw-metadata-collapse {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.raw-metadata-title {
+  color: #718095;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+:deep(.raw-metadata-collapse .el-collapse-item__header) {
+  height: 34px;
+  border-bottom: 0;
+  color: #718095;
+  background: transparent;
+}
+
+:deep(.raw-metadata-collapse .el-collapse-item__wrap) {
+  border-bottom: 0;
+  background: transparent;
+}
+
+:deep(.raw-metadata-collapse .el-collapse-item__content) {
+  padding-bottom: 0;
+}
+
 .metadata-block,
 .error-panel pre {
   max-height: 390px;
@@ -1811,8 +2709,15 @@ onMounted(async () => {
 
   .event-filters,
   .run-overview,
-  .workflow-meta {
+  .workflow-meta,
+  .retrieval-grid,
+  .intel-grid,
+  .evidence-fields {
     grid-template-columns: 1fr;
+  }
+
+  .wide-field {
+    grid-column: auto;
   }
 }
 </style>
