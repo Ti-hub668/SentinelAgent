@@ -1,14 +1,6 @@
-from collections.abc import Callable
 from dataclasses import dataclass
 
 from pydantic import BaseModel
-
-from app.agent.executors.mock_executors import (
-    simulate_block_ip,
-    simulate_create_ticket,
-    simulate_manual_review,
-    simulate_notify,
-)
 from app.schemas.tool_capability import ToolCapabilityDescriptor, ToolRiskLevel
 from app.schemas.response_plan import (
     ResponseActionType,
@@ -20,12 +12,12 @@ from app.schemas.tool_contracts import (
     ManualReviewParameters,
     NotifyParameters,
 )
-
-
-ToolExecutor = Callable[
-    [ToolRequest],
-    dict,
-]
+from app.agent.adapters.base import (
+    ToolAdapter,
+)
+from app.agent.adapters.registry import (
+    get_adapter,
+)
 
 
 @dataclass(
@@ -39,7 +31,7 @@ class ToolDefinition:
     A tool definition binds together:
     - tool name
     - accepted parameter contract
-    - dry-run executor
+    - governed tool adapter
     """
 
     name: ResponseActionType
@@ -48,7 +40,7 @@ class ToolDefinition:
         BaseModel
     ]
 
-    executor: ToolExecutor
+    adapter: ToolAdapter
     description: str
     risk_level: ToolRiskLevel
     requires_target: bool
@@ -58,7 +50,7 @@ class ToolDefinition:
     tags: tuple[str, ...]
 
     def describe(self) -> ToolCapabilityDescriptor:
-        # Explicit allowlist: never serialize this dataclass or its executor.
+        # Explicit allowlist: never serialize this dataclass or its adapter.
         # Contract docstrings can mention implementation details; omit them.
         def public_schema(value):
             if isinstance(value, dict):
@@ -95,10 +87,14 @@ TOOL_REGISTRY: dict[
 ] = {
     "create_ticket": ToolDefinition(
         name="create_ticket",
+
         parameter_schema=(
             CreateTicketParameters
         ),
-        executor=simulate_create_ticket,
+
+        adapter=get_adapter(
+            "create_ticket"
+        ),
         description='Simulate a remediation ticket for the supplied target.',
         risk_level='low',
         requires_target=True,
@@ -113,7 +109,7 @@ TOOL_REGISTRY: dict[
         parameter_schema=(
             NotifyParameters
         ),
-        executor=simulate_notify,
+        adapter=get_adapter("notify"),
         description='Simulate a security notification for the supplied target.',
         risk_level='low',
         requires_target=True,
@@ -128,7 +124,7 @@ TOOL_REGISTRY: dict[
         parameter_schema=(
             BlockIpParameters
         ),
-        executor=simulate_block_ip,
+        adapter=get_adapter("block_ip"),
         description='Simulate network containment for the supplied target.',
         risk_level='high',
         requires_target=True,
@@ -143,7 +139,7 @@ TOOL_REGISTRY: dict[
         parameter_schema=(
             ManualReviewParameters
         ),
-        executor=simulate_manual_review,
+        adapter=get_adapter("manual_review"),
         description='Simulate acknowledgement of a human security review.',
         risk_level='low',
         requires_target=True,

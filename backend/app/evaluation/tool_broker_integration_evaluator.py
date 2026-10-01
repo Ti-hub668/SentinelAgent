@@ -119,7 +119,7 @@ def main():
 
         # ---------------------------------------------
         # After approval:
-        # Mock executor may run.
+        # Dry-run adapter may run.
         # ---------------------------------------------
 
         approved_batch = (
@@ -144,7 +144,7 @@ def main():
 
         print(
             "[PASS] approved request reached "
-            "dry-run executor"
+            "dry-run adapter"
         )
 
         # ---------------------------------------------

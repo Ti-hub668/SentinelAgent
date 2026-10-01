@@ -24,6 +24,7 @@ from app.agent.tool_broker import (
     execute_policy_evaluation_with_ledger,
 )
 from app.agent.tool_registry import TOOL_REGISTRY
+from app.evaluation.adapter_test_utils import TestAdapter
 from app.evaluation.tool_broker_evaluator import make_plan
 from app.models.execution_claim import ExecutionClaim
 from app.models.investigation_event import InvestigationEvent
@@ -51,7 +52,9 @@ def isolated_ledger():
         engine
     )
 
-    ExecutionClaim.__table__.create(engine)
+    ExecutionClaim.__table__.create(
+        engine
+    )
 
     try:
         with Session(engine) as db:
@@ -176,8 +179,8 @@ def test_canonical_request_fingerprint():
         != first_fingerprint
     )
 
-    # Idempotency key identifies the execution slot,
-    # not request semantics.
+    # Idempotency key identifies the execution
+    # slot, not request semantics.
     first_key = build_idempotency_key(
         run_id=42,
         request_index=0,
@@ -188,8 +191,18 @@ def test_canonical_request_fingerprint():
         request_index=0,
     )
 
-    assert first_key == second_key
-    assert first_key != build_idempotency_key(run_id=42, request_index=1)
+    assert (
+        first_key
+        == second_key
+    )
+
+    assert (
+        first_key
+        != build_idempotency_key(
+            run_id=42,
+            request_index=1,
+        )
+    )
 
     different_run_key = (
         build_idempotency_key(
@@ -229,11 +242,12 @@ def test_same_run_replay_deduplicated():
         with patch.dict(
             TOOL_REGISTRY,
             {
-                "create_ticket":
-                    replace(
-                        definition,
-                        executor=executor,
-                    )
+                "create_ticket": replace(
+                    definition,
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
             },
         ):
             first = execute_with_ledger(
@@ -260,15 +274,31 @@ def test_same_run_replay_deduplicated():
             first_result.status
             == "simulated"
         )
-        assert first_result.executed
-        assert not first_result.replayed
+
+        assert (
+            first_result.executed
+            is True
+        )
+
+        assert (
+            first_result.replayed
+            is False
+        )
 
         assert (
             second_result.status
             == "simulated"
         )
-        assert not second_result.executed
-        assert second_result.replayed
+
+        assert (
+            second_result.executed
+            is False
+        )
+
+        assert (
+            second_result.replayed
+            is True
+        )
 
         executor.assert_called_once()
 
@@ -306,8 +336,10 @@ def test_same_run_replay_deduplicated():
             second_result
             .execution_receipt
             .replayed
+            is True
         )
 
+        # Legacy audit compatibility field.
         assert (
             second_result
             .execution_receipt
@@ -363,11 +395,12 @@ def test_replay_fingerprint_mismatch_blocked():
         with patch.dict(
             TOOL_REGISTRY,
             {
-                "create_ticket":
-                    replace(
-                        definition,
-                        executor=executor,
-                    )
+                "create_ticket": replace(
+                    definition,
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
             },
         ):
             first = execute_with_ledger(
@@ -387,21 +420,31 @@ def test_replay_fingerprint_mismatch_blocked():
             == "simulated"
         )
 
-        mismatch = second.results[0]
+        mismatch = (
+            second.results[0]
+        )
 
         assert (
             mismatch.status
             == "blocked"
         )
-        assert mismatch.executed is False
-        assert mismatch.replayed is False
+
+        assert (
+            mismatch.executed
+            is False
+        )
+
+        assert (
+            mismatch.replayed
+            is False
+        )
 
         assert (
             "fingerprint"
             in mismatch.message.lower()
         )
 
-        # Changed request must NOT reach executor.
+        # Changed request must NOT reach adapter.
         executor.assert_called_once()
 
         assert (
@@ -473,11 +516,12 @@ def test_different_runs_remain_independent():
         with patch.dict(
             TOOL_REGISTRY,
             {
-                "create_ticket":
-                    replace(
-                        definition,
-                        executor=executor,
-                    )
+                "create_ticket": replace(
+                    definition,
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
             },
         ):
             first = execute_with_ledger(
@@ -502,10 +546,20 @@ def test_different_runs_remain_independent():
             is True
         )
 
-        assert not first.results[0].replayed
-        assert not second.results[0].replayed
+        assert (
+            first.results[0].replayed
+            is False
+        )
 
-        assert executor.call_count == 2
+        assert (
+            second.results[0].replayed
+            is False
+        )
+
+        assert (
+            executor.call_count
+            == 2
+        )
 
         assert (
             first.results[0]
@@ -562,11 +616,13 @@ def test_approval_before_execution_and_replay():
         with patch.dict(
             TOOL_REGISTRY,
             {
-                "block_ip":
-                    replace(
-                        definition,
-                        executor=executor,
-                    )
+                "block_ip": replace(
+                    definition,
+                    adapter=TestAdapter(
+                        executor,
+                        name="block_ip",
+                    ),
+                )
             },
         ):
             pending = (
@@ -589,6 +645,8 @@ def test_approval_before_execution_and_replay():
                 is None
             )
 
+            # Approval must happen before
+            # adapter execution.
             executor.assert_not_called()
 
             approved = approve_request(
@@ -623,14 +681,25 @@ def test_approval_before_execution_and_replay():
                 )
             )
 
-        assert first.results[0].executed
-        assert not first.results[0].replayed
+        assert (
+            first.results[0].executed
+            is True
+        )
+
+        assert (
+            first.results[0].replayed
+            is False
+        )
 
         assert (
             second.results[0].executed
             is False
         )
-        assert second.results[0].replayed
+
+        assert (
+            second.results[0].replayed
+            is True
+        )
 
         executor.assert_called_once()
 
@@ -660,11 +729,12 @@ def test_invalid_parameters_blocked_before_intent():
         with patch.dict(
             TOOL_REGISTRY,
             {
-                "create_ticket":
-                    replace(
-                        definition,
-                        executor=executor,
-                    )
+                "create_ticket": replace(
+                    definition,
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
             },
         ):
             result = execute_with_ledger(
@@ -682,7 +752,10 @@ def test_invalid_parameters_blocked_before_intent():
             == "blocked"
         )
 
-        assert not broker_result.executed
+        assert (
+            broker_result.executed
+            is False
+        )
 
         assert (
             broker_result
@@ -729,11 +802,12 @@ def test_failed_execution_remains_retryable():
         with patch.dict(
             TOOL_REGISTRY,
             {
-                "create_ticket":
-                    replace(
-                        definition,
-                        executor=executor,
-                    )
+                "create_ticket": replace(
+                    definition,
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
             },
         ):
             first = execute_with_ledger(
@@ -766,10 +840,20 @@ def test_failed_execution_remains_retryable():
             == "simulated"
         )
 
-        assert second_result.executed
-        assert not second_result.replayed
+        assert (
+            second_result.executed
+            is True
+        )
 
-        assert executor.call_count == 2
+        assert (
+            second_result.replayed
+            is False
+        )
+
+        assert (
+            executor.call_count
+            == 2
+        )
 
         assert (
             first_result
@@ -826,122 +910,635 @@ def test_failed_execution_remains_retryable():
 
 def test_current_authorization_precedes_replay():
     with isolated_ledger() as db:
-        run = start_investigation_run(db, 62)
-        evaluation = make_evaluation(make_request(tool_name="block_ip", target="192.0.2.10"))
-        pending = build_approval_requests(evaluation)[0]
-        approved = approve_request(pending, reviewer="analyst", reason="test")
-        executor = Mock(return_value={"ok": True})
-        with patch.dict(TOOL_REGISTRY, {"block_ip": replace(TOOL_REGISTRY["block_ip"], executor=executor)}):
-            first = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                evaluation=evaluation, approvals=[approved])
-            assert first.results[0].executed
-            rejected = approved.model_copy(update={"status": "rejected"})
-            for approvals in ([], [pending], [rejected], [approved, rejected]):
-                result = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                    evaluation=evaluation, approvals=approvals).results[0]
-                assert result.status == "blocked" and not result.replayed
-                assert result.execution_intent is None
-            denied = evaluation.model_copy(deep=True)
-            denied.results[0].decision = "DENY"
-            result = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                evaluation=denied, approvals=[approved]).results[0]
-            assert result.status == "blocked" and not result.replayed
+        run = start_investigation_run(
+            db,
+            62,
+        )
+
+        evaluation = make_evaluation(
+            make_request(
+                tool_name="block_ip",
+                target="192.0.2.10",
+            )
+        )
+
+        pending = (
+            build_approval_requests(
+                evaluation
+            )[0]
+        )
+
+        approved = approve_request(
+            pending,
+            reviewer="analyst",
+            reason="test",
+        )
+
+        executor = Mock(
+            return_value={
+                "ok": True,
+            }
+        )
+
+        with patch.dict(
+            TOOL_REGISTRY,
+            {
+                "block_ip": replace(
+                    TOOL_REGISTRY[
+                        "block_ip"
+                    ],
+                    adapter=TestAdapter(
+                        executor,
+                        name="block_ip",
+                    ),
+                )
+            },
+        ):
+            first = (
+                execute_policy_evaluation_with_ledger(
+                    db,
+                    run_id=run.id,
+                    evaluation=evaluation,
+                    approvals=[
+                        approved
+                    ],
+                )
+            )
+
+            assert (
+                first.results[0].executed
+                is True
+            )
+
+            rejected = (
+                approved.model_copy(
+                    update={
+                        "status":
+                            "rejected"
+                    }
+                )
+            )
+
+            for approvals in (
+                [],
+                [pending],
+                [rejected],
+                [
+                    approved,
+                    rejected,
+                ],
+            ):
+                result = (
+                    execute_policy_evaluation_with_ledger(
+                        db,
+                        run_id=run.id,
+                        evaluation=evaluation,
+                        approvals=approvals,
+                    )
+                    .results[0]
+                )
+
+                assert (
+                    result.status
+                    == "blocked"
+                )
+
+                assert (
+                    result.replayed
+                    is False
+                )
+
+                assert (
+                    result.execution_intent
+                    is None
+                )
+
+            denied = (
+                evaluation.model_copy(
+                    deep=True
+                )
+            )
+
+            denied.results[
+                0
+            ].decision = "DENY"
+
+            result = (
+                execute_policy_evaluation_with_ledger(
+                    db,
+                    run_id=run.id,
+                    evaluation=denied,
+                    approvals=[
+                        approved
+                    ],
+                )
+                .results[0]
+            )
+
+            assert (
+                result.status
+                == "blocked"
+            )
+
+            assert (
+                result.replayed
+                is False
+            )
+
             executor.assert_called_once()
 
 
 def test_approval_is_bound_to_finding_and_parameters():
     with isolated_ledger() as db:
-        run = start_investigation_run(db, 62)
-        request = make_request(tool_name="manual_review", parameters={
-            "finding_id": 62, "grounded_verdict": "likely_true_positive"})
-        evaluation = make_evaluation(request)
-        approved = approve_request(build_approval_requests(evaluation)[0],
-            reviewer="analyst", reason="test")
-        changed = evaluation.model_copy(deep=True)
-        changed.results[0].tool_request.parameters["grounded_verdict"] = "false_positive"
-        executor = Mock(return_value={"ok": True})
-        with patch.dict(TOOL_REGISTRY, {"manual_review": replace(TOOL_REGISTRY["manual_review"], executor=executor)}):
-            result = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                evaluation=changed, approvals=[approved]).results[0]
-            assert result.status == "blocked" and result.execution_intent is None
-            wrong_finding = approved.model_copy(update={"finding_id": 63})
-            result = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                evaluation=evaluation, approvals=[wrong_finding]).results[0]
-            assert result.status == "blocked" and result.execution_intent is None
+        run = start_investigation_run(
+            db,
+            62,
+        )
+
+        request = make_request(
+            tool_name="manual_review",
+            parameters={
+                "finding_id": 62,
+                "grounded_verdict":
+                    "likely_true_positive",
+            },
+        )
+
+        evaluation = make_evaluation(
+            request
+        )
+
+        approved = approve_request(
+            build_approval_requests(
+                evaluation
+            )[0],
+            reviewer="analyst",
+            reason="test",
+        )
+
+        changed = (
+            evaluation.model_copy(
+                deep=True
+            )
+        )
+
+        changed.results[
+            0
+        ].tool_request.parameters[
+            "grounded_verdict"
+        ] = "false_positive"
+
+        executor = Mock(
+            return_value={
+                "ok": True,
+            }
+        )
+
+        with patch.dict(
+            TOOL_REGISTRY,
+            {
+                "manual_review": replace(
+                    TOOL_REGISTRY[
+                        "manual_review"
+                    ],
+                    adapter=TestAdapter(
+                        executor,
+                        name="manual_review",
+                    ),
+                )
+            },
+        ):
+            result = (
+                execute_policy_evaluation_with_ledger(
+                    db,
+                    run_id=run.id,
+                    evaluation=changed,
+                    approvals=[
+                        approved
+                    ],
+                )
+                .results[0]
+            )
+
+            assert (
+                result.status
+                == "blocked"
+            )
+
+            assert (
+                result.execution_intent
+                is None
+            )
+
+            wrong_finding = (
+                approved.model_copy(
+                    update={
+                        "finding_id": 63
+                    }
+                )
+            )
+
+            result = (
+                execute_policy_evaluation_with_ledger(
+                    db,
+                    run_id=run.id,
+                    evaluation=evaluation,
+                    approvals=[
+                        wrong_finding
+                    ],
+                )
+                .results[0]
+            )
+
+            assert (
+                result.status
+                == "blocked"
+            )
+
+            assert (
+                result.execution_intent
+                is None
+            )
+
             executor.assert_not_called()
-            result = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                evaluation=evaluation, approvals=[approved]).results[0]
-            assert result.executed
-            result = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                evaluation=evaluation, approvals=[wrong_finding]).results[0]
-            assert result.status == "blocked" and not result.replayed
+
+            result = (
+                execute_policy_evaluation_with_ledger(
+                    db,
+                    run_id=run.id,
+                    evaluation=evaluation,
+                    approvals=[
+                        approved
+                    ],
+                )
+                .results[0]
+            )
+
+            assert (
+                result.executed
+                is True
+            )
+
+            result = (
+                execute_policy_evaluation_with_ledger(
+                    db,
+                    run_id=run.id,
+                    evaluation=evaluation,
+                    approvals=[
+                        wrong_finding
+                    ],
+                )
+                .results[0]
+            )
+
+            assert (
+                result.status
+                == "blocked"
+            )
+
+            assert (
+                result.replayed
+                is False
+            )
+
             executor.assert_called_once()
 
 
 def test_batch_duplicate_slots_do_not_execute_twice():
-    for changed in (False, True):
+    for changed in (
+        False,
+        True,
+    ):
         with isolated_ledger() as db:
-            run = start_investigation_run(db, 62)
-            evaluation = make_evaluation(make_request())
-            duplicate = evaluation.results[0].model_copy(deep=True)
+            run = (
+                start_investigation_run(
+                    db,
+                    62,
+                )
+            )
+
+            evaluation = (
+                make_evaluation(
+                    make_request()
+                )
+            )
+
+            duplicate = (
+                evaluation.results[
+                    0
+                ].model_copy(
+                    deep=True
+                )
+            )
+
             if changed:
-                duplicate.tool_request.target = "finding:63"
-            evaluation.results.append(duplicate)
-            executor = Mock(return_value={"ok": True})
-            with patch.dict(TOOL_REGISTRY, {"create_ticket": replace(TOOL_REGISTRY["create_ticket"], executor=executor)}):
-                batch = execute_policy_evaluation_with_ledger(db, run_id=run.id,
-                    evaluation=evaluation, approvals=[])
+                duplicate.tool_request.target = (
+                    "finding:63"
+                )
+
+            evaluation.results.append(
+                duplicate
+            )
+
+            executor = Mock(
+                return_value={
+                    "ok": True,
+                }
+            )
+
+            with patch.dict(
+                TOOL_REGISTRY,
+                {
+                    "create_ticket": replace(
+                        TOOL_REGISTRY[
+                            "create_ticket"
+                        ],
+                        adapter=TestAdapter(
+                            executor
+                        ),
+                    )
+                },
+            ):
+                batch = (
+                    execute_policy_evaluation_with_ledger(
+                        db,
+                        run_id=run.id,
+                        evaluation=evaluation,
+                        approvals=[],
+                    )
+                )
+
             executor.assert_called_once()
-            assert batch.simulated_count == 1
-            assert batch.replayed_count == (0 if changed else 1)
-            assert batch.blocked_count == (1 if changed else 0)
-            assert not batch.results[1].executed
-            assert len(get_investigation_trace(db, run.id).events) == 2
+
+            assert (
+                batch.simulated_count
+                == 1
+            )
+
+            assert (
+                batch.replayed_count
+                == (
+                    0
+                    if changed
+                    else 1
+                )
+            )
+
+            assert (
+                batch.blocked_count
+                == (
+                    1
+                    if changed
+                    else 0
+                )
+            )
+
+            assert (
+                batch.results[
+                    1
+                ].executed
+                is False
+            )
+
+            assert (
+                len(
+                    get_investigation_trace(
+                        db,
+                        run.id,
+                    ).events
+                )
+                == 2
+            )
 
 
 def test_missing_binding_fingerprint_fails_closed():
     with isolated_ledger() as db:
-        run = start_investigation_run(db, 62)
-        executor = Mock(return_value={"ok": True})
-        with patch.dict(TOOL_REGISTRY, {"create_ticket": replace(TOOL_REGISTRY["create_ticket"], executor=executor)}):
-            execute_with_ledger(db, run_id=run.id, request=make_request())
-            event = db.query(InvestigationEvent).filter_by(run_id=run.id).one()
-            metadata = dict(event.event_metadata)
-            metadata.pop("request_fingerprint")
-            event.event_metadata = metadata
+        run = start_investigation_run(
+            db,
+            62,
+        )
+
+        executor = Mock(
+            return_value={
+                "ok": True,
+            }
+        )
+
+        with patch.dict(
+            TOOL_REGISTRY,
+            {
+                "create_ticket": replace(
+                    TOOL_REGISTRY[
+                        "create_ticket"
+                    ],
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
+            },
+        ):
+            execute_with_ledger(
+                db,
+                run_id=run.id,
+                request=make_request(),
+            )
+
+            event = (
+                db.query(
+                    InvestigationEvent
+                )
+                .filter_by(
+                    run_id=run.id
+                )
+                .one()
+            )
+
+            metadata = dict(
+                event.event_metadata
+            )
+
+            metadata.pop(
+                "request_fingerprint"
+            )
+
+            event.event_metadata = (
+                metadata
+            )
+
             db.commit()
-            result = execute_with_ledger(db, run_id=run.id, request=make_request()).results[0]
-            assert result.status == "blocked" and not result.replayed
+
+            result = (
+                execute_with_ledger(
+                    db,
+                    run_id=run.id,
+                    request=make_request(),
+                )
+                .results[0]
+            )
+
+            assert (
+                result.status
+                == "blocked"
+            )
+
+            assert (
+                result.replayed
+                is False
+            )
+
             executor.assert_called_once()
 
 
 def test_failed_slot_rejects_changed_semantics():
     with isolated_ledger() as db:
-        run = start_investigation_run(db, 62)
-        executor = Mock(side_effect=[RuntimeError("test failure"), {"ok": True}])
-        with patch.dict(TOOL_REGISTRY, {"create_ticket": replace(TOOL_REGISTRY["create_ticket"], executor=executor)}):
-            first = execute_with_ledger(db, run_id=run.id, request=make_request()).results[0]
-            assert first.status == "failed"
-            changed = execute_with_ledger(db, run_id=run.id,
-                request=make_request(target="finding:63")).results[0]
-            assert changed.status == "blocked"
-            retry = execute_with_ledger(db, run_id=run.id, request=make_request()).results[0]
-            assert retry.executed and retry.execution_intent.attempt == 2
-            assert executor.call_count == 2
+        run = start_investigation_run(
+            db,
+            62,
+        )
+
+        executor = Mock(
+            side_effect=[
+                RuntimeError(
+                    "test failure"
+                ),
+                {
+                    "ok": True,
+                },
+            ]
+        )
+
+        with patch.dict(
+            TOOL_REGISTRY,
+            {
+                "create_ticket": replace(
+                    TOOL_REGISTRY[
+                        "create_ticket"
+                    ],
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
+            },
+        ):
+            first = (
+                execute_with_ledger(
+                    db,
+                    run_id=run.id,
+                    request=make_request(),
+                )
+                .results[0]
+            )
+
+            assert (
+                first.status
+                == "failed"
+            )
+
+            changed = (
+                execute_with_ledger(
+                    db,
+                    run_id=run.id,
+                    request=make_request(
+                        target="finding:63"
+                    ),
+                )
+                .results[0]
+            )
+
+            assert (
+                changed.status
+                == "blocked"
+            )
+
+            retry = (
+                execute_with_ledger(
+                    db,
+                    run_id=run.id,
+                    request=make_request(),
+                )
+                .results[0]
+            )
+
+            assert (
+                retry.executed
+                is True
+            )
+
+            assert (
+                retry
+                .execution_intent
+                .attempt
+                == 2
+            )
+
+            assert (
+                executor.call_count
+                == 2
+            )
 
 
 def test_validation_still_precedes_replay():
     with isolated_ledger() as db:
-        run = start_investigation_run(db, 62)
-        executor = Mock(return_value={"ok": True})
-        with patch.dict(TOOL_REGISTRY, {"create_ticket": replace(TOOL_REGISTRY["create_ticket"], executor=executor)}):
-            execute_with_ledger(db, run_id=run.id, request=make_request())
-            result = execute_with_ledger(db, run_id=run.id,
-                request=make_request(parameters={"unexpected": True})).results[0]
-            assert result.status == "blocked" and result.execution_intent is None
-            assert not result.replayed
-            executor.assert_called_once()
+        run = start_investigation_run(
+            db,
+            62,
+        )
 
+        executor = Mock(
+            return_value={
+                "ok": True,
+            }
+        )
+
+        with patch.dict(
+            TOOL_REGISTRY,
+            {
+                "create_ticket": replace(
+                    TOOL_REGISTRY[
+                        "create_ticket"
+                    ],
+                    adapter=TestAdapter(
+                        executor
+                    ),
+                )
+            },
+        ):
+            execute_with_ledger(
+                db,
+                run_id=run.id,
+                request=make_request(),
+            )
+
+            result = (
+                execute_with_ledger(
+                    db,
+                    run_id=run.id,
+                    request=make_request(
+                        parameters={
+                            "unexpected":
+                                True
+                        }
+                    ),
+                )
+                .results[0]
+            )
+
+            assert (
+                result.status
+                == "blocked"
+            )
+
+            assert (
+                result.execution_intent
+                is None
+            )
+
+            assert (
+                result.replayed
+                is False
+            )
+
+            executor.assert_called_once()
 
 
 def main():
@@ -965,7 +1562,8 @@ def main():
         check()
 
         print(
-            f"[PASS] {check.__name__}"
+            f"[PASS] "
+            f"{check.__name__}"
         )
 
     print(

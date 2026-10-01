@@ -70,7 +70,7 @@ def test_allow():
 
     print(
         "[PASS] ALLOW request reached "
-        "mock executor"
+        "dry-run adapter"
     )
 
 
@@ -148,7 +148,7 @@ def test_approved_request():
 
     print(
         "[PASS] approved request reached "
-        "mock executor"
+        "dry-run adapter"
     )
 
 

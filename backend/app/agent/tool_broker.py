@@ -311,7 +311,7 @@ def execute_policy_result(
         if claim.state == "completed":
             return ToolExecutionResult(
                 **common, executed=False, status="simulated", replayed=True,
-                message="Replay detected; durable completed claim reused without executor invocation.",
+                message="Replay detected; durable completed claim reused without adapter invocation.",
                 output=claim.output or {},
                 execution_receipt=build_execution_receipt(
                     intent=execution_intent, outcome="replayed", executor_invoked=False,
@@ -320,16 +320,19 @@ def execute_policy_result(
         if claim.state != "acquired":
             messages = {
                 "conflict": "Execution-slot fingerprint conflict; request blocked.",
-                "in_progress": "Execution claim in_progress; retry cannot invoke executor.",
+                "in_progress": "Execution claim in_progress; retry cannot invoke adapter.",
                 "retry_exhausted": "Execution retry budget exhausted; operator review required.",
             }
             return ToolExecutionResult(**common, executed=False, status="blocked",
                                        message=messages[claim.state], output={})
 
-    # The no-DB entry point remains an offline mock compatibility helper.
+    # The adapter boundary remains isolated here.
     # Every persistent/API execution reaches here only after durable ownership.
     try:
-        output = definition.executor(validated_request)
+        output = definition.adapter.execute(
+            parameters=validated_request.parameters,
+            dry_run=True,
+        )
     except Exception as exc:
         result = ToolExecutionResult(
             **common, executed=False, status="failed",

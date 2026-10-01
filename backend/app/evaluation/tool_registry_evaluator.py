@@ -188,7 +188,7 @@ def test_valid_request_reaches_executor():
 
     print(
         "[PASS] validated request reached "
-        "dry-run executor"
+        "dry-run adapter"
     )
 
 
@@ -225,7 +225,7 @@ def test_invalid_request_blocked():
 
     print(
         "[PASS] invalid request blocked "
-        "before executor"
+        "before adapter"
     )
 
 
