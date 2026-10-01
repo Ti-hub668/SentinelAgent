@@ -23,6 +23,7 @@ ApprovalExecutionStatus = Literal[
 
 ExecutionOutcome = Literal[
     "simulated",
+    "executed",
     "replayed",
     "failed",
 ]

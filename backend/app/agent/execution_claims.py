@@ -29,6 +29,7 @@ class ClaimDecision:
     owner_token: str | None = None
     output: dict | None = None
     event_id: int | None = None
+    receipt: dict | None = None
 
 
 def acquire_claim(db: Session, intent: ExecutionIntent) -> ClaimDecision:
@@ -70,7 +71,7 @@ def acquire_claim(db: Session, intent: ExecutionIntent) -> ClaimDecision:
         db.rollback()
     else:
         decision = ClaimDecision("completed" if legacy else "acquired", initial_attempt,
-                                 token if not legacy else None, candidate.output, candidate.event_id)
+                                 token if not legacy else None, candidate.output, candidate.event_id, candidate.receipt)
         db.rollback()
         return decision
 
@@ -82,7 +83,7 @@ def acquire_claim(db: Session, intent: ExecutionIntent) -> ClaimDecision:
             or existing.run_id != intent.run_id or existing.request_index != intent.request_index):
         decision = ClaimDecision("conflict", attempt)
     elif existing.status == "completed":
-        decision = ClaimDecision("completed", attempt, output=existing.output, event_id=existing.event_id)
+        decision = ClaimDecision("completed", attempt, output=existing.output, event_id=existing.event_id, receipt=existing.receipt)
     elif existing.status not in {"failed", "released"}:
         decision = ClaimDecision("in_progress", attempt)
     elif attempt >= MAX_ATTEMPTS:

@@ -1,7 +1,7 @@
 from app.agent.adapters.base import (
     ToolAdapter,
+    ToolExecutionContext,
 )
-
 
 class SecurityActionAdapter(
     ToolAdapter
@@ -13,12 +13,12 @@ class SecurityActionAdapter(
 
 
     def execute(
-        self,
-        *,
-        parameters: dict,
-        dry_run: bool = True,
-    ) -> dict:
-
+    self,
+    *,
+    parameters: dict,
+    dry_run: bool = True,
+    execution_context: ToolExecutionContext | None = None,
+) -> dict:
         if dry_run:
             return {
                 "mode": "dry_run",

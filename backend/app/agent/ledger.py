@@ -416,6 +416,7 @@ def find_tool_execution_binding(
             InvestigationEvent.event_type.in_(
                 [
                     "tool_execution_simulated",
+                    "tool_execution_executed",
                     "tool_execution_replayed",
                     "tool_execution_failed",
                 ]
@@ -467,8 +468,7 @@ def find_successful_tool_execution(
         .filter(
             InvestigationEvent.run_id
             == run_id,
-            InvestigationEvent.event_type
-            == "tool_execution_simulated",
+            InvestigationEvent.event_type.in_(["tool_execution_simulated", "tool_execution_executed"]),
         )
         .order_by(
             InvestigationEvent.id.desc()
@@ -524,6 +524,7 @@ def count_tool_execution_attempts(
             InvestigationEvent.event_type.in_(
                 [
                     "tool_execution_simulated",
+                    "tool_execution_executed",
                     "tool_execution_replayed",
                     "tool_execution_failed",
                 ]

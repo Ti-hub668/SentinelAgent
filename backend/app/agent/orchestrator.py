@@ -155,6 +155,8 @@ def _load_tool_results(
     for event in trace.events:
         if event.event_type not in {
             "tool_execution_simulated",
+            "tool_execution_executed",
+            "tool_execution_replayed",
             "tool_execution_blocked",
             "tool_execution_failed",
         }:
@@ -191,6 +193,9 @@ def _determine_workflow_status(
         return "running"
     if run_status == "failed":
         return "failed"
+
+    if any(result.status == "executed" for result in tool_results):
+        return "executed"
 
     if any(
         result.status == "simulated"

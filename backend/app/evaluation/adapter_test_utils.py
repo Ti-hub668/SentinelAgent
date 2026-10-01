@@ -1,4 +1,7 @@
-from app.agent.adapters.base import ToolAdapter
+from app.agent.adapters.base import (
+    ToolAdapter,
+    ToolExecutionContext,
+)
 
 
 class TestAdapter(ToolAdapter):
@@ -22,5 +25,8 @@ class TestAdapter(ToolAdapter):
         *,
         parameters: dict,
         dry_run: bool = True,
+        execution_context: ToolExecutionContext | None = None,
     ) -> dict:
-        return self._execute_fn(parameters)
+        return self._execute_fn(
+            parameters
+        )

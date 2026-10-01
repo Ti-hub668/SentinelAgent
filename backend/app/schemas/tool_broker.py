@@ -16,6 +16,7 @@ from app.schemas.tool_capability import (
 
 BrokerStatus = Literal[
     "simulated",
+    "executed",
     "blocked",
     "failed",
 ]
@@ -70,6 +71,8 @@ class ToolBrokerBatchResult(BaseModel):
     ] = Field(
         default_factory=list
     )
+
+    executed_count: int = 0
 
     simulated_count: int = 0
 

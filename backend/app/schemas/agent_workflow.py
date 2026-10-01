@@ -20,6 +20,7 @@ WorkflowStatus = Literal[
     "policy_blocked",
     "ready_for_execution",
     "dry_run_executed",
+    "executed",
 ]
 
 class AgentWorkflowStartResponse(BaseModel):

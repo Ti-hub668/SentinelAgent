@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from app.agent.adapters.errors import ToolAdapterError
 from app.agent.adapters.base import ToolAdapter
 from app.agent.adapters.registry import (
     ADAPTER_REGISTRY,
@@ -625,6 +626,7 @@ def test_builtin_adapters_fail_closed_without_production_config():
             )
 
         except (
+            ToolAdapterError,
             NotImplementedError,
             ValueError,
         ):

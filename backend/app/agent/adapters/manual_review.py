@@ -1,5 +1,7 @@
-from app.agent.adapters.base import ToolAdapter
-
+from app.agent.adapters.base import (
+    ToolAdapter,
+    ToolExecutionContext,
+)
 
 class ManualReviewAdapter(ToolAdapter):
 
@@ -12,6 +14,7 @@ class ManualReviewAdapter(ToolAdapter):
         *,
         parameters: dict,
         dry_run: bool = True,
+        execution_context: ToolExecutionContext | None = None,
     ) -> dict:
         if dry_run:
             return {

@@ -1,3 +1,7 @@
+from app.core.tool_settings import external_tool_execution_enabled, get_github_ticket_settings, redact_tool_secrets
+from sqlalchemy import select
+from app.models.execution_claim import ExecutionClaim
+from app.models.investigation_run import InvestigationRun
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -25,6 +29,9 @@ from app.schemas.tool_broker import (
 )
 from app.schemas.tool_capability import (
     ToolRegistryAuditMetadata,
+)
+from app.agent.adapters.base import (
+    ToolExecutionContext,
 )
 
 def _find_matching_approval(
@@ -140,7 +147,7 @@ def execute_policy_result(
     """
     Process one policy result through Tool Broker.
 
-    All executors are mock/dry-run in Day27.
+    Default to dry-run; external execution requires an explicit durable gate.
     """
     if (
         (db is None)
@@ -150,6 +157,11 @@ def execute_policy_result(
             "db and run_id must be "
             "provided together."
         )
+    safe_request = policy_result.tool_request.model_copy(update={
+        key: redact_tool_secrets(value) for key, value in policy_result.tool_request.model_dump().items()
+    })
+    policy_result = policy_result.model_copy(update={"tool_request": safe_request})
+    approvals = [approval.model_copy(update={"reviewer": redact_tool_secrets(approval.reviewer)}) for approval in approvals]
     definition = get_tool_definition(
         policy_result.tool_request.tool_name
     )
@@ -289,12 +301,41 @@ def execute_policy_result(
         )
     )
 
+    real_requested = external_tool_execution_enabled()
+    dry_run = not real_requested
+    gate_error = None
+    if real_requested:
+        if definition.name != "create_ticket":
+            gate_error = "External execution is only permitted for create_ticket."
+        elif db is None or run_id is None:
+            gate_error = "External execution requires db, run_id and a durable claim."
+        elif db.get(InvestigationRun, run_id) is None:
+            gate_error = "External execution requires an existing investigation run."
+        else:
+            completed = db.scalar(select(ExecutionClaim).where(
+                ExecutionClaim.idempotency_key == build_idempotency_key(
+                    run_id=run_id, request_index=policy_result.request_index),
+                ExecutionClaim.status == "completed",
+            ))
+            try:
+                if completed is None and not get_github_ticket_settings().configured:
+                    gate_error = "GitHub ticket integration is not enabled/configured."
+            except (ValueError, TypeError):
+                gate_error = "GitHub ticket configuration is invalid."
+    if gate_error:
+        return ToolExecutionResult(
+            finding_id=finding_id, request_index=policy_result.request_index,
+            tool_request=validated_request, policy_decision=policy_result.decision,
+            authorized=True, executed=False, dry_run=dry_run, status="blocked",
+            registry_metadata=registry_metadata, message=gate_error, output={},
+        )
+
     execution_intent = None
     claim = None
     common = dict(
         finding_id=finding_id, request_index=policy_result.request_index,
         tool_request=validated_request, policy_decision=policy_result.decision,
-        authorized=True, dry_run=True, registry_metadata=registry_metadata,
+        authorized=True, dry_run=dry_run, registry_metadata=registry_metadata,
     )
     if db is not None:
         execution_intent = build_execution_intent(
@@ -309,10 +350,12 @@ def execute_policy_result(
         execution_intent = execution_intent.model_copy(update={"attempt": claim.attempt})
         common["execution_intent"] = execution_intent
         if claim.state == "completed":
+            original_status = "executed" if (claim.receipt or {}).get("outcome") == "executed" else "simulated"
+            common["dry_run"] = original_status == "simulated"
             return ToolExecutionResult(
-                **common, executed=False, status="simulated", replayed=True,
+                **common, executed=False, status=original_status, replayed=True,
                 message="Replay detected; durable completed claim reused without adapter invocation.",
-                output=claim.output or {},
+                output=redact_tool_secrets(claim.output or {}),
                 execution_receipt=build_execution_receipt(
                     intent=execution_intent, outcome="replayed", executor_invoked=False,
                     replayed=True, original_event_id=claim.event_id),
@@ -329,14 +372,29 @@ def execute_policy_result(
     # The adapter boundary remains isolated here.
     # Every persistent/API execution reaches here only after durable ownership.
     try:
+        adapter_context = None
+
+        if execution_intent is not None:
+            adapter_context = ToolExecutionContext(
+                execution_id=execution_intent.execution_id,
+                idempotency_key=execution_intent.idempotency_key,
+                request_fingerprint=(
+                    execution_intent.request_fingerprint
+                ),
+                run_id=execution_intent.run_id,
+                request_index=execution_intent.request_index,
+                attempt=execution_intent.attempt,
+            )
+
         output = definition.adapter.execute(
             parameters=validated_request.parameters,
-            dry_run=True,
+            dry_run=dry_run,
+            execution_context=adapter_context,
         )
-    except Exception as exc:
+    except Exception:
         result = ToolExecutionResult(
             **common, executed=False, status="failed",
-            message=f"{type(exc).__name__}: {exc}", output={},
+            message="Tool adapter execution failed; external details suppressed.", output={},
             execution_receipt=build_execution_receipt(
                 intent=execution_intent, outcome="failed", executor_invoked=True,
             ) if execution_intent else None,
@@ -345,10 +403,10 @@ def execute_policy_result(
         # Validation/serialization/persistence errors after the call are NOT
         # evidence that side effects failed. Leave ownership claimed on error.
         result = ToolExecutionResult(
-            **common, executed=True, status="simulated",
-            message="Authorized request processed by dry-run executor.", output=output,
+            **common, executed=True, status="simulated" if dry_run else "executed",
+            message="Authorized request processed by dry-run executor." if dry_run else "Authorized GitHub ticket execution completed.", output=redact_tool_secrets(output),
             execution_receipt=build_execution_receipt(
-                intent=execution_intent, outcome="simulated", executor_invoked=True,
+                intent=execution_intent, outcome="simulated" if dry_run else "executed", executor_invoked=True,
             ) if execution_intent else None,
         )
     if claim is not None:
@@ -378,6 +436,7 @@ def _build_batch_result(
         finding_id=finding_id,
         results=results,
 
+        executed_count=sum(item.status == "executed" and not item.replayed for item in results),
         simulated_count=sum(
             (
                 item.status
@@ -418,7 +477,7 @@ def execute_policy_evaluation(
     """
     Process every policy result.
 
-    No real-world tools are executed.
+    Without a Ledger, an enabled real-mode gate blocks execution.
     """
 
     results = [
@@ -477,6 +536,9 @@ def _record_tool_result(db, *, run_id, result, commit=True):
         event_type = (
             "tool_execution_replayed"
         )
+
+    elif result.status == "executed":
+        event_type = "tool_execution_executed"
 
     elif result.status == "simulated":
         event_type = (
