@@ -13,6 +13,7 @@ from app.models.ai_analysis import AIAnalysis
 from app.models.agent_decision import AgentDecision
 from app.models.investigation_run import InvestigationRun
 from app.models.investigation_event import InvestigationEvent
+from app.models.execution_claim import ExecutionClaim
 
 from app.api.vulnerabilities import router as vulnerabilities_router
 from app.api.findings import router as findings_router

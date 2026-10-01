@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.agent.execution_claims import acquire_claim, finish_claim
 from app.agent.execution_guard import (
     build_execution_intent,
     build_execution_receipt,
@@ -8,9 +9,6 @@ from app.agent.execution_guard import (
     build_request_fingerprint,
 )
 from app.agent.ledger import (
-    count_tool_execution_attempts,
-    find_successful_tool_execution,
-    find_tool_execution_binding,
     record_investigation_event,
 )
 from app.agent.tool_registry import (
@@ -292,308 +290,79 @@ def execute_policy_result(
     )
 
     execution_intent = None
-
-    if (
-        db is not None
-        and run_id is not None
-    ):
-        request_fingerprint = (
-            build_request_fingerprint(
-                validated_request
-            )
+    claim = None
+    common = dict(
+        finding_id=finding_id, request_index=policy_result.request_index,
+        tool_request=validated_request, policy_decision=policy_result.decision,
+        authorized=True, dry_run=True, registry_metadata=registry_metadata,
+    )
+    if db is not None:
+        execution_intent = build_execution_intent(
+            finding_id=finding_id, run_id=run_id, policy_result=policy_result,
+            validated_request=validated_request,
+            approval=_find_matching_approval(policy_result, approvals, finding_id=finding_id),
+            attempt=1, request_fingerprint=build_request_fingerprint(validated_request),
+            idempotency_key=build_idempotency_key(
+                run_id=run_id, request_index=policy_result.request_index),
         )
-
-        idempotency_key = (
-            build_idempotency_key(
-                run_id=run_id,
-                request_index=(
-                    policy_result
-                    .request_index
-                ),
-            )
-        )
-
-        attempt = (
-            count_tool_execution_attempts(
-                db,
-                run_id=run_id,
-                idempotency_key=(
-                    idempotency_key
-                ),
-            )
-            + 1
-        )
-
-        matching_approval = (
-            _find_matching_approval(
-                policy_result,
-                approvals,
-                finding_id=finding_id,
-            )
-        )
-
-        execution_intent = (
-            build_execution_intent(
-                finding_id=finding_id,
-                run_id=run_id,
-                policy_result=(
-                    policy_result
-                ),
-                validated_request=(
-                    validated_request
-                ),
-                approval=(
-                    matching_approval
-                ),
-                attempt=attempt,
-                request_fingerprint=(
-                    request_fingerprint
-                ),
-                idempotency_key=(
-                    idempotency_key
-                ),
-            )
-        )
-        previous_binding = (
-            find_tool_execution_binding(
-                db,
-                run_id=run_id,
-                idempotency_key=(
-                    idempotency_key
-                ),
-            )
-        )
-
-        if (
-            previous_binding
-            is not None
-        ):
-            previous_metadata = (
-                previous_binding
-                .event_metadata
-                or {}
-            )
-
-            previous_fingerprint = (
-                previous_metadata.get(
-                    "request_fingerprint"
-                )
-            )
-
-            if (
-                previous_fingerprint
-                != request_fingerprint
-            ):
-                return ToolExecutionResult(
-                    finding_id=finding_id,
-                    request_index=(
-                        policy_result
-                        .request_index
-                    ),
-                    tool_request=(
-                        validated_request
-                    ),
-                    policy_decision=(
-                        policy_result
-                        .decision
-                    ),
-                    authorized=True,
-                    executed=False,
-                    dry_run=True,
-                    status="blocked",
-                    message=(
-                        "Replay protection blocked "
-                        "a missing or mismatched execution-slot fingerprint "
-                        "mismatch."
-                    ),
-                    output={},
-                    registry_metadata=(
-                        registry_metadata
-                    ),
-                    execution_intent=(
-                        execution_intent
-                    ),
-                    execution_receipt=None,
-                    replayed=False,
-                )
-        previous_execution = (
-            find_successful_tool_execution(
-                db,
-                run_id=run_id,
-                idempotency_key=(
-                    idempotency_key
-                ),
-            )
-        )
-
-        if (
-            previous_execution
-            is not None
-        ):
-            previous_metadata = (
-                previous_execution
-                .event_metadata
-                or {}
-            )
-
-            previous_output = (
-                previous_metadata.get(
-                    "output"
-                )
-            )
-
-            if not isinstance(
-                previous_output,
-                dict,
-            ):
-                previous_output = {}
-
-            receipt = (
-                build_execution_receipt(
-                    intent=execution_intent,
-                    outcome="replayed",
-                    executor_invoked=False,
-                    replayed=True,
-                    original_event_id=(
-                        previous_execution.id
-                    ),
-                )
-            )
-
+        claim = acquire_claim(db, execution_intent)
+        execution_intent = execution_intent.model_copy(update={"attempt": claim.attempt})
+        common["execution_intent"] = execution_intent
+        if claim.state == "completed":
             return ToolExecutionResult(
-                finding_id=finding_id,
-                registry_metadata=(
-                    registry_metadata
-                ),
-                request_index=(
-                    policy_result
-                    .request_index
-                ),
-                tool_request=(
-                    validated_request
-                ),
-                policy_decision=(
-                    policy_result
-                    .decision
-                ),
-                authorized=True,
-                executed=False,
-                dry_run=True,
-
-                # Keep legacy BrokerStatus
-                # compatible.
-                status="simulated",
-
-                message=(
-                    "Replay detected. "
-                    "Previous successful "
-                    "dry-run execution was "
-                    "reused and the executor "
-                    "was not invoked."
-                ),
-
-                execution_intent=(
-                    execution_intent
-                ),
-                execution_receipt=(
-                    receipt
-                ),
-                replayed=True,
-                output=previous_output,
+                **common, executed=False, status="simulated", replayed=True,
+                message="Replay detected; durable completed claim reused without executor invocation.",
+                output=claim.output or {},
+                execution_receipt=build_execution_receipt(
+                    intent=execution_intent, outcome="replayed", executor_invoked=False,
+                    replayed=True, original_event_id=claim.event_id),
             )
+        if claim.state != "acquired":
+            messages = {
+                "conflict": "Execution-slot fingerprint conflict; request blocked.",
+                "in_progress": "Execution claim in_progress; retry cannot invoke executor.",
+                "retry_exhausted": "Execution retry budget exhausted; operator review required.",
+            }
+            return ToolExecutionResult(**common, executed=False, status="blocked",
+                                       message=messages[claim.state], output={})
 
+    # The no-DB entry point remains an offline mock compatibility helper.
+    # Every persistent/API execution reaches here only after durable ownership.
     try:
-        output = definition.executor(
-            validated_request
-        )
-
-        receipt = (
-            build_execution_receipt(
-                intent=execution_intent,
-                outcome="simulated",
-                executor_invoked=True,
-            )
-            if execution_intent
-            is not None
-            else None
-        )
-
-        return ToolExecutionResult(
-            finding_id=finding_id,
-            registry_metadata=(
-                registry_metadata
-            ),
-            request_index=(
-                policy_result.request_index
-            ),
-            tool_request=(
-                validated_request
-            ),
-            policy_decision=(
-                policy_result.decision
-            ),
-            authorized=True,
-            executed=True,
-            dry_run=True,
-            status="simulated",
-            message=(
-                "Authorized request "
-                "processed by dry-run "
-                "executor."
-            ),
-            execution_intent=(
-                execution_intent
-            ),
-            execution_receipt=(
-                receipt
-            ),
-            replayed=False,
-            output=output,
-        )
-
+        output = definition.executor(validated_request)
     except Exception as exc:
-        receipt = (
-            build_execution_receipt(
-                intent=execution_intent,
-                outcome="failed",
-                executor_invoked=True,
+        result = ToolExecutionResult(
+            **common, executed=False, status="failed",
+            message=f"{type(exc).__name__}: {exc}", output={},
+            execution_receipt=build_execution_receipt(
+                intent=execution_intent, outcome="failed", executor_invoked=True,
+            ) if execution_intent else None,
+        )
+    else:
+        # Validation/serialization/persistence errors after the call are NOT
+        # evidence that side effects failed. Leave ownership claimed on error.
+        result = ToolExecutionResult(
+            **common, executed=True, status="simulated",
+            message="Authorized request processed by dry-run executor.", output=output,
+            execution_receipt=build_execution_receipt(
+                intent=execution_intent, outcome="simulated", executor_invoked=True,
+            ) if execution_intent else None,
+        )
+    if claim is not None:
+        try:
+            event = _record_tool_result(db, run_id=run_id, result=result, commit=False)
+            finish_claim(
+                db, execution_intent, claim.owner_token,
+                status="completed" if result.executed else "failed",
+                receipt=result.execution_receipt.model_dump(mode="json"),
+                output=result.output, event_id=event.id,
             )
-            if execution_intent
-            is not None
-            else None
-        )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+    return result
 
-        return ToolExecutionResult(
-            finding_id=finding_id,
-            registry_metadata=(
-                registry_metadata
-            ),
-            request_index=(
-                policy_result.request_index
-            ),
-            tool_request=(
-                validated_request
-            ),
-            policy_decision=(
-                policy_result.decision
-            ),
-            authorized=True,
-            executed=False,
-            dry_run=True,
-            status="failed",
-            message=(
-                f"{type(exc).__name__}: "
-                f"{exc}"
-            ),
-            execution_intent=(
-                execution_intent
-            ),
-            execution_receipt=(
-                receipt
-            ),
-            replayed=False,
-            output={},
-        )
 
 def _build_batch_result(
     *,
@@ -678,8 +447,7 @@ def execute_policy_evaluation_with_ledger(
     Execute broker workflow and persist audit events.
     """
 
-    # Persist each result before considering the next slot in this batch.
-    # This prevents sequential duplicates, but is not a concurrent reservation.
+    # Durable claim acquisition serializes concurrent execution of each slot.
     results = []
     for policy_result in evaluation.results:
         result = execute_policy_result(
@@ -689,132 +457,139 @@ def execute_policy_evaluation_with_ledger(
             db=db,
             run_id=run_id,
         )
-        if result.replayed:
-            event_type = (
-                "tool_execution_replayed"
-            )
-
-        elif result.status == "simulated":
-            event_type = (
-                "tool_execution_simulated"
-            )
-
-        elif result.status == "blocked":
-            event_type = (
-                "tool_execution_blocked"
-            )
-
-        else:
-            event_type = (
-                "tool_execution_failed"
-            )
-
-        record_investigation_event(
-            db,
-            run_id=run_id,
-            event_type=event_type,
-            node_name="tool_broker",
-            status=(
-                "failed"
-                if result.status == "failed"
-                else "completed"
-            ),
-            summary=(
-                f"Tool Broker processed "
-                f"{result.tool_request.tool_name}: "
-                f"{result.status}."
-            ),
-            event_metadata={
-                "finding_id":
-                    result.finding_id,
-                "request_index":
-                    result.request_index,
-                "tool_name":
-                    result.tool_request.tool_name,
-                "target":
-                    result.tool_request.target,
-                "policy_decision":
-                    result.policy_decision,
-                "authorized":
-                    result.authorized,
-                "executed":
-                    result.executed,
-                "dry_run":
-                    result.dry_run,
-                "broker_status":
-                    result.status,
-                "message":
-                    result.message,
-                "output":
-                    result.output,
-                "tool_registry": (
-                    result.registry_metadata.model_dump(mode="json")
-                    if result.registry_metadata is not None else None
-                ),
-                "execution_result":
-                    result.model_dump(
-                        mode="json"
-                    ),
-                "execution_id": (
-                    result.execution_intent
-                    .execution_id
-                    if result.execution_intent
-                    is not None
-                    else None
-                ),
-
-                "request_fingerprint": (
-                    result.execution_intent
-                    .request_fingerprint
-                    if result.execution_intent
-                    is not None
-                    else None
-                ),
-
-                "idempotency_key": (
-                    result.execution_intent
-                    .idempotency_key
-                    if result.execution_intent
-                    is not None
-                    else None
-                ),
-
-                "execution_attempt": (
-                    result.execution_intent
-                    .attempt
-                    if result.execution_intent
-                    is not None
-                    else None
-                ),
-
-                "replayed":
-                    result.replayed,
-
-                "execution_intent": (
-                    result.execution_intent
-                    .model_dump(
-                        mode="json"
-                    )
-                    if result.execution_intent
-                    is not None
-                    else None
-                ),
-
-                "execution_receipt": (
-                    result.execution_receipt
-                    .model_dump(
-                        mode="json"
-                    )
-                    if result.execution_receipt
-                    is not None
-                    else None
-                ),
-            },
-        )
+        # Executor outcomes were already committed atomically with their claim.
+        if result.execution_receipt is None or not result.execution_receipt.executor_invoked:
+            _record_tool_result(db, run_id=run_id, result=result)
 
         results.append(result)
 
     return _build_batch_result(
         finding_id=evaluation.finding_id,
         results=results,
+    )
+
+
+def _record_tool_result(db, *, run_id, result, commit=True):
+    if result.replayed:
+        event_type = (
+            "tool_execution_replayed"
+        )
+
+    elif result.status == "simulated":
+        event_type = (
+            "tool_execution_simulated"
+        )
+
+    elif result.status == "blocked":
+        event_type = (
+            "tool_execution_blocked"
+        )
+
+    else:
+        event_type = (
+            "tool_execution_failed"
+        )
+
+    return record_investigation_event(
+        db,
+        commit=commit,
+        run_id=run_id,
+        event_type=event_type,
+        node_name="tool_broker",
+        status=(
+            "failed"
+            if result.status == "failed"
+            else "completed"
+        ),
+        summary=(
+            f"Tool Broker processed "
+            f"{result.tool_request.tool_name}: "
+            f"{result.status}."
+        ),
+        event_metadata={
+            "finding_id":
+                result.finding_id,
+            "request_index":
+                result.request_index,
+            "tool_name":
+                result.tool_request.tool_name,
+            "target":
+                result.tool_request.target,
+            "policy_decision":
+                result.policy_decision,
+            "authorized":
+                result.authorized,
+            "executed":
+                result.executed,
+            "dry_run":
+                result.dry_run,
+            "broker_status":
+                result.status,
+            "message":
+                result.message,
+            "output":
+                result.output,
+            "tool_registry": (
+                result.registry_metadata.model_dump(mode="json")
+                if result.registry_metadata is not None else None
+            ),
+            "execution_result":
+                result.model_dump(
+                    mode="json"
+                ),
+            "execution_id": (
+                result.execution_intent
+                .execution_id
+                if result.execution_intent
+                is not None
+                else None
+            ),
+
+            "request_fingerprint": (
+                result.execution_intent
+                .request_fingerprint
+                if result.execution_intent
+                is not None
+                else None
+            ),
+
+            "idempotency_key": (
+                result.execution_intent
+                .idempotency_key
+                if result.execution_intent
+                is not None
+                else None
+            ),
+
+            "execution_attempt": (
+                result.execution_intent
+                .attempt
+                if result.execution_intent
+                is not None
+                else None
+            ),
+
+            "replayed":
+                result.replayed,
+
+            "execution_intent": (
+                result.execution_intent
+                .model_dump(
+                    mode="json"
+                )
+                if result.execution_intent
+                is not None
+                else None
+            ),
+
+            "execution_receipt": (
+                result.execution_receipt
+                .model_dump(
+                    mode="json"
+                )
+                if result.execution_receipt
+                is not None
+                else None
+            ),
+        },
     )

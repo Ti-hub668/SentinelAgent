@@ -25,6 +25,7 @@ from app.agent.tool_broker import (
 )
 from app.agent.tool_registry import TOOL_REGISTRY
 from app.evaluation.tool_broker_evaluator import make_plan
+from app.models.execution_claim import ExecutionClaim
 from app.models.investigation_event import InvestigationEvent
 from app.models.investigation_run import InvestigationRun
 from app.schemas.response_plan import ToolRequest
@@ -49,6 +50,8 @@ def isolated_ledger():
     InvestigationEvent.__table__.create(
         engine
     )
+
+    ExecutionClaim.__table__.create(engine)
 
     try:
         with Session(engine) as db:

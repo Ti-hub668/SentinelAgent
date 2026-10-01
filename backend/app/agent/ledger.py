@@ -52,6 +52,7 @@ def record_investigation_event(
     status: str = "completed",
     summary: str | None = None,
     event_metadata: dict[str, Any] | None = None,
+    commit: bool = True,
 ) -> InvestigationEventRecord:
     """
     Append one immutable-style audit event to the ledger.
@@ -77,8 +78,11 @@ def record_investigation_event(
     )
 
     db.add(event)
-    db.commit()
-    db.refresh(event)
+    if commit:
+        db.commit()
+        db.refresh(event)
+    else:
+        db.flush()
 
     return InvestigationEventRecord.model_validate(
         event

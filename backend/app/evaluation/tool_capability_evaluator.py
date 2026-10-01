@@ -17,6 +17,7 @@ from app.agent.tool_registry import (
 )
 from app.evaluation.tool_broker_evaluator import make_plan
 from app.evaluation.tool_registry_evaluator import EXPECTED_TOOLS, make_allow_result
+from app.models.execution_claim import ExecutionClaim
 from app.models.investigation_event import InvestigationEvent
 from app.models.investigation_run import InvestigationRun
 from app.schemas.agent_decision import AgentDecisionOutput
@@ -116,6 +117,7 @@ def test_ledger_and_governance():
     engine = create_engine("sqlite:///:memory:")
     InvestigationRun.__table__.create(engine)
     InvestigationEvent.__table__.create(engine)
+    ExecutionClaim.__table__.create(engine)
     try:
         with Session(engine) as db:
             run = start_investigation_run(db, 62)
