@@ -10,6 +10,7 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Workflow-1C3C3C)](https://www.langchain.com/langgraph)
 [![Release](https://img.shields.io/badge/release-v1.0--demo-blue)](#project-status)
 [![Security](https://img.shields.io/badge/use-authorized_security_testing-red)](#security--authorized-use)
+[![SentinelAgent CI](https://github.com/Ti-hub668/SentinelAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/Ti-hub668/SentinelAgent/actions/workflows/ci.yml)
 
 ---
 
