@@ -1,3 +1,8 @@
+<script setup>
+import { useI18n } from 'vue-i18n'
+const { t, locale } = useI18n()
+</script>
+
 <template>
-  <section class="panel placeholder-page"><h2>Discovery</h2><p>Asset discovery and service inventory</p><el-empty description="开放端口、服务、产品版本与 Web Targets 将在后续接入" /></section>
+  <section class="panel placeholder-page"><h2>{{ t('interface.discovery') }}</h2><p>{{ t('interface.assetDiscoveryAndServiceInventory') }}</p><el-empty :description="t('interface.openPortsServicesProductVersionsAndWebTargetsWillBeAddedLater')" /></section>
 </template>

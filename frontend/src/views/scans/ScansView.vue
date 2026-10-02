@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+import { useDisplayLabels } from '../../i18n/display'
+const { t, locale } = useI18n()
+const { label } = useDisplayLabels()
+
 import {
   computed,
   onMounted,
@@ -129,7 +134,7 @@ function formatDate(value) {
     return value
   }
 
-  return date.toLocaleString()
+  return date.toLocaleString(locale.value)
 }
 
 function statusType(status) {
@@ -155,7 +160,7 @@ function assetName(assetId) {
     )
 
   if (!asset) {
-    return `Asset #${assetId}`
+    return t('interface.assetValue', { p0: assetId })
   }
 
   return asset.name
@@ -229,7 +234,7 @@ async function loadPage() {
     console.error(error)
 
     ElMessage.error(
-      '扫描页面数据加载失败',
+      t('interface.failedToLoadScanData'),
     )
   } finally {
     loading.value = false
@@ -239,7 +244,7 @@ async function loadPage() {
 async function submitScan() {
   if (!form.asset_id) {
     ElMessage.warning(
-      '请选择扫描资产',
+      t('interface.pleaseSelectAnAssetToScan'),
     )
 
     return
@@ -262,7 +267,7 @@ async function submitScan() {
     )
 
     ElMessage.success(
-      `扫描任务 #${result.id} 已完成`,
+      t('interface.scanTaskValueCompleted', { p0: result.id }),
     )
 
     await loadPage()
@@ -294,7 +299,7 @@ async function openDetail(scanId) {
     console.error(error)
 
     ElMessage.error(
-      '扫描详情加载失败',
+      t('interface.failedToLoadScanDetails'),
     )
   } finally {
     detailLoading.value = false
@@ -311,15 +316,15 @@ onMounted(() => {
     <div class="page-heading">
       <div>
         <div class="eyebrow">
-          SECURITY SCANNING
+          {{ t('interface.securityScanning') }}
         </div>
 
         <h2>
-          Scan Tasks
+          {{ t('interface.scanTasks') }}
         </h2>
 
         <p>
-          Nmap 资产发现与 Nuclei Web 安全检测
+          {{ t('interface.nmapAssetDiscoveryAndNucleiWebSecurityScanning') }}
         </p>
       </div>
 
@@ -327,7 +332,7 @@ onMounted(() => {
         :icon="Refresh"
         @click="loadPage"
       >
-        刷新
+        {{ t('interface.refresh') }}
       </el-button>
     </div>
 
@@ -335,11 +340,11 @@ onMounted(() => {
       <div class="launcher-heading">
         <div>
           <h3>
-            启动扫描任务
+            {{ t('interface.launchScanTask') }}
           </h3>
 
           <p>
-            选择已登记资产和扫描策略
+            {{ t('interface.selectARegisteredAssetAndScanProfile') }}
           </p>
         </div>
 
@@ -347,7 +352,7 @@ onMounted(() => {
           effect="plain"
           type="info"
         >
-          Nmap + Nuclei
+          {{ t('interface.nmapNuclei') }}
         </el-tag>
       </div>
 
@@ -355,10 +360,10 @@ onMounted(() => {
         class="scan-form"
         label-position="top"
       >
-        <el-form-item label="扫描资产">
+        <el-form-item :label="t('interface.scanAsset')">
           <el-select
             v-model="form.asset_id"
-            placeholder="选择资产"
+            :placeholder="t('interface.selectAsset')"
             filterable
           >
             <el-option
@@ -372,22 +377,22 @@ onMounted(() => {
           </el-select>
         </el-form-item>
 
-        <el-form-item label="扫描策略">
+        <el-form-item :label="t('interface.scanProfile')">
           <el-select
             v-model="form.scan_profile"
           >
             <el-option
-              label="Fast"
+              :label="t('interface.fast')"
               value="fast"
             />
 
             <el-option
-              label="Security"
+              :label="t('interface.security')"
               value="security"
             />
 
             <el-option
-              label="Full"
+              :label="t('interface.full')"
               value="full"
             />
           </el-select>
@@ -402,8 +407,8 @@ onMounted(() => {
           >
             {{
               creating
-                ? '扫描执行中...'
-                : '开始扫描'
+                ? t('interface.scanning')
+                : t('interface.startScan')
             }}
           </el-button>
         </el-form-item>
@@ -416,7 +421,7 @@ onMounted(() => {
         show-icon
       >
         <template #title>
-          Dashboard 带入目标
+          {{ t('interface.targetFromDashboard') }}
         </template>
 
         {{
@@ -430,7 +435,7 @@ onMounted(() => {
         <el-input
           v-model="keyword"
           class="search-input"
-          placeholder="搜索 Scan ID、资产、扫描器"
+          :placeholder="t('interface.searchScanIdAssetOrScanner')"
           clearable
         >
           <template #prefix>
@@ -443,21 +448,21 @@ onMounted(() => {
         <el-select
           v-model="statusFilter"
           class="status-filter"
-          placeholder="全部状态"
+          :placeholder="t('interface.allStatuses')"
           clearable
         >
           <el-option
-            label="Completed"
+            :label="t('interface.completed')"
             value="completed"
           />
 
           <el-option
-            label="Running"
+            :label="t('interface.running')"
             value="running"
           />
 
           <el-option
-            label="Failed"
+            :label="t('interface.failed')"
             value="failed"
           />
         </el-select>
@@ -466,16 +471,16 @@ onMounted(() => {
       <el-table
         v-loading="loading"
         :data="filteredScans"
-        empty-text="暂无扫描任务"
+        :empty-text="t('interface.noScanTasks')"
       >
         <el-table-column
           prop="id"
-          label="Scan ID"
+          :label="t('interface.scanId')"
           width="100"
         />
 
         <el-table-column
-          label="资产"
+          :label="t('interface.asset')"
           min-width="220"
         >
           <template #default="{ row }">
@@ -493,12 +498,12 @@ onMounted(() => {
 
         <el-table-column
           prop="scanner"
-          label="Scanner"
+          :label="t('interface.scanner')"
           width="160"
         />
 
         <el-table-column
-          label="状态"
+          :label="t('interface.status')"
           width="130"
         >
           <template #default="{ row }">
@@ -506,13 +511,13 @@ onMounted(() => {
               :type="statusType(row.status)"
               effect="light"
             >
-              {{ row.status }}
+              {{ label(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="开放端口"
+          :label="t('interface.openPorts')"
           width="120"
         >
           <template #default="{ row }">
@@ -521,7 +526,7 @@ onMounted(() => {
         </el-table-column>
 
         <el-table-column
-          label="开始时间"
+          :label="t('interface.startedAt')"
           min-width="190"
         >
           <template #default="{ row }">
@@ -534,7 +539,7 @@ onMounted(() => {
         </el-table-column>
 
         <el-table-column
-          label="结束时间"
+          :label="t('interface.finishedAt')"
           min-width="190"
         >
           <template #default="{ row }">
@@ -547,7 +552,7 @@ onMounted(() => {
         </el-table-column>
 
         <el-table-column
-          label="操作"
+          :label="t('interface.actions')"
           width="110"
           align="right"
         >
@@ -558,7 +563,7 @@ onMounted(() => {
               :icon="View"
               @click="openDetail(row.id)"
             >
-              详情
+              {{ t('interface.details') }}
             </el-button>
           </template>
         </el-table-column>
@@ -567,7 +572,7 @@ onMounted(() => {
 
     <el-drawer
       v-model="detailVisible"
-      title="Scan Detail"
+      :title="t('interface.scanDetail')"
       size="520px"
     >
       <div
@@ -578,7 +583,7 @@ onMounted(() => {
           <div class="detail-title">
             <div>
               <span>
-                Scan
+                {{ t('interface.scan63') }}
               </span>
 
               <h3>
@@ -593,14 +598,14 @@ onMounted(() => {
                 )
               "
             >
-              {{ selectedScan.status }}
+              {{ label(selectedScan.status) }}
             </el-tag>
           </div>
 
           <dl class="detail-grid">
             <div>
               <dt>
-                Asset
+                {{ t('interface.asset64') }}
               </dt>
 
               <dd>
@@ -614,7 +619,7 @@ onMounted(() => {
 
             <div>
               <dt>
-                Scanner
+                {{ t('interface.scanner') }}
               </dt>
 
               <dd>
@@ -624,7 +629,7 @@ onMounted(() => {
 
             <div>
               <dt>
-                Started
+                {{ t('interface.started') }}
               </dt>
 
               <dd>
@@ -638,7 +643,7 @@ onMounted(() => {
 
             <div>
               <dt>
-                Finished
+                {{ t('interface.finished') }}
               </dt>
 
               <dd>
@@ -653,7 +658,7 @@ onMounted(() => {
 
           <div class="ports-heading">
             <h4>
-              Open Ports
+              {{ t('interface.openPorts67') }}
             </h4>
 
             <span>
@@ -670,29 +675,29 @@ onMounted(() => {
           >
             <el-table-column
               prop="port"
-              label="Port"
+              :label="t('interface.port')"
               width="80"
             />
 
             <el-table-column
               prop="protocol"
-              label="Protocol"
+              :label="t('interface.protocol')"
               width="90"
             />
 
             <el-table-column
               prop="service"
-              label="Service"
+              :label="t('interface.service')"
             />
 
             <el-table-column
               prop="product"
-              label="Product"
+              :label="t('interface.product')"
             />
 
             <el-table-column
               prop="version"
-              label="Version"
+              :label="t('interface.version')"
             />
           </el-table>
 

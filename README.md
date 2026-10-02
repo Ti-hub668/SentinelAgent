@@ -395,6 +395,8 @@ Audit Trace
 
 # 4. Key Features
 
+- **中英文界面切换 / Chinese and English UI**：Settings 支持简体中文 / English，语言偏好在刷新后保持，主要页面、Element Plus 控件和浏览器标题同步切换。
+
 ## 4.1 Automated Security Discovery
 
 SentinelAgent 集成：
@@ -1432,6 +1434,7 @@ Execute Again First
 目前已经完成：
 
 - [x] Vue 3 Frontend
+- [x] Frontend i18n — 简体中文 / English
 - [x] FastAPI Backend
 - [x] MySQL Persistence
 - [x] Asset Management
@@ -1479,7 +1482,6 @@ Execute Again First
 
 下一阶段计划包括：
 
-- [ ] Frontend i18n — 中文 / English
 - [ ] Additional SOAR integrations
 - [ ] Additional Threat Intelligence providers
 - [ ] More governed response adapters

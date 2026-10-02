@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+import { useDisplayLabels } from '../../i18n/display'
+const { t, locale } = useI18n()
+const { label } = useDisplayLabels()
+
 import {
   computed,
   onMounted,
@@ -216,23 +221,25 @@ const workflowStatusLabel = computed(() => {
     workflow.value?.workflow_status
 
   const labels = {
+    executed: label('executed'),
+    running: label('running'),
     failed:
-      'Workflow Failed',
+      t('interface.workflowFailed'),
 
     investigation_completed:
-      'Investigation Completed',
+      t('interface.investigationCompleted'),
 
     awaiting_approval:
-      'Awaiting Approval',
+      t('interface.awaitingApproval'),
 
     policy_blocked:
-      'Policy Blocked',
+      t('interface.policyBlocked'),
 
     ready_for_execution:
-      'Ready for Execution',
+      t('interface.readyForExecution'),
 
     dry_run_executed:
-      'Dry-run Executed',
+      t('interface.dryRunExecuted'),
   }
 
   return labels[status] || status || '—'
@@ -251,7 +258,7 @@ function formatDate(value) {
     return value
   }
 
-  return date.toLocaleString()
+  return date.toLocaleString(locale.value)
 }
 
 function workflowTagType(status) {
@@ -322,21 +329,21 @@ function brokerTagType(status) {
 
 function toolName(value) {
   if (!value) {
-    return 'Unknown Tool'
+    return t('interface.unknownTool356')
   }
 
   const labels = {
     manual_review:
-      'Manual Review',
+      t('interface.manualReview'),
 
     create_ticket:
-      'Create Ticket',
+      t('interface.createTicket'),
 
     notify:
-      'Notify',
+      t('interface.notify'),
 
     block_ip:
-      'Block IP',
+      t('interface.blockIp'),
   }
 
   return labels[value] || value
@@ -345,25 +352,25 @@ function toolName(value) {
 function eventLabel(type) {
   const labels = {
     response_planned:
-      'Response Agent',
+      t('interface.responseAgent'),
 
     policy_evaluated:
-      'Policy Engine',
+      t('interface.policyEngine'),
 
     approval_requested:
-      'Approval Requested',
+      t('interface.approvalRequested'),
 
     approval_resolved:
-      'Human Review',
+      t('interface.humanReview'),
 
     tool_execution_simulated:
-      'Tool Broker',
+      t('interface.toolBroker'),
 
     tool_execution_completed:
-      'Tool Broker',
+      t('interface.toolBroker'),
 
     tool_execution_failed:
-      'Tool Broker Failed',
+      t('interface.toolBrokerFailed226'),
   }
 
   return labels[type] || type
@@ -406,7 +413,7 @@ async function loadRun(runId) {
 
   if (!id) {
     ElMessage.warning(
-      '请输入有效 Run ID',
+      t('interface.pleaseEnterAValidRunId'),
     )
 
     return
@@ -452,7 +459,7 @@ async function loadRun(runId) {
     console.error(error)
 
     ElMessage.error(
-      'Response Run 加载失败',
+      t('interface.failedToLoadResponseRun'),
     )
   } finally {
     loading.value = false
@@ -489,8 +496,8 @@ function openReview(
 
   reviewForm.reason =
     mode === 'approve'
-      ? 'Evidence reviewed and action approved.'
-      : 'Action rejected after security review.'
+      ? t('interface.evidenceReviewedAndActionApproved')
+      : t('interface.actionRejectedAfterSecurityReview')
 
   reviewDialogVisible.value = true
 }
@@ -500,7 +507,7 @@ async function submitReview() {
     !reviewForm.reviewer.trim()
   ) {
     ElMessage.warning(
-      'Reviewer 不能为空',
+      t('interface.reviewerIsRequired'),
     )
 
     return
@@ -510,7 +517,7 @@ async function submitReview() {
     !reviewForm.reason.trim()
   ) {
     ElMessage.warning(
-      'Review reason 不能为空',
+      t('interface.reviewReasonIsRequired'),
     )
 
     return
@@ -569,8 +576,8 @@ async function submitReview() {
     ElMessage.success(
       reviewMode.value ===
         'approve'
-        ? 'Action 已批准，但尚未执行'
-        : 'Action 已拒绝',
+        ? t('interface.actionApprovedButNotYetExecuted')
+        : t('interface.actionRejected'),
     )
   } catch (error) {
     console.error(error)
@@ -588,7 +595,7 @@ async function executeTools() {
     pendingApprovals.value.length
   ) {
     ElMessage.warning(
-      '仍有待审批 Action，不能进入 Tool Broker',
+      t('interface.actionsStillAwaitApprovalToolBrokerExecutionIsBlocked'),
     )
 
     return
@@ -596,13 +603,13 @@ async function executeTools() {
 
   try {
     await ElMessageBox.confirm(
-      '当前 Tool Broker 为 DRY-RUN / Mock 模式，不会产生真实外部副作用。是否继续执行授权动作？',
-      'Execute Authorized Actions',
+      t('interface.executeAuthorizedActionsThroughTheToolBrokerExternalEffectsDependOnTheServerExecutionConfiguration'),
+      t('interface.executeAuthorizedActions'),
       {
         confirmButtonText:
-          '执行 Dry-run',
+          t('interface.executeActions'),
         cancelButtonText:
-          '取消',
+          t('interface.cancel'),
         type: 'warning',
       },
     )
@@ -631,7 +638,7 @@ async function executeTools() {
     )
 
     ElMessage.success(
-      'Tool Broker Dry-run 已完成',
+      t('interface.toolBrokerExecutionCompleted'),
     )
   } catch (error) {
     console.error(error)
@@ -655,16 +662,15 @@ onMounted(async () => {
     <div class="page-heading">
       <div>
         <div class="eyebrow">
-          RESPONSE GOVERNANCE
+          {{ t('interface.responseGovernance') }}
         </div>
 
         <h2>
-          Response Center
+          {{ t('interface.responseCenter') }}
         </h2>
 
         <p>
-          Policy、Human Approval 与 Tool Broker
-          安全响应工作台
+          {{ t('interface.securityResponseWorkspaceForPolicyHumanApprovalAndToolBroker') }}
         </p>
       </div>
 
@@ -674,20 +680,20 @@ onMounted(async () => {
         :loading="loading"
         @click="refreshRun"
       >
-        刷新状态
+        {{ t('interface.refreshStatus') }}
       </el-button>
     </div>
 
     <section class="panel run-loader">
       <div>
         <label>
-          Investigation Run ID
+          {{ t('interface.investigationRunId') }}
         </label>
 
         <div class="run-search">
           <el-input
             v-model="runIdInput"
-            placeholder="例如 31"
+            :placeholder="t('interface.eG31')"
             @keyup.enter="searchRun"
           />
 
@@ -697,7 +703,7 @@ onMounted(async () => {
             :loading="loading"
             @click="searchRun"
           >
-            加载 Response
+            {{ t('interface.loadResponse') }}
           </el-button>
         </div>
       </div>
@@ -709,13 +715,11 @@ onMounted(async () => {
 
         <div>
           <strong>
-            Safe Execution Boundary
+            {{ t('interface.safeExecutionBoundary') }}
           </strong>
 
           <span>
-            当前 Tool Broker
-            仅执行 Dry-run / Mock，
-            不产生真实 SOAR 副作用。
+            {{ t('interface.toolBrokerGovernsExecutionExternalEffectsDependOnTheServerExecutionConfiguration') }}
           </span>
         </div>
       </div>
@@ -725,7 +729,7 @@ onMounted(async () => {
       <div class="summary-grid">
         <section class="panel summary-card">
           <span>
-            Workflow Run
+            {{ t('interface.workflowRun') }}
           </span>
 
           <strong>
@@ -733,14 +737,13 @@ onMounted(async () => {
           </strong>
 
           <small>
-            Finding
-            #{{ workflow.finding_id }}
+            {{ t('interface.finding177') }}{{ workflow.finding_id }}
           </small>
         </section>
 
         <section class="panel summary-card">
           <span>
-            Workflow Status
+            {{ t('interface.workflowStatus') }}
           </span>
 
           <strong class="summary-text">
@@ -754,15 +757,13 @@ onMounted(async () => {
               )
             "
           >
-            {{
-              workflow.workflow_status
-            }}
+            {{ label(workflow.workflow_status) }}
           </el-tag>
         </section>
 
         <section class="panel summary-card">
           <span>
-            Pending Approval
+            {{ t('interface.pendingApproval') }}
           </span>
 
           <strong>
@@ -775,28 +776,26 @@ onMounted(async () => {
             {{
               approvedApprovals.length
             }}
-            approved ·
+            {{ t('interface.approved') }}
             {{
               rejectedApprovals.length
             }}
-            rejected
+            {{ t('interface.rejected') }}
           </small>
         </section>
 
         <section class="panel summary-card">
           <span>
-            Tool Broker
+            {{ t('interface.toolBroker') }}
           </span>
           <strong class="summary-text">
-            {{
-              brokerDisplay.results.length
-                ? 'Executed'
-                : 'Not Executed'
-            }}
+            {{ label(brokerDisplay.results.length
+                ? t('interface.executed')
+                : t('interface.notExecuted')) }}
           </strong>
 
           <small>
-            Dry-run only
+            {{ t('interface.executionModeControlledByServer') }}
           </small>
         </section>
       </div>
@@ -807,7 +806,7 @@ onMounted(async () => {
       >
         <div>
           <span class="section-label">
-            SECURITY FINDING
+            {{ t('interface.securityFinding') }}
           </span>
 
           <h3>
@@ -825,25 +824,21 @@ onMounted(async () => {
               type="info"
               effect="plain"
             >
-              {{ finding.severity }}
+              {{ label(finding.severity) }}
             </el-tag>
 
             <el-tag
               effect="plain"
             >
-              Risk:
-              {{
-                finding.risk_level
-              }}
+              {{ t('interface.risk') }}
+              {{ label(finding.risk_level) }}
             </el-tag>
 
             <el-tag
               type="danger"
               effect="plain"
             >
-              {{
-                workflow.final_verdict
-              }}
+              {{ label(workflow.final_verdict) }}
             </el-tag>
           </div>
         </div>
@@ -861,7 +856,7 @@ onMounted(async () => {
             })
           "
         >
-          查看 Investigation
+          {{ t('interface.viewInvestigation') }}
         </el-button>
       </section>
 
@@ -874,11 +869,11 @@ onMounted(async () => {
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  RESPONSE AGENT
+                  {{ t('interface.responseAgent192') }}
                 </span>
 
                 <h3>
-                  Response Plan
+                  {{ t('interface.responsePlan') }}
                 </h3>
               </div>
 
@@ -894,8 +889,8 @@ onMounted(async () => {
                   {{
                     responsePlan
                       .requires_human_review
-                      ? 'Human Review'
-                      : 'No Review'
+                      ? t('interface.humanReview')
+                      : t('interface.noReview')
                   }}
                 </el-tag>
 
@@ -903,7 +898,7 @@ onMounted(async () => {
                   type="info"
                   effect="plain"
                 >
-                  Dry-run
+                  {{ t('interface.dryRun390') }}
                 </el-tag>
               </div>
             </div>
@@ -911,46 +906,40 @@ onMounted(async () => {
             <div class="response-overview">
               <div>
                 <span>
-                  Grounded Verdict
+                  {{ t('interface.groundedVerdict') }}
                 </span>
 
                 <strong>
-                  {{
-                    responsePlan
-                      .grounded_verdict
-                  }}
+                  {{ label(responsePlan
+                      .grounded_verdict) }}
                 </strong>
               </div>
 
               <div>
                 <span>
-                  Decision Action
+                  {{ t('interface.decisionAction') }}
                 </span>
 
                 <strong>
-                  {{
-                    responsePlan
-                      .decision_action
-                  }}
+                  {{ label(responsePlan
+                      .decision_action) }}
                 </strong>
               </div>
 
               <div>
                 <span>
-                  Priority
+                  {{ t('interface.priority309') }}
                 </span>
 
                 <strong>
-                  {{
-                    responsePlan.priority
-                  }}
+                  {{ label(responsePlan.priority) }}
                 </strong>
               </div>
             </div>
 
             <div class="response-summary">
               <span>
-                Analyst Summary
+                {{ t('interface.analystSummary') }}
               </span>
 
               <p>
@@ -964,21 +953,21 @@ onMounted(async () => {
               v-for="section in [
                 {
                   title:
-                    'Containment Plan',
+                    t('interface.containmentPlan'),
                   value:
                     responsePlan
                       .containment_plan,
                 },
                 {
                   title:
-                    'Remediation Plan',
+                    t('interface.remediationPlan'),
                   value:
                     responsePlan
                       .remediation_plan,
                 },
                 {
                   title:
-                    'Verification Plan',
+                    t('interface.verificationPlan'),
                   value:
                     responsePlan
                       .verification_plan,
@@ -1015,11 +1004,11 @@ onMounted(async () => {
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  REQUESTED ACTIONS
+                  {{ t('interface.requestedActions') }}
                 </span>
 
                 <h3>
-                  Tool Requests
+                  {{ t('interface.toolRequests') }}
                 </h3>
               </div>
 
@@ -1031,7 +1020,7 @@ onMounted(async () => {
                     ?.tool_requests
                     ?.length || 0
                 }}
-                requests
+                {{ t('interface.requests') }}
               </el-tag>
             </div>
 
@@ -1061,11 +1050,9 @@ onMounted(async () => {
                 <div class="tool-main">
                   <div class="tool-title">
                     <strong>
-                      {{
-                        toolName(
+                      {{ label(toolName(
                           request.tool_name,
-                        )
-                      }}
+                        )) }}
                     </strong>
 
                     <el-tag
@@ -1083,11 +1070,9 @@ onMounted(async () => {
                         )
                       "
                     >
-                      {{
-                        policyResults[
+                      {{ label(policyResults[
                           index
-                        ].decision
-                      }}
+                        ].decision) }}
                     </el-tag>
                   </div>
 
@@ -1120,7 +1105,7 @@ onMounted(async () => {
 
             <el-empty
               v-else
-              description="No Tool Requests"
+              :description="t('interface.noToolRequests')"
             />
           </section>
 
@@ -1131,25 +1116,25 @@ onMounted(async () => {
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  TOOL BROKER
+                  {{ t('interface.toolBroker344') }}
                 </span>
 
                 <h3>
-                  Execution Results
+                  {{ t('interface.executionResults') }}
                 </h3>
               </div>
 
               <el-tag
                 type="success"
               >
-                Dry-run Complete
+                {{ t('interface.dryRunComplete') }}
               </el-tag>
             </div>
 
             <div class="broker-counts">
               <div>
                 <span>
-                  SIMULATED
+                  {{ t('interface.simulated') }}
                 </span>
 
                 <strong>
@@ -1162,7 +1147,7 @@ onMounted(async () => {
 
               <div>
                 <span>
-                  BLOCKED
+                  {{ t('interface.blocked') }}
                 </span>
 
                 <strong>
@@ -1175,7 +1160,7 @@ onMounted(async () => {
 
               <div>
                 <span>
-                  FAILED
+                  {{ t('interface.failed404') }}
                 </span>
 
                 <strong>
@@ -1200,18 +1185,15 @@ onMounted(async () => {
               >
                 <div>
                   <strong>
-                    {{
-                      toolName(
+                    {{ label(toolName(
                         item
                           .tool_request
                           .tool_name,
-                      )
-                    }}
+                      )) }}
                   </strong>
 
                   <span>
-                    Request
-                    #{{
+                    {{ t('interface.request332') }}{{
                       item.request_index
                     }}
                   </span>
@@ -1224,7 +1206,7 @@ onMounted(async () => {
                     )
                   "
                 >
-                  {{ item.status }}
+                  {{ label(item.status) }}
                 </el-tag>
 
                 <p>
@@ -1233,24 +1215,18 @@ onMounted(async () => {
 
                 <div class="broker-flags">
                   <span>
-                    Authorized:
-                    {{
-                      item.authorized
-                    }}
+                    {{ t('interface.authorized405') }}
+                    {{ label(item.authorized) }}
                   </span>
 
                   <span>
-                    Executed:
-                    {{
-                      item.executed
-                    }}
+                    {{ t('interface.executed406') }}
+                    {{ label(item.executed) }}
                   </span>
 
                   <span>
-                    Dry-run:
-                    {{
-                      item.dry_run
-                    }}
+                    {{ t('interface.dryRun') }}
+                    {{ label(item.dry_run) }}
                   </span>
                 </div>
 
@@ -1281,11 +1257,11 @@ onMounted(async () => {
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  POLICY ENGINE
+                  {{ t('interface.policyEngine199') }}
                 </span>
 
                 <h3>
-                  Governance Decision
+                  {{ t('interface.governanceDecision') }}
                 </h3>
               </div>
             </div>
@@ -1293,7 +1269,7 @@ onMounted(async () => {
             <div class="policy-counts">
               <div class="allow">
                 <span>
-                  ALLOW
+                  {{ t('interface.allow') }}
                 </span>
 
                 <strong>
@@ -1305,7 +1281,7 @@ onMounted(async () => {
 
               <div class="deny">
                 <span>
-                  DENY
+                  {{ t('interface.deny') }}
                 </span>
 
                 <strong>
@@ -1317,7 +1293,7 @@ onMounted(async () => {
 
               <div class="approval">
                 <span>
-                  APPROVAL
+                  {{ t('interface.approval') }}
                 </span>
 
                 <strong>
@@ -1340,8 +1316,7 @@ onMounted(async () => {
               >
                 <div class="policy-item-top">
                   <strong>
-                    Request
-                    #{{
+                    {{ t('interface.request332') }}{{
                       item.request_index
                     }}
                   </strong>
@@ -1354,9 +1329,7 @@ onMounted(async () => {
                       )
                     "
                   >
-                    {{
-                      item.decision
-                    }}
+                    {{ label(item.decision) }}
                   </el-tag>
                 </div>
 
@@ -1374,11 +1347,11 @@ onMounted(async () => {
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  HUMAN IN THE LOOP
+                  {{ t('interface.humanInTheLoop') }}
                 </span>
 
                 <h3>
-                  Human Approval
+                  {{ t('interface.humanApproval') }}
                 </h3>
               </div>
 
@@ -1401,18 +1374,15 @@ onMounted(async () => {
                 <div class="approval-head">
                   <div>
                     <strong>
-                      {{
-                        toolName(
+                      {{ label(toolName(
                           approval
                             .tool_request
                             .tool_name,
-                        )
-                      }}
+                        )) }}
                     </strong>
 
                     <small>
-                      Request
-                      #{{
+                      {{ t('interface.request332') }}{{
                         approval
                           .request_index
                       }}
@@ -1426,9 +1396,7 @@ onMounted(async () => {
                       )
                     "
                   >
-                    {{
-                      approval.status
-                    }}
+                    {{ label(approval.status) }}
                   </el-tag>
                 </div>
 
@@ -1448,7 +1416,7 @@ onMounted(async () => {
                 >
                   <div>
                     <span>
-                      Reviewer
+                      {{ t('interface.reviewer') }}
                     </span>
 
                     <strong>
@@ -1461,7 +1429,7 @@ onMounted(async () => {
 
                   <div>
                     <span>
-                      Reason
+                      {{ t('interface.reason') }}
                     </span>
 
                     <strong>
@@ -1490,7 +1458,7 @@ onMounted(async () => {
                       )
                     "
                   >
-                    Reject
+                    {{ t('interface.reject') }}
                   </el-button>
 
                   <el-button
@@ -1503,7 +1471,7 @@ onMounted(async () => {
                       )
                     "
                   >
-                    Approve
+                    {{ t('interface.approve') }}
                   </el-button>
                 </div>
               </div>
@@ -1514,11 +1482,11 @@ onMounted(async () => {
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  EXECUTION BOUNDARY
+                  {{ t('interface.executionBoundary') }}
                 </span>
 
                 <h3>
-                  Tool Broker
+                  {{ t('interface.toolBroker') }}
                 </h3>
               </div>
 
@@ -1541,7 +1509,7 @@ onMounted(async () => {
                 {{
                   pendingApprovals.length
                 }}
-                个动作仍等待人工审批。
+                {{ t('interface.actionsAwaitHumanApproval') }}
               </span>
             </div>
 
@@ -1554,16 +1522,12 @@ onMounted(async () => {
               </el-icon>
 
               <span>
-                所有审批已处理，
-                可以进入 Tool Broker。
+                {{ t('interface.allApprovalsHaveBeenProcessedToolBrokerExecutionIsAvailable') }}
               </span>
             </div>
 
             <p>
-              Tool Broker
-              是所有响应动作的唯一执行边界。
-              当前仅执行模拟动作，
-              不会产生真实外部副作用。
+              {{ t('interface.toolBrokerIsTheSoleExecutionBoundaryForResponseActionsExecutionModeIsControlledByTheServerConfiguration') }}
             </p>
 
             <el-button
@@ -1573,7 +1537,7 @@ onMounted(async () => {
               :loading="executing"
               @click="executeTools"
             >
-              Execute Authorized Actions
+              {{ t('interface.executeAuthorizedActions') }}
             </el-button>
           </section>
 
@@ -1586,11 +1550,11 @@ onMounted(async () => {
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  GOVERNANCE TRACE
+                  {{ t('interface.governanceTrace') }}
                 </span>
 
                 <h3>
-                  Response Timeline
+                  {{ t('interface.responseTimeline') }}
                 </h3>
               </div>
             </div>
@@ -1607,18 +1571,14 @@ onMounted(async () => {
 
                 <div>
                   <strong>
-                    {{
-                      eventLabel(
+                    {{ label(eventLabel(
                         event.event_type,
-                      )
-                    }}
+                      )) }}
                   </strong>
 
                   <p>
-                    {{
-                      event.summary ||
-                      event.event_type
-                    }}
+                    {{ label(event.summary ||
+                      event.event_type) }}
                   </p>
 
                   <small>
@@ -1641,11 +1601,10 @@ onMounted(async () => {
       class="panel empty-state"
     >
       <el-empty
-        description="加载一个 Investigation Run 开始响应治理"
+        :description="t('interface.loadAnInvestigationRunToBeginResponseGovernance')"
       >
         <p class="empty-help">
-          可以使用昨天生成的
-          Run #31 进行测试。
+          {{ t('interface.enterAnExistingInvestigationRunIdToLoadItsResponseWorkflow') }}
         </p>
       </el-empty>
     </section>
@@ -1654,8 +1613,8 @@ onMounted(async () => {
       v-model="reviewDialogVisible"
       :title="
         reviewMode === 'approve'
-          ? 'Approve Security Action'
-          : 'Reject Security Action'
+          ? t('interface.approveSecurityAction')
+          : t('interface.rejectSecurityAction')
       "
       width="520px"
       destroy-on-close
@@ -1672,8 +1631,8 @@ onMounted(async () => {
         <template #title>
           {{
             reviewMode === 'approve'
-              ? '批准只代表授权，不会立即执行工具。'
-              : '拒绝后该 Action 将不会被授权执行。'
+              ? t('interface.approvalGrantsAuthorizationItDoesNotExecuteToolsImmediately')
+              : t('interface.rejectedActionsWillNotBeAuthorizedForExecution')
           }}
         </template>
       </el-alert>
@@ -1683,7 +1642,7 @@ onMounted(async () => {
         class="review-form"
       >
         <el-form-item
-          label="Reviewer"
+          :label="t('interface.reviewer')"
           required
         >
           <el-input
@@ -1691,12 +1650,12 @@ onMounted(async () => {
               reviewForm.reviewer
             "
             maxlength="100"
-            placeholder="例如 security-analyst"
+            :placeholder="t('interface.eGSecurityAnalyst')"
           />
         </el-form-item>
 
         <el-form-item
-          label="Review Reason"
+          :label="t('interface.reviewReason')"
           required
         >
           <el-input
@@ -1718,7 +1677,7 @@ onMounted(async () => {
               false
           "
         >
-          Cancel
+          {{ t('interface.cancel423') }}
         </el-button>
 
         <el-button
@@ -1732,8 +1691,8 @@ onMounted(async () => {
         >
           {{
             reviewMode === 'approve'
-              ? 'Confirm Approval'
-              : 'Confirm Rejection'
+              ? t('interface.confirmApproval')
+              : t('interface.confirmRejection')
           }}
         </el-button>
       </template>

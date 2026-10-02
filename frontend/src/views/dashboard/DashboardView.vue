@@ -5,9 +5,12 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  watch,
 } from 'vue'
 
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useDisplayLabels } from '../../i18n/display'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 
@@ -29,6 +32,8 @@ import {
 } from '../../api'
 
 const router = useRouter()
+const { t, locale } = useI18n()
+const { label } = useDisplayLabels()
 
 const target = ref('')
 const loading = ref(false)
@@ -45,32 +50,32 @@ let trendChart = null
 
 const severity = [
   {
-    label: '严重风险',
-    english: 'Critical',
+    labelKey: 'dashboard.severity.critical',
+    shortKey: 'dashboard.severity.criticalShort',
     key: 'critical',
     color: '#df5965',
     tint: '#fff0f2',
     icon: WarningFilled,
   },
   {
-    label: '高危风险',
-    english: 'High',
+    labelKey: 'dashboard.severity.high',
+    shortKey: 'dashboard.severity.highShort',
     key: 'high',
     color: '#e68b3e',
     tint: '#fff5eb',
     icon: Warning,
   },
   {
-    label: '中危风险',
-    english: 'Medium',
+    labelKey: 'dashboard.severity.medium',
+    shortKey: 'dashboard.severity.mediumShort',
     key: 'medium',
     color: '#d4aa26',
     tint: '#fff9e7',
     icon: RemoveFilled,
   },
   {
-    label: '低危风险',
-    english: 'Low',
+    labelKey: 'dashboard.severity.low',
+    shortKey: 'dashboard.severity.lowShort',
     key: 'low',
     color: '#299dbc',
     tint: '#ebf8fc',
@@ -81,8 +86,8 @@ const severity = [
 const findingLegend = [
   ...severity,
   {
-    label: '信息',
-    english: 'Info',
+    labelKey: 'dashboard.severity.info',
+    shortKey: 'dashboard.severity.info',
     key: 'info',
     color: '#91a4ba',
   },
@@ -308,7 +313,7 @@ function renderTrendChart() {
 
     series: [
       {
-        name: 'Critical',
+        name: t('dashboard.severity.criticalShort'),
         type: 'line',
         smooth: true,
         symbol: 'circle',
@@ -329,7 +334,7 @@ function renderTrendChart() {
       },
 
       {
-        name: 'High',
+        name: t('dashboard.severity.highShort'),
         type: 'line',
         smooth: true,
         symbol: 'circle',
@@ -350,7 +355,7 @@ function renderTrendChart() {
       },
 
       {
-        name: 'Medium',
+        name: t('dashboard.severity.mediumShort'),
         type: 'line',
         smooth: true,
         symbol: 'circle',
@@ -371,7 +376,7 @@ function renderTrendChart() {
       },
 
       {
-        name: 'Low',
+        name: t('dashboard.severity.lowShort'),
         type: 'line',
         smooth: true,
         symbol: 'circle',
@@ -419,7 +424,7 @@ function renderFindingChart() {
 
     series: [
       {
-        name: 'Finding Severity',
+        name: t('dashboard.severityDistribution'),
         type: 'pie',
 
         radius: [
@@ -446,7 +451,7 @@ function renderFindingChart() {
           {
             value:
               severityCounts.value.critical,
-            name: 'Critical',
+            name: t('dashboard.severity.criticalShort'),
 
             itemStyle: {
               color: '#df5965',
@@ -456,7 +461,7 @@ function renderFindingChart() {
           {
             value:
               severityCounts.value.high,
-            name: 'High',
+            name: t('dashboard.severity.highShort'),
 
             itemStyle: {
               color: '#e68b3e',
@@ -466,7 +471,7 @@ function renderFindingChart() {
           {
             value:
               severityCounts.value.medium,
-            name: 'Medium',
+            name: t('dashboard.severity.mediumShort'),
 
             itemStyle: {
               color: '#d4aa26',
@@ -476,8 +481,7 @@ function renderFindingChart() {
           {
             value:
               severityCounts.value.low,
-            name: 'Low',
-
+            name: t('dashboard.severity.lowShort'),
             itemStyle: {
               color: '#299dbc',
             },
@@ -486,7 +490,7 @@ function renderFindingChart() {
           {
             value:
               severityCounts.value.info,
-            name: 'Info',
+            name: t('dashboard.severity.info'),
 
             itemStyle: {
               color: '#91a4ba',
@@ -540,7 +544,7 @@ async function loadDashboard() {
     )
 
     ElMessage.warning(
-      'Dashboard 数据加载失败，请确认后端接口是否正常',
+      t('dashboard.loadFailed'),
     )
   } finally {
     loading.value = false
@@ -552,7 +556,7 @@ function prepareScan() {
 
   if (!value) {
     ElMessage.warning(
-      '请输入目标 URL、域名或 IP 地址',
+      t('dashboard.enterTarget'),
     )
 
     return
@@ -566,6 +570,13 @@ function prepareScan() {
     },
   })
 }
+
+watch(locale, async () => {
+  await nextTick()
+
+  renderFindingChart()
+  renderTrendChart()
+})
 
 onMounted(async () => {
   await loadDashboard()
@@ -599,15 +610,15 @@ onBeforeUnmount(() => {
     <div class="page-heading">
       <div>
         <div class="eyebrow">
-          SECURITY OVERVIEW
+          {{ t('dashboard.eyebrow') }}
         </div>
 
         <h2>
-          Security Dashboard
+          {{ t('dashboard.title') }}
         </h2>
 
         <p>
-          SentinelAgent AI-Powered Security Operations Platform
+          {{ t('dashboard.subtitle') }}
         </p>
       </div>
 
@@ -617,8 +628,12 @@ onBeforeUnmount(() => {
       >
         {{
           loading
-            ? '正在读取安全数据'
-            : `${assets.length} 资产 · ${scans.length} 扫描 · ${findings.length} Findings`
+            ? t('dashboard.loadingSecurityData')
+            : t('dashboard.overviewCounts', {
+                assets: assets.length,
+                scans: scans.length,
+                findings: findings.length,
+              })
         }}
       </el-tag>
     </div>
@@ -630,11 +645,11 @@ onBeforeUnmount(() => {
             <Lock />
           </el-icon>
 
-          快速安全扫描
+          {{ t('dashboard.quickScan') }}
         </h3>
 
         <p>
-          输入目标地址，前往扫描任务配置
+          {{ t('dashboard.quickScanDescription') }}
         </p>
 
         <form
@@ -643,8 +658,8 @@ onBeforeUnmount(() => {
         >
           <el-input
             v-model="target"
-            aria-label="扫描目标"
-            placeholder="https://example.com 或 192.168.1.1"
+            :aria-:label="t('dashboard.scanTarget')"
+            :placeholder="t('dashboard.scanPlaceholder')"
             clearable
           />
 
@@ -653,7 +668,7 @@ onBeforeUnmount(() => {
               <Position />
             </el-icon>
 
-            配置扫描
+            {{ t('dashboard.configureScan') }}
           </el-button>
         </form>
       </section>
@@ -661,7 +676,7 @@ onBeforeUnmount(() => {
       <section class="today-card panel">
         <div>
           <span class="muted">
-            今日扫描数
+            {{ t('dashboard.todayScans') }}
           </span>
 
           <strong>
@@ -675,8 +690,10 @@ onBeforeUnmount(() => {
           <small>
             {{
               loading
-                ? '正在读取扫描数据'
-                : `累计扫描任务 ${scans.length}`
+                ? t('dashboard.loadingScanData')
+                : t('dashboard.totalScans', {
+                    count: scans.length,
+                  })
             }}
           </small>
         </div>
@@ -692,7 +709,7 @@ onBeforeUnmount(() => {
     <div class="severity-grid">
       <section
         v-for="item in severity"
-        :key="item.english"
+        {{ t(item.shortKey) }}
         class="severity-card panel"
         :style="{
           '--severity': item.color,
@@ -704,7 +721,7 @@ onBeforeUnmount(() => {
             {{ item.label }}
 
             <small>
-              {{ item.english }}
+              {{ t(item.shortKey) }}
             </small>
           </span>
 
@@ -731,15 +748,15 @@ onBeforeUnmount(() => {
       <section class="panel chart-panel">
         <div class="panel-heading">
           <h3>
-            风险趋势
+            {{ t('dashboard.riskTrend') }}
 
             <small>
-              Risk trend
+              {{ t('dashboard.riskTrend') }}
             </small>
           </h3>
 
           <span class="muted">
-            最近 7 天
+            {{ t('dashboard.recent7Days') }}
           </span>
         </div>
 
@@ -751,7 +768,7 @@ onBeforeUnmount(() => {
         <div class="chart-legend">
           <span
             v-for="item in severity"
-            :key="item.english"
+            :key="item.key"
           >
             <i
               :style="{
@@ -759,7 +776,7 @@ onBeforeUnmount(() => {
               }"
             ></i>
 
-            {{ item.english }}
+            {{ t(item.shortKey) }}
           </span>
         </div>
       </section>
@@ -767,15 +784,15 @@ onBeforeUnmount(() => {
       <section class="panel chart-panel">
         <div class="panel-heading">
           <h3>
-            Finding 分布
+            {{ t('dashboard.findingDistribution') }}
 
             <small>
-              Severity distribution
+              {{ t('dashboard.severityDistribution') }}
             </small>
           </h3>
 
           <span class="muted">
-            全部发现
+            {{ t('dashboard.allFindings') }}
           </span>
         </div>
 
@@ -796,29 +813,31 @@ onBeforeUnmount(() => {
               </strong>
 
               <span>
-                Findings
+                {{ t('dashboard.findings') }}
               </span>
             </div>
           </div>
 
           <div class="distribution-summary">
-            <h4>
-              安全发现总览
+            <h4>{{ t('dashboard.securityFindingsOverview') }}
             </h4>
 
             <p>
-              Critical
+              {{ t('dashboard.severity.criticalShort') }}
               {{ severityCounts.critical }}
-              · High
+              ·
+              {{ t('dashboard.severity.highShort') }}
               {{ severityCounts.high }}
-              · Medium
+              ·
+              {{ t('dashboard.severity.mediumShort') }}
               {{ severityCounts.medium }}
-              · Low
+              ·
+              {{ t('dashboard.severity.lowShort') }}
               {{ severityCounts.low }}
             </p>
 
             <small class="muted">
-              Info
+              {{ t('dashboard.severity.info') }}
               {{ severityCounts.info }}
             </small>
           </div>
@@ -827,7 +846,7 @@ onBeforeUnmount(() => {
         <div class="chart-legend">
           <span
             v-for="item in findingLegend"
-            :key="item.english"
+            :key="item.key"
           >
             <i
               :style="{
@@ -835,7 +854,7 @@ onBeforeUnmount(() => {
               }"
             ></i>
 
-            {{ item.english }}
+            {{ t(item.shortKey) }}
           </span>
         </div>
       </section>
@@ -844,10 +863,10 @@ onBeforeUnmount(() => {
     <section class="panel">
       <div class="panel-heading">
         <h3>
-          最近扫描任务
+            {{ t('dashboard.recentScans') }}
 
           <small>
-            Recent scans
+            {{ t('dashboard.recentScans') }}
           </small>
         </h3>
 
@@ -855,7 +874,7 @@ onBeforeUnmount(() => {
           class="text-link"
           to="/scans"
         >
-          查看全部
+          {{ t('dashboard.viewAll') }}
 
           <el-icon>
             <Right />
@@ -866,16 +885,16 @@ onBeforeUnmount(() => {
       <el-table
         :data="recentScans"
         v-loading="loading"
-        empty-text="暂无扫描任务"
+        :empty-text="t('dashboard.noScanTasks')"
       >
         <el-table-column
           prop="id"
-          label="任务 ID"
+          :label="t('dashboard.taskId')"
           width="100"
         />
 
         <el-table-column
-          label="资产"
+          :label="t('dashboard.asset')"
           width="120"
         >
           <template #default="{ row }">
@@ -885,18 +904,19 @@ onBeforeUnmount(() => {
 
         <el-table-column
           prop="status"
-          label="状态"
+          :formatter="(row) => label(row.status)"
+          :label="t('dashboard.status')"
           width="130"
         />
 
         <el-table-column
           prop="started_at"
-          label="开始时间"
+          :label="t('dashboard.startedAt')"
         />
 
         <el-table-column
           prop="finished_at"
-          label="结束时间"
+          :label="t('dashboard.finishedAt')"
         />
       </el-table>
     </section>
@@ -904,10 +924,11 @@ onBeforeUnmount(() => {
     <section class="panel">
       <div class="panel-heading">
         <h3>
-          最近 Agent Investigation
+          {{ t('dashboard.recentAgentInvestigation') }}
+
 
           <small>
-            AI 调查
+            {{ t('dashboard.aiInvestigation') }}
           </small>
         </h3>
 
@@ -915,7 +936,7 @@ onBeforeUnmount(() => {
           class="text-link"
           to="/investigations"
         >
-          进入调查中心
+          {{ t('dashboard.enterInvestigationCenter') }}
 
           <el-icon>
             <Right />
@@ -925,27 +946,27 @@ onBeforeUnmount(() => {
 
       <el-table
         :data="[]"
-        empty-text="暂无 AI 调查 · Day31 接入 LangGraph 调查工作流"
+        :empty-text="t('dashboard.noInvestigations')"
       >
-        <el-table-column
-          label="Investigation Run"
-        />
+      <el-table-column
+        :label="t('dashboard.investigationRun')"
+      />
 
-        <el-table-column
-          label="关联 Finding"
-        />
+      <el-table-column
+        :label="t('dashboard.relatedFinding')"
+      />
 
-        <el-table-column
-          label="当前阶段"
-        />
+      <el-table-column
+        :label="t('dashboard.currentStage')"
+      />
 
-        <el-table-column
-          label="Final Verdict"
-        />
+      <el-table-column
+        :label="t('dashboard.finalVerdict')"
+      />
 
-        <el-table-column
-          label="更新时间"
-        />
+      <el-table-column
+        :label="t('dashboard.updatedAt')"
+      />
       </el-table>
     </section>
   </div>

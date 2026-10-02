@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+import { useDisplayLabels } from '../../i18n/display'
+const { t, locale } = useI18n()
+const { label } = useDisplayLabels()
+
 import {
   computed,
   onBeforeUnmount,
@@ -58,7 +63,7 @@ let pollTimer = null
 const runStatus = computed(() => workflow.value?.run_status || trace.value?.run?.status)
 const busy = computed(() => investigating.value || polling.value || runStatus.value === 'running')
 const failureMessage = computed(() => trace.value?.run?.error_message ||
-  events.value.findLast(event => event.status === 'failed')?.summary || '调查执行失败，请查看审计事件。')
+  events.value.findLast(event => event.status === 'failed')?.summary || t('interface.investigationFailedCheckTheAuditEvents'))
 
 function validId(value) {
   return /^\d+$/.test(String(value)) && Number.isSafeInteger(Number(value)) && Number(value) > 0
@@ -116,18 +121,19 @@ const workflowStatusLabel = computed(() => {
     workflow.value?.workflow_status
 
   const labels = {
-    running: 'Running',
-    failed: 'Failed',
+    executed: label('executed'),
+    running: t('interface.running'),
+    failed: t('interface.failed'),
     investigation_completed:
-      'Investigation Completed',
+      t('interface.investigationCompleted'),
     awaiting_approval:
-      'Awaiting Approval',
+      t('interface.awaitingApproval'),
     policy_blocked:
-      'Policy Blocked',
+      t('interface.policyBlocked'),
     ready_for_execution:
-      'Ready for Execution',
+      t('interface.readyForExecution'),
     dry_run_executed:
-      'Dry-run Executed',
+      t('interface.dryRunExecuted'),
   }
 
   return labels[status] || status || '—'
@@ -144,7 +150,7 @@ function formatDate(value) {
     return value
   }
 
-  return date.toLocaleString()
+  return date.toLocaleString(locale.value)
 }
 
 function statusType(status) {
@@ -199,72 +205,72 @@ function eventLabel(event) {
 
   const labels = {
     context_built:
-      'Context Builder',
+      t('interface.contextBuilder'),
 
     triage_completed:
-      'Triage',
+      t('interface.triage'),
 
     research_completed:
-      'Research · RAG / Intel',
+      t('interface.researchRagIntel'),
 
     evidence_assessed:
-      'Evidence Assessment',
+      t('interface.evidenceAssessment'),
 
     risk_enriched:
-      'Risk Synthesis',
+      t('interface.riskSynthesis'),
 
     grounding_validated:
-      'Grounding Validator',
+      t('interface.groundingValidator'),
 
     response_planned:
-      'Response Agent',
+      t('interface.responseAgent'),
 
     policy_evaluated:
-      'Policy Engine',
+      t('interface.policyEngine'),
 
     approval_requested:
-      'Human Approval',
+      t('interface.humanApproval'),
 
     approval_resolved:
-      'Approval Review',
+      t('interface.approvalReview'),
 
     tool_execution_simulated:
-      'Tool Broker',
+      t('interface.toolBroker'),
 
     tool_execution_executed:
-      'Tool Broker · Executed',
+      t('interface.toolBrokerExecuted'),
 
     tool_execution_replayed:
-      'Tool Broker · Replay',
+      t('interface.toolBrokerReplay'),
 
     tool_execution_blocked:
-      'Tool Broker · Blocked',
+      t('interface.toolBrokerBlocked'),
 
     tool_execution_failed:
-      'Tool Broker · Failed',
+      t('interface.toolBrokerFailed'),
 
     tool_reconciliation_started:
-      'Reconciliation Started',
+      t('interface.reconciliationStarted'),
 
     tool_reconciliation_confirmed:
-      'Reconciliation Confirmed',
+      t('interface.reconciliationConfirmed'),
 
     tool_reconciliation_unresolved:
-      'Reconciliation Unresolved',
+      t('interface.reconciliationUnresolved'),
 
     tool_reconciliation_failed:
-      'Reconciliation Failed',
+      t('interface.reconciliationFailed'),
 
-    investigation_failed: 'Investigation Failed',
-    workflow_failed: 'Workflow Failed',
-    stale_run_recovered: 'Stale Run Recovered',
+    investigation_failed: t('interface.investigationFailed'),
+    workflow_failed: t('interface.workflowFailed'),
+    stale_run_recovered: t('interface.staleRunRecovered'),
   }
 
   return (
     labels[type] ||
     event?.node_name ||
     type ||
-    'Agent Event'
+    t('interface.agentEvent')
   )
 }
 
@@ -315,7 +321,7 @@ async function loadFinding(id, token = generation) {
     finding.value = result
     findingIdInput.value = String(id)
   } catch (error) {
-    if (token === generation) ElMessage.error('Finding 加载失败，请重新加载')
+    if (token === generation) ElMessage.error(t('interface.failedToLoadFindingPleaseReload'))
   } finally {
     if (token === generation) loadingFinding.value = false
   }
@@ -350,8 +356,8 @@ async function pollRun(runId, token, failures = 0) {
     nextFailures = failures + 1
     retry = nextFailures < 3 && ![401, 403, 404].includes(error.response?.status)
     pollError.value = retry
-      ? '进度获取失败，正在自动重试；后台任务不会因此停止。'
-      : '进度刷新已暂停，请点击刷新 Run 重试；这不代表后台任务失败。'
+      ? 'interface.failedToFetchProgressRetryingAutomaticallyTheBackgroundTaskContinues'
+      : 'interface.progressUpdatesPausedRefreshTheRunToRetryThisDoesNotIndicateABackgroundTaskFailure'
   } finally {
     if (token === generation) {
       loadingRun.value = false
@@ -376,7 +382,7 @@ async function investigate() {
   if (busy.value || loadingFinding.value) return
   const id = finding.value?.id
   if (!validId(id)) {
-    ElMessage.warning('请先加载有效 Finding')
+    ElMessage.warning(t('interface.pleaseLoadAValidFindingFirst'))
     return
   }
   const token = cancelRequests()
@@ -387,7 +393,7 @@ async function investigate() {
     if (token !== generation) return
     workflow.value = started
     runIdInput.value = String(started.run_id)
-    ElMessage.success('Investigation Run #' + started.run_id + ' 已启动')
+    ElMessage.success(t('feedback.investigationStarted', { id: started.run_id }))
     await router.replace({ name: 'investigations', query: { finding_id: id, run_id: started.run_id } })
   } catch (error) {
     // The shared request interceptor displays submission errors.
@@ -399,7 +405,7 @@ async function investigate() {
 
 async function searchFinding() {
   if (!validId(findingIdInput.value)) {
-    ElMessage.warning('请输入有效 Finding ID')
+    ElMessage.warning(t('interface.pleaseEnterAValidFindingId'))
     return
   }
   const id = Number(findingIdInput.value)
@@ -415,7 +421,7 @@ async function searchFinding() {
 
 async function searchRun() {
   if (!validId(runIdInput.value)) {
-    ElMessage.warning('请输入有效 Run ID')
+    ElMessage.warning(t('interface.pleaseEnterAValidRunId'))
     return
   }
   const id = Number(runIdInput.value)
@@ -436,7 +442,7 @@ watch(() => [route.query.finding_id, route.query.run_id], async ([findingId, run
     finding.value = null
     findingIdInput.value = ''
     if (validId(findingId)) await loadFinding(Number(findingId), token)
-    if (runId || (findingId && !validId(findingId))) ElMessage.warning('链接中的 ID 无效')
+    if (runId || (findingId && !validId(findingId))) ElMessage.warning(t('interface.invalidIdInTheLink'))
   }
 }, { immediate: true })
 
@@ -448,15 +454,15 @@ onBeforeUnmount(cancelRequests)
     <div class="page-heading">
       <div>
         <div class="eyebrow">
-          AGENT INVESTIGATION
+          {{ t('interface.agentInvestigation') }}
         </div>
 
         <h2>
-          AI Investigation Center
+          {{ t('interface.aiInvestigationCenter') }}
         </h2>
 
         <p>
-          LangGraph 驱动的安全调查、证据验证与响应决策工作台
+          {{ t('interface.langgraphPoweredSecurityInvestigationEvidenceValidationAndResponseDecisions') }}
         </p>
       </div>
 
@@ -466,20 +472,20 @@ onBeforeUnmount(cancelRequests)
         :loading="loadingRun"
         @click="refreshCurrentRun"
       >
-        刷新 Run
+        {{ t('interface.refreshRun') }}
       </el-button>
     </div>
 
     <section class="panel control-panel">
       <div class="control-block">
         <label>
-          Finding ID
+          {{ t('interface.findingId') }}
         </label>
 
         <div class="control-row">
           <el-input
             v-model="findingIdInput"
-            placeholder="例如 62"
+            :placeholder="t('interface.eG62')"
             @keyup.enter="searchFinding"
           />
 
@@ -487,7 +493,7 @@ onBeforeUnmount(cancelRequests)
             :icon="Search"
             @click="searchFinding"
           >
-            加载 Finding
+            {{ t('interface.loadFinding') }}
           </el-button>
         </div>
       </div>
@@ -496,13 +502,13 @@ onBeforeUnmount(cancelRequests)
 
       <div class="control-block">
         <label>
-          Existing Run ID
+          {{ t('interface.existingRunId') }}
         </label>
 
         <div class="control-row">
           <el-input
             v-model="runIdInput"
-            placeholder="例如 30"
+            :placeholder="t('interface.eG30')"
             @keyup.enter="searchRun"
           />
 
@@ -510,7 +516,7 @@ onBeforeUnmount(cancelRequests)
             :icon="Search"
             @click="searchRun"
           >
-            恢复 Run
+            {{ t('interface.resumeRun') }}
           </el-button>
         </div>
       </div>
@@ -523,7 +529,7 @@ onBeforeUnmount(cancelRequests)
     >
       <div class="finding-context-main">
         <div class="finding-id">
-          FINDING #{{ finding.id }}
+          {{ t('interface.finding') }}{{ finding.id }}
         </div>
 
         <h3>
@@ -541,7 +547,7 @@ onBeforeUnmount(cancelRequests)
             type="info"
             effect="plain"
           >
-            {{ finding.severity }}
+            {{ label(finding.severity) }}
           </el-tag>
 
           <el-tag
@@ -554,8 +560,8 @@ onBeforeUnmount(cancelRequests)
                   : 'success'
             "
           >
-            Risk:
-            {{ finding.risk_level }}
+            {{ t('interface.risk') }}
+            {{ label(finding.risk_level) }}
           </el-tag>
 
           <span class="finding-target">
@@ -573,25 +579,25 @@ onBeforeUnmount(cancelRequests)
       >
         {{
           investigating
-            ? '正在提交...'
-            : '启动 AI Investigation'
+            ? t('interface.submitting')
+            : t('interface.startAiInvestigation')
         }}
       </el-button>
     </section>
 
-    <el-alert v-if="pollError" :title="pollError" type="warning" :closable="false" show-icon />
+    <el-alert v-if="pollError" :title="t(pollError)" type="warning" :closable="false" show-icon />
 
     <template v-if="workflow">
       <div class="run-progress" role="status" aria-live="polite">
-        <el-tag :type="statusType(runStatus)">Run: {{ runStatus }}</el-tag>
-        <span>{{ polling ? (runStatus === 'completed' ? '调查分析已完成，正在同步 Response / Policy / Approval…' : '正在实时更新调查进度…') : (pollError ? '自动刷新已暂停' : '本次执行已结束，自动刷新已停止') }}</span>
-        <small v-if="lastUpdated">最近同步：{{ formatDate(lastUpdated) }}</small>
+        <el-tag :type="statusType(runStatus)">{{ t('interface.run') }} {{ runStatus }}</el-tag>
+        <span>{{ polling ? (runStatus === 'completed' ? t('interface.investigationAnalysisCompletedSynchronizingResponsePolicyAndApprovals') : t('interface.updatingInvestigationProgressLive')) : (pollError ? t('interface.automaticRefreshPaused') : t('interface.runFinishedAutomaticRefreshStopped')) }}</span>
+        <small v-if="lastUpdated">{{ t('interface.lastSynchronized') }}{{ formatDate(lastUpdated) }}</small>
       </div>
       <el-alert v-if="runStatus === 'failed'" :title="failureMessage" type="error" :closable="false" show-icon />
       <div class="summary-grid">
         <section class="panel summary-card">
           <span>
-            Run ID
+            {{ t('interface.runId') }}
           </span>
 
           <strong>
@@ -599,14 +605,13 @@ onBeforeUnmount(cancelRequests)
           </strong>
 
           <small>
-            Finding
-            #{{ workflow.finding_id }}
+            {{ t('interface.finding177') }}{{ workflow.finding_id }}
           </small>
         </section>
 
         <section class="panel summary-card">
           <span>
-            Workflow Status
+            {{ t('interface.workflowStatus') }}
           </span>
 
           <strong class="summary-text">
@@ -620,20 +625,18 @@ onBeforeUnmount(cancelRequests)
               )
             "
           >
-            {{ workflow.workflow_status }}
+            {{ label(workflow.workflow_status) }}
           </el-tag>
         </section>
 
         <section class="panel summary-card">
           <span>
-            Final Verdict
+            {{ t('interface.finalVerdict') }}
           </span>
 
           <strong class="summary-text">
-            {{
-              workflow.final_verdict ||
-              '—'
-            }}
+            {{ label(workflow.final_verdict ||
+              '—') }}
           </strong>
 
           <el-tag
@@ -643,16 +646,14 @@ onBeforeUnmount(cancelRequests)
               )
             "
           >
-            {{
-              workflow.final_verdict ||
-              'unknown'
-            }}
+            {{ label(workflow.final_verdict ||
+              'unknown') }}
           </el-tag>
         </section>
 
         <section class="panel summary-card">
           <span>
-            Ledger Events
+            {{ t('interface.ledgerEvents') }}
           </span>
 
           <strong>
@@ -660,7 +661,7 @@ onBeforeUnmount(cancelRequests)
           </strong>
 
           <small>
-            Audit Trace
+            {{ t('interface.auditTrace') }}
           </small>
         </section>
       </div>
@@ -670,11 +671,11 @@ onBeforeUnmount(cancelRequests)
           <div class="panel-heading">
             <div>
               <h3>
-                Agent Trace
+                {{ t('interface.agentTrace') }}
               </h3>
 
               <p>
-                Investigation Ledger
+                {{ t('interface.investigationLedger') }}
               </p>
             </div>
 
@@ -682,7 +683,7 @@ onBeforeUnmount(cancelRequests)
               type="info"
               effect="plain"
             >
-              {{ events.length }} events
+              {{ events.length }} {{ t('interface.events') }}
             </el-tag>
           </div>
 
@@ -728,15 +729,13 @@ onBeforeUnmount(cancelRequests)
                   </strong>
 
                   <span>
-                    {{ event.status }}
+                    {{ label(event.status) }}
                   </span>
                 </div>
 
                 <p>
-                  {{
-                    event.summary ||
-                    event.event_type
-                  }}
+                  {{ label(event.summary ||
+                    event.event_type) }}
                 </p>
 
                 <small>
@@ -752,7 +751,7 @@ onBeforeUnmount(cancelRequests)
 
           <el-empty
             v-else
-            :description="polling ? '任务已受理，等待首条 Ledger 事件…' : '暂无 Trace Events'"
+            :description="polling ? t('interface.taskAcceptedWaitingForTheFirstLedgerEvent') : t('interface.noTraceEvents')"
           />
         </section>
 
@@ -764,7 +763,7 @@ onBeforeUnmount(cancelRequests)
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  LEDGER EVENT
+                  {{ t('interface.ledgerEvent') }}
                 </span>
 
                 <h3>
@@ -783,41 +782,35 @@ onBeforeUnmount(cancelRequests)
                   )
                 "
               >
-                {{
-                  selectedEvent.status
-                }}
+                {{ label(selectedEvent.status) }}
               </el-tag>
             </div>
 
             <dl class="event-metadata">
               <div>
                 <dt>
-                  Event Type
+                  {{ t('interface.eventType') }}
                 </dt>
 
                 <dd>
-                  {{
-                    selectedEvent.event_type
-                  }}
+                  {{ label(selectedEvent.event_type) }}
                 </dd>
               </div>
 
               <div>
                 <dt>
-                  Node
+                  {{ t('interface.node') }}
                 </dt>
 
                 <dd>
-                  {{
-                    selectedEvent.node_name ||
-                    '—'
-                  }}
+                  {{ label(selectedEvent.node_name ||
+                    '—') }}
                 </dd>
               </div>
 
               <div>
                 <dt>
-                  Created
+                  {{ t('interface.created') }}
                 </dt>
 
                 <dd>
@@ -833,7 +826,7 @@ onBeforeUnmount(cancelRequests)
             <div class="event-summary">
               {{
                 selectedEvent.summary ||
-                'No event summary.'
+                t('interface.noEventSummary')
               }}
             </div>
 
@@ -843,7 +836,7 @@ onBeforeUnmount(cancelRequests)
               "
               class="raw-heading"
             >
-              Event Metadata
+              {{ t('interface.eventMetadata') }}
             </div>
 
             <pre
@@ -867,11 +860,11 @@ onBeforeUnmount(cancelRequests)
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  RESPONSE AGENT
+                  {{ t('interface.responseAgent192') }}
                 </span>
 
                 <h3>
-                  Response Plan
+                  {{ t('interface.responsePlan') }}
                 </h3>
               </div>
 
@@ -884,21 +877,19 @@ onBeforeUnmount(cancelRequests)
               >
                 {{
                   responsePlan.requires_human_review
-                    ? 'Human Review'
-                    : 'Auto'
+                    ? t('interface.humanReview')
+                    : t('interface.auto')
                 }}
               </el-tag>
             </div>
 
             <div class="response-action">
               <span>
-                Decision
+                {{ t('interface.decision') }}
               </span>
 
               <strong>
-                {{
-                  responsePlan.decision_action
-                }}
+                {{ label(responsePlan.decision_action) }}
               </strong>
             </div>
 
@@ -908,16 +899,16 @@ onBeforeUnmount(cancelRequests)
 
             <div class="response-tags">
               <el-tag effect="plain">
-                Priority:
-                {{ responsePlan.priority }}
+                {{ t('interface.priority') }}
+                {{ label(responsePlan.priority) }}
               </el-tag>
 
               <el-tag
                 type="info"
                 effect="plain"
               >
-                Dry-run:
-                {{ responsePlan.dry_run }}
+                {{ t('interface.dryRun') }}
+                {{ label(responsePlan.dry_run) }}
               </el-tag>
             </div>
           </section>
@@ -929,11 +920,11 @@ onBeforeUnmount(cancelRequests)
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  POLICY ENGINE
+                  {{ t('interface.policyEngine199') }}
                 </span>
 
                 <h3>
-                  Policy Decision
+                  {{ t('interface.policyDecision') }}
                 </h3>
               </div>
             </div>
@@ -941,7 +932,7 @@ onBeforeUnmount(cancelRequests)
             <div class="policy-counts">
               <div>
                 <span>
-                  ALLOW
+                  {{ t('interface.allow') }}
                 </span>
 
                 <strong>
@@ -953,7 +944,7 @@ onBeforeUnmount(cancelRequests)
 
               <div>
                 <span>
-                  DENY
+                  {{ t('interface.deny') }}
                 </span>
 
                 <strong>
@@ -965,7 +956,7 @@ onBeforeUnmount(cancelRequests)
 
               <div>
                 <span>
-                  APPROVAL
+                  {{ t('interface.approval') }}
                 </span>
 
                 <strong>
@@ -984,20 +975,18 @@ onBeforeUnmount(cancelRequests)
             <div class="panel-heading">
               <div>
                 <span class="section-label">
-                  HUMAN IN THE LOOP
+                  {{ t('interface.humanInTheLoop') }}
                 </span>
 
                 <h3>
-                  Pending Approval
+                  {{ t('interface.pendingApproval') }}
                 </h3>
               </div>
 
               <el-tag
                 type="warning"
               >
-                {{
-                  approvals[0].status
-                }}
+                {{ label(approvals[0].status) }}
               </el-tag>
             </div>
 
@@ -1010,8 +999,7 @@ onBeforeUnmount(cancelRequests)
 
             <div class="approval-footer">
             <small>
-              审批、拒绝与 Tool Broker 执行
-              请在 Response Center 完成。
+              {{ t('interface.completeApprovalsRejectionsAndToolBrokerExecutionInTheResponseCenter') }}
             </small>
 
             <el-button
@@ -1027,7 +1015,7 @@ onBeforeUnmount(cancelRequests)
                 })
               "
             >
-              进入 Response Center
+              {{ t('interface.openResponseCenter') }}
             </el-button>
           </div>
           </section>
@@ -1040,7 +1028,7 @@ onBeforeUnmount(cancelRequests)
       class="panel empty-state"
     >
       <el-empty
-        description="从 Findings 页面选择一个安全发现开始 AI Investigation"
+        :description="t('interface.selectASecurityFindingFromFindingsToStartAnAiInvestigation')"
       >
         <el-button
           type="primary"
@@ -1050,7 +1038,7 @@ onBeforeUnmount(cancelRequests)
             })
           "
         >
-          前往 Findings
+          {{ t('interface.openFindings') }}
         </el-button>
       </el-empty>
     </section>

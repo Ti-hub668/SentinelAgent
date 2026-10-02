@@ -7,6 +7,7 @@ import {
 } from 'vue'
 
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import {
   DataAnalysis,
@@ -41,47 +42,53 @@ const icons = {
   Setting,
 }
 
-const navigationGroups = [
+const navigationGroups = computed(() => [
   {
     key: 'workspace',
-    label: '工作空间',
-    english: 'WORKSPACE',
+    label: t('navigationGroups.workspace'),
+    english: t('navigationGroups.workspace'),
   },
   {
     key: 'asset',
-    label: '资产与扫描',
-    english: 'ASSET & SCAN',
+    label: t('navigationGroups.asset'),
+    english: t('navigationGroups.asset'),
   },
   {
     key: 'security',
-    label: '安全运营',
-    english: 'SECURITY OPERATIONS',
+    label: t('navigationGroups.security'),
+    english: t('navigationGroups.security'),
   },
   {
     key: 'governance',
-    label: '治理与审计',
-    english: 'GOVERNANCE',
+    label: t('navigationGroups.governance'),
+    english: t('navigationGroups.governance'),
   },
-]
+])
 
 const groupedNavigation = computed(() =>
-  navigationGroups.map((group) => ({
+  navigationGroups.value.map((group) => ({
     ...group,
-    items: navigation.filter((item) => item.group === group.key),
+    items: navigation.filter(
+      (item) => item.group === group.key,
+    ),
   })),
 )
 
 const route = useRoute()
 const ui = useUiStore()
+const { t, locale } = useI18n()
 
 const now = ref(new Date())
 const apiOnline = ref(false)
 const apiChecking = ref(true)
 
 const time = computed(() =>
-  now.value.toLocaleTimeString('zh-CN', {
-    hour12: false,
-  }),
+  now.value.toLocaleTimeString(
+    locale.value,
+    {
+      hour12: false,
+    },
+  ),
 )
 
 let timer
@@ -130,7 +137,7 @@ onUnmounted(() => {
       <router-link
         to="/dashboard"
         class="brand"
-        aria-label="SentinelAgent 首页"
+        :aria-label="t('layout.home')"
       >
         <span class="brand-mark">
           <el-icon>
@@ -145,12 +152,12 @@ onUnmounted(() => {
           Sentinel<span class="brand-accent">Agent</span>
 
           <small>
-            SECURITY OPERATIONS
+            {{ t('navigationGroups.security') }}
           </small>
         </span>
       </router-link>
 
-      <nav aria-label="主导航">
+      <nav :aria-label="t('layout.mainNavigation')">
         <div
           v-for="group in groupedNavigation"
           :key="group.key"
@@ -173,15 +180,15 @@ onUnmounted(() => {
             :to="item.path"
             class="nav-item"
             active-class="is-active"
-            :title="item.title"
-            :aria-label="item.title"
+            :title="t(`navigation.${item.i18nKey}`)"
+            :aria-label="t(`navigation.${item.i18nKey}`)"
           >
             <el-icon>
               <component :is="icons[item.icon]" />
             </el-icon>
 
             <span v-if="!ui.collapsed">
-              {{ item.title }}
+              {{ t(`navigation.${item.i18nKey}`) }}
             </span>
 
             <small
@@ -204,7 +211,7 @@ onUnmounted(() => {
         >
           <span class="status-dot"></span>
 
-          Day 29 · 前端基础框架
+          {{ t('layout.frontendFramework') }}
         </div>
 
         <div class="profile">
@@ -213,9 +220,9 @@ onUnmounted(() => {
           </span>
 
           <div v-if="!ui.collapsed">
-            <strong>
-              本地工作空间
-            </strong>
+          <strong>
+            {{ t('layout.workspace') }}
+          </strong>
 
             <small>
               SentinelAgent v0.1.0
@@ -233,8 +240,8 @@ onUnmounted(() => {
             circle
             :aria-label="
               ui.collapsed
-                ? '展开侧边栏'
-                : '收起侧边栏'
+                ? t('layout.expandSidebar')
+                : t('layout.collapseSidebar')
             "
             @click="ui.toggleSidebar"
           >
@@ -250,11 +257,15 @@ onUnmounted(() => {
           </el-button>
 
           <strong>
-            {{ route.meta.title }}
+            {{
+              route.meta.i18nKey
+                ? t(`navigation.${route.meta.i18nKey}`)
+                : t('navigation.dashboard')
+            }}
           </strong>
 
           <span class="breadcrumb">
-            / {{ route.meta.english }}
+            / {{ t(`navigation.${route.meta.i18nKey || 'dashboard'}`) }}
           </span>
         </div>
 
@@ -285,17 +296,17 @@ onUnmounted(() => {
 
             {{
               apiChecking
-                ? 'API 检测中'
+                ? t('layout.apiChecking')
                 : apiOnline
-                  ? 'API 已连接'
-                  : 'API 离线'
+                  ? t('layout.apiOnline')
+                  : t('layout.apiOffline')
             }}
           </span>
 
           <span class="topbar-divider"></span>
 
           <span class="workspace-label">
-            本地开发
+            {{ t('layout.localDevelopment') }}
           </span>
         </div>
       </header>
@@ -306,11 +317,11 @@ onUnmounted(() => {
 
       <footer class="page-footer">
         <span>
-          SentinelAgent · AI-Powered Security Operations Platform
+          {{ t('layout.footer') }}
         </span>
 
         <span>
-          Day 29 / Foundation
+          {{ t('layout.foundation') }}
         </span>
       </footer>
     </div>

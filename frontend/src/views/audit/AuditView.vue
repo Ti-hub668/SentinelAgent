@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+import { useDisplayLabels } from '../../i18n/display'
+const { t, locale } = useI18n()
+const { label } = useDisplayLabels()
+
 import {
   computed,
   onMounted,
@@ -245,7 +250,7 @@ const selectedRunDuration = computed(
       )
 
     if (seconds < 60) {
-      return `${seconds}s`
+      return t('feedback.durationSeconds', { seconds })
     }
 
     const minutes =
@@ -256,7 +261,7 @@ const selectedRunDuration = computed(
     const remain =
       seconds % 60
 
-    return `${minutes}m ${remain}s`
+    return t('feedback.durationMinutes', { minutes, seconds: remain })
   },
 )
 
@@ -554,17 +559,17 @@ function formatScore(value) {
 function matchTypeLabel(value) {
   const labels = {
     canonical_exact:
-      'Canonical Exact',
+      t('interface.canonicalExact'),
     relationship:
-      'Relationship',
+      t('interface.relationship'),
     semantic:
-      'Semantic',
+      t('interface.semantic'),
   }
 
   return (
     labels[value] ||
     value ||
-    'Unknown'
+    t('interface.unknown')
   )
 }
 
@@ -599,11 +604,11 @@ function compactHash(value) {
 
 function booleanLabel(value) {
   if (value === true) {
-    return 'Matched'
+    return t('interface.matched')
   }
 
   if (value === false) {
-    return 'No match'
+    return t('interface.noMatch')
   }
 
   return '—'
@@ -625,7 +630,7 @@ function formatDate(value) {
     return value
   }
 
-  return date.toLocaleString()
+  return date.toLocaleString(locale.value)
 }
 
 function decisionTagType(value) {
@@ -692,11 +697,11 @@ function executionStatusTagType(
 
 function yesNoLabel(value) {
   if (value === true) {
-    return 'Yes'
+    return t('interface.yes')
   }
 
   if (value === false) {
-    return 'No'
+    return t('interface.no')
   }
 
   return '—'
@@ -718,7 +723,7 @@ function formatTime(value) {
     return value
   }
 
-  return date.toLocaleTimeString()
+  return date.toLocaleTimeString(locale.value)
 }
 
 function runStatusType(status) {
@@ -748,19 +753,19 @@ function eventStatusType(status) {
 function categoryLabel(category) {
   const labels = {
     investigation:
-      'Investigation',
+      t('interface.investigation'),
 
     response:
-      'Response',
+      t('interface.response'),
 
     governance:
-      'Governance',
+      t('interface.governance'),
 
     execution:
-      'Execution',
+      t('interface.execution'),
 
     system:
-      'System',
+      t('interface.system'),
   }
 
   return (
@@ -776,55 +781,55 @@ function categoryClass(category) {
 function eventLabel(event) {
   const labels = {
     context_built:
-      'Context Builder',
+      t('interface.contextBuilder'),
 
     triage_completed:
-      'Triage',
+      t('interface.triage'),
 
     research_completed:
-      'Research · RAG / Intel',
+      t('interface.researchRagIntel'),
 
     evidence_assessed:
-      'Evidence Assessment',
+      t('interface.evidenceAssessment'),
 
     risk_enriched:
-      'Risk Synthesis',
+      t('interface.riskSynthesis'),
 
     grounding_validated:
-      'Grounding Validator',
+      t('interface.groundingValidator'),
 
     response_planned:
-      'Response Agent',
+      t('interface.responseAgent'),
 
     policy_evaluated:
-      'Policy Engine',
+      t('interface.policyEngine'),
 
     approval_requested:
-      'Approval Requested',
+      t('interface.approvalRequested'),
 
     approval_resolved:
-      'Approval Resolved',
+      t('interface.approvalResolved'),
 
     tool_execution_simulated:
-      'Tool Broker · Simulated',
+      t('interface.toolBrokerSimulated'),
 
     tool_execution_completed:
-      'Tool Broker',
+      t('interface.toolBroker'),
 
     tool_execution_failed:
-      'Tool Broker Failed',
+      t('interface.toolBrokerFailed226'),
 
     tool_reconciliation_started:
-      'Reconciliation Started',
+      t('interface.reconciliationStarted'),
 
     tool_reconciliation_confirmed:
-      'Reconciliation Confirmed',
+      t('interface.reconciliationConfirmed'),
 
     tool_reconciliation_unresolved:
-      'Reconciliation Unresolved',
+      t('interface.reconciliationUnresolved'),
 
     tool_reconciliation_failed:
-      'Reconciliation Failed',
+      t('interface.reconciliationFailed'),
   }
 
   return (
@@ -833,7 +838,7 @@ function eventLabel(event) {
     ] ||
     event?.node_name ||
     event?.event_type ||
-    'Audit Event'
+    t('interface.auditEvent')
   )
 }
 
@@ -880,7 +885,7 @@ async function loadRuns() {
     console.error(error)
 
     ElMessage.error(
-      'Investigation Runs 加载失败',
+      t('interface.failedToLoadInvestigationRuns'),
     )
   } finally {
     loadingRuns.value = false
@@ -954,7 +959,7 @@ async function selectRun(run) {
     console.error(error)
 
     ElMessage.error(
-      'Audit Trace 加载失败',
+      t('interface.failedToLoadAuditTrace'),
     )
   } finally {
     loadingTrace.value = false
@@ -968,7 +973,7 @@ async function reconcileSelectedRun() {
 
   if (!runId) {
     ElMessage.warning(
-      'Please select an investigation run first.',
+      t('interface.pleaseSelectAnInvestigationRunFirst'),
     )
     return
   }
@@ -1000,21 +1005,18 @@ async function reconcileSelectedRun() {
       traceResponse
 
     ElMessage.success(
-      `Reconciliation finished: ` +
-      `${result.confirmed} confirmed, ` +
-      `${result.unresolved} unresolved, ` +
-      `${result.failed} failed.`,
+      t('feedback.reconciliationSummary', { confirmed: result.confirmed, unresolved: result.unresolved, failed: result.failed }),
     )
   } catch (error) {
     console.error(
-      'Reconciliation error:',
+      t('interface.reconciliationError'),
       error,
     )
 
     ElMessage.error(
       error?.response?.data?.detail ||
       error?.message ||
-      'Execution reconciliation failed.',
+      t('interface.executionReconciliationFailed'),
     )
   } finally {
     reconciling.value = false
@@ -1103,16 +1105,15 @@ onMounted(async () => {
     <div class="page-heading">
       <div>
         <div class="eyebrow">
-          INVESTIGATION LEDGER
+          {{ t('interface.investigationLedger234') }}
         </div>
 
         <h2>
-          Audit Center
+          {{ t('interface.auditCenter') }}
         </h2>
 
         <p>
-          Agent 调查、治理审批与
-          Tool Broker 的全链路审计追踪
+          {{ t('interface.endToEndAuditTrailOfAgentInvestigationsGovernanceApprovalsAndToolBrokerExecution') }}
         </p>
       </div>
 
@@ -1121,7 +1122,7 @@ onMounted(async () => {
         :loading="loadingRuns"
         @click="refreshAll"
       >
-        刷新审计数据
+        {{ t('interface.refreshAuditData') }}
       </el-button>
 
       <el-button
@@ -1130,7 +1131,7 @@ onMounted(async () => {
         :disabled="!trace?.run?.id"
         @click="reconcileSelectedRun"
       >
-        Reconcile stale executions
+        {{ t('interface.reconcileStaleExecutions') }}
       </el-button>
     </div>
 
@@ -1142,26 +1143,26 @@ onMounted(async () => {
       class="reconciliation-alert"
     >
       <template #title>
-        Reconciliation completed
+        {{ t('interface.reconciliationCompleted') }}
       </template>
 
-      Checked:
+      {{ t('interface.checked') }}
       {{ reconciliationResult.checked }}
 
-      · Confirmed:
+      {{ t('interface.confirmed') }}
       {{ reconciliationResult.confirmed }}
 
-      · Unresolved:
+      {{ t('interface.unresolved') }}
       {{ reconciliationResult.unresolved }}
 
-      · Failed:
+      {{ t('interface.failed243') }}
       {{ reconciliationResult.failed }}
     </el-alert>
 
     <div class="summary-grid">
       <section class="panel summary-card">
         <span>
-          Investigation Runs
+          {{ t('interface.investigationRuns') }}
         </span>
 
         <strong>
@@ -1169,13 +1170,13 @@ onMounted(async () => {
         </strong>
 
         <small>
-          Ledger records
+          {{ t('interface.ledgerRecords') }}
         </small>
       </section>
 
       <section class="panel summary-card">
         <span>
-          Completed
+          {{ t('interface.completed') }}
         </span>
 
         <strong>
@@ -1183,13 +1184,13 @@ onMounted(async () => {
         </strong>
 
         <small>
-          Completed runs
+          {{ t('interface.completedRuns') }}
         </small>
       </section>
 
       <section class="panel summary-card">
         <span>
-          Failed
+          {{ t('interface.failed') }}
         </span>
 
         <strong>
@@ -1197,13 +1198,13 @@ onMounted(async () => {
         </strong>
 
         <small>
-          Failed runs
+          {{ t('interface.failedRuns') }}
         </small>
       </section>
 
       <section class="panel summary-card">
         <span>
-          Audit Events
+          {{ t('interface.auditEvents') }}
         </span>
 
         <strong>
@@ -1211,7 +1212,7 @@ onMounted(async () => {
         </strong>
 
         <small>
-          Recorded events
+          {{ t('interface.recordedEvents') }}
         </small>
       </section>
     </div>
@@ -1224,11 +1225,11 @@ onMounted(async () => {
         <div class="panel-heading">
           <div>
             <span class="section-label">
-              RUN QUEUE
+              {{ t('interface.runQueue') }}
             </span>
 
             <h3>
-              Investigation Runs
+              {{ t('interface.investigationRuns') }}
             </h3>
           </div>
 
@@ -1247,7 +1248,7 @@ onMounted(async () => {
             v-model="runSearch"
             :prefix-icon="Search"
             clearable
-            placeholder="Run / Finding / Verdict"
+            :placeholder="t('interface.runFindingVerdict')"
           />
 
           <el-select
@@ -1255,20 +1256,20 @@ onMounted(async () => {
               runStatusFilter
             "
             clearable
-            placeholder="Run Status"
+            :placeholder="t('interface.runStatus')"
           >
             <el-option
-              label="Completed"
+              :label="t('interface.completed')"
               value="completed"
             />
 
             <el-option
-              label="Running"
+              :label="t('interface.running')"
               value="running"
             />
 
             <el-option
-              label="Failed"
+              :label="t('interface.failed')"
               value="failed"
             />
           </el-select>
@@ -1298,7 +1299,7 @@ onMounted(async () => {
           >
             <div class="run-item-top">
               <strong>
-                Run #{{ run.id }}
+                {{ t('interface.run253') }}{{ run.id }}
               </strong>
 
               <el-tag
@@ -1309,20 +1310,17 @@ onMounted(async () => {
                   )
                 "
               >
-                {{ run.status }}
+                {{ label(run.status) }}
               </el-tag>
             </div>
 
             <div class="run-finding">
-              Finding
-              #{{ run.finding_id }}
+              {{ t('interface.finding177') }}{{ run.finding_id }}
             </div>
 
             <div class="run-verdict">
-              {{
-                run.final_verdict ||
-                'No verdict'
-              }}
+              {{ label(run.final_verdict ||
+                t('interface.noVerdict')) }}
             </div>
 
             <div class="run-footer">
@@ -1330,7 +1328,7 @@ onMounted(async () => {
                 {{
                   run.event_count
                 }}
-                events
+                {{ t('interface.events') }}
               </span>
 
               <span>
@@ -1346,7 +1344,7 @@ onMounted(async () => {
 
         <el-empty
           v-else
-          description="No matching runs"
+          :description="t('interface.noMatchingRuns')"
         />
       </section>
 
@@ -1357,14 +1355,14 @@ onMounted(async () => {
         <div class="panel-heading">
           <div>
             <span class="section-label">
-              AUDIT TIMELINE
+              {{ t('interface.auditTimeline') }}
             </span>
 
             <h3>
               {{
                 selectedRun
-                  ? `Run #${selectedRun.id}`
-                  : 'Select Run'
+                  ? t('interface.runValue', { p0: selectedRun.id })
+                  : t('interface.selectRun')
               }}
             </h3>
           </div>
@@ -1380,7 +1378,7 @@ onMounted(async () => {
             {{
               events.length
             }}
-            events
+            {{ t('interface.events') }}
           </el-tag>
         </div>
 
@@ -1388,7 +1386,7 @@ onMounted(async () => {
           <div class="run-overview">
             <div>
               <span>
-                Finding
+                {{ t('interface.finding259') }}
               </span>
 
               <strong>
@@ -1398,21 +1396,19 @@ onMounted(async () => {
 
             <div>
               <span>
-                Final Verdict
+                {{ t('interface.finalVerdict') }}
               </span>
 
               <strong>
-                {{
-                  trace.run
+                {{ label(trace.run
                     .final_verdict ||
-                  '—'
-                }}
+                  '—') }}
               </strong>
             </div>
 
             <div>
               <span>
-                Duration
+                {{ t('interface.duration') }}
               </span>
 
               <strong>
@@ -1428,7 +1424,7 @@ onMounted(async () => {
               v-model="eventSearch"
               :prefix-icon="Search"
               clearable
-              placeholder="Search events"
+              :placeholder="t('interface.searchEvents')"
             />
 
             <el-select
@@ -1436,25 +1432,25 @@ onMounted(async () => {
                 eventCategoryFilter
               "
               clearable
-              placeholder="Category"
+              :placeholder="t('interface.category')"
             >
               <el-option
-                label="Investigation"
+                :label="t('interface.investigation')"
                 value="investigation"
               />
 
               <el-option
-                label="Response"
+                :label="t('interface.response')"
                 value="response"
               />
 
               <el-option
-                label="Governance"
+                :label="t('interface.governance')"
                 value="governance"
               />
 
               <el-option
-                label="Execution"
+                :label="t('interface.execution')"
                 value="execution"
               />
             </el-select>
@@ -1464,20 +1460,20 @@ onMounted(async () => {
                 eventStatusFilter
               "
               clearable
-              placeholder="Status"
+              :placeholder="t('interface.status94')"
             >
               <el-option
-                label="Completed"
+                :label="t('interface.completed')"
                 value="completed"
               />
 
               <el-option
-                label="Started"
+                :label="t('interface.started')"
                 value="started"
               />
 
               <el-option
-                label="Failed"
+                :label="t('interface.failed')"
                 value="failed"
               />
             </el-select>
@@ -1558,25 +1554,19 @@ onMounted(async () => {
                       )
                     "
                   >
-                    {{
-                      event.status
-                    }}
+                    {{ label(event.status) }}
                   </el-tag>
                 </div>
 
                 <p>
-                  {{
-                    event.summary ||
-                    event.event_type
-                  }}
+                  {{ label(event.summary ||
+                    event.event_type) }}
                 </p>
 
                 <div class="timeline-meta">
                   <span>
-                    {{
-                      event.node_name ||
-                      'system'
-                    }}
+                    {{ label(event.node_name ||
+                      'system') }}
                   </span>
 
                   <span>
@@ -1593,13 +1583,13 @@ onMounted(async () => {
 
           <el-empty
             v-else
-            description="No matching events"
+            :description="t('interface.noMatchingEvents')"
           />
         </template>
 
         <el-empty
           v-else
-          description="Select an Investigation Run"
+          :description="t('interface.selectAnInvestigationRun')"
         />
       </section>
 
@@ -1614,11 +1604,11 @@ onMounted(async () => {
           <div class="panel-heading">
             <div>
               <span class="section-label">
-                WORKFLOW STATE
+                {{ t('interface.workflowState') }}
               </span>
 
               <h3>
-                Run Summary
+                {{ t('interface.runSummary') }}
               </h3>
             </div>
 
@@ -1629,10 +1619,8 @@ onMounted(async () => {
                 )
               "
             >
-              {{
-                workflow
-                  .workflow_status
-              }}
+              {{ label(workflow
+                  .workflow_status) }}
             </el-tag>
           </div>
 
@@ -1641,8 +1629,7 @@ onMounted(async () => {
             class="finding-card"
           >
             <span>
-              Finding
-              #{{ finding.id }}
+              {{ t('interface.finding177') }}{{ finding.id }}
             </span>
 
             <strong>
@@ -1657,21 +1644,19 @@ onMounted(async () => {
           <div class="workflow-meta">
             <div>
               <span>
-                Verdict
+                {{ t('interface.verdict') }}
               </span>
 
               <strong>
-                {{
-                  workflow
+                {{ label(workflow
                     .final_verdict ||
-                  '—'
-                }}
+                  '—') }}
               </strong>
             </div>
 
             <div>
               <span>
-                Ledger Events
+                {{ t('interface.ledgerEvents') }}
               </span>
 
               <strong>
@@ -1681,7 +1666,7 @@ onMounted(async () => {
 
             <div>
               <span>
-                Tool Results
+                {{ t('interface.toolResults') }}
               </span>
 
               <strong>
@@ -1700,7 +1685,7 @@ onMounted(async () => {
                 goInvestigation
               "
             >
-              Investigation
+              {{ t('interface.investigation') }}
             </el-button>
 
             <el-button
@@ -1708,7 +1693,7 @@ onMounted(async () => {
               plain
               @click="goResponse"
             >
-              Response
+              {{ t('interface.response') }}
             </el-button>
           </div>
         </section>
@@ -1720,7 +1705,7 @@ onMounted(async () => {
           <div class="panel-heading">
             <div>
               <span class="section-label">
-                EVENT INSPECTOR
+                {{ t('interface.eventInspector') }}
               </span>
 
               <h3>
@@ -1739,43 +1724,37 @@ onMounted(async () => {
                 )
               "
             >
-              {{
-                selectedEvent.status
-              }}
+              {{ label(selectedEvent.status) }}
             </el-tag>
           </div>
 
           <div class="event-info">
             <div>
               <span>
-                Event Type
+                {{ t('interface.eventType') }}
               </span>
 
               <strong>
-                {{
-                  selectedEvent
-                    .event_type
-                }}
+                {{ label(selectedEvent
+                    .event_type) }}
               </strong>
             </div>
 
             <div>
               <span>
-                Node
+                {{ t('interface.node') }}
               </span>
 
               <strong>
-                {{
-                  selectedEvent
+                {{ label(selectedEvent
                     .node_name ||
-                  '—'
-                }}
+                  '—') }}
               </strong>
             </div>
 
             <div>
               <span>
-                Category
+                {{ t('interface.category') }}
               </span>
 
               <strong>
@@ -1791,7 +1770,7 @@ onMounted(async () => {
 
             <div>
               <span>
-                Created At
+                {{ t('interface.createdAt270') }}
               </span>
 
               <strong>
@@ -1807,13 +1786,13 @@ onMounted(async () => {
 
           <div class="event-summary">
             <span>
-              Summary
+              {{ t('interface.summary') }}
             </span>
 
             <p>
               {{
                 selectedEvent.summary ||
-                'No summary recorded.'
+                t('interface.noSummaryRecorded')
               }}
             </p>
           </div>
@@ -1835,11 +1814,11 @@ onMounted(async () => {
                   <div class="provenance-section-heading">
                     <div>
                       <span class="provenance-kicker">
-                        RAG RETRIEVAL
+                        {{ t('interface.ragRetrieval') }}
                       </span>
 
                       <strong>
-                        Security Knowledge Search
+                        {{ t('interface.securityKnowledgeSearch') }}
                       </strong>
                     </div>
 
@@ -1857,7 +1836,7 @@ onMounted(async () => {
 
                   <div class="retrieval-grid">
                     <div>
-                      <span>Top K</span>
+                      <span>{{ t('interface.topK') }}</span>
                       <strong>
                         {{
                           researchMetadata
@@ -1867,7 +1846,7 @@ onMounted(async () => {
                     </div>
 
                     <div>
-                      <span>Retrieved</span>
+                      <span>{{ t('interface.retrieved') }}</span>
                       <strong>
                         {{
                           researchMetadata
@@ -1878,25 +1857,25 @@ onMounted(async () => {
                     </div>
 
                     <div>
-                      <span>RAG Used</span>
+                      <span>{{ t('interface.ragUsed') }}</span>
                       <strong>
                         {{
                           researchMetadata
                             .rag_used
-                            ? 'Yes'
-                            : 'No'
+                            ? t('interface.yes')
+                            : t('interface.no')
                         }}
                       </strong>
                     </div>
 
                     <div>
-                      <span>Intel Used</span>
+                      <span>{{ t('interface.intelUsed') }}</span>
                       <strong>
                         {{
                           researchMetadata
                             .intelligence_used
-                            ? 'Yes'
-                            : 'No'
+                            ? t('interface.yes')
+                            : t('interface.no')
                         }}
                       </strong>
                     </div>
@@ -1906,7 +1885,7 @@ onMounted(async () => {
                     v-if="researchSources.length"
                     class="source-tags"
                   >
-                    <span>Sources</span>
+                    <span>{{ t('interface.sources') }}</span>
 
                     <div>
                       <el-tag
@@ -1921,19 +1900,19 @@ onMounted(async () => {
                   </div>
 
                   <div class="provenance-query">
-                    <span>Query</span>
+                    <span>{{ t('interface.query') }}</span>
 
                     <div class="query-block">
                       {{
                         researchMetadata
                           .rag_query ||
-                        'No RAG query recorded.'
+                        t('interface.noRagQueryRecorded')
                       }}
                     </div>
                   </div>
 
                   <div class="provenance-index">
-                    <span>Index</span>
+                    <span>{{ t('interface.index') }}</span>
                     <code>
                       {{
                         researchMetadata
@@ -1948,11 +1927,11 @@ onMounted(async () => {
                   <div class="provenance-section-heading">
                     <div>
                       <span class="provenance-kicker">
-                        RETRIEVED EVIDENCE
+                        {{ t('interface.retrievedEvidence') }}
                       </span>
 
                       <strong>
-                        Auditable Knowledge Evidence
+                        {{ t('interface.auditableKnowledgeEvidence') }}
                       </strong>
                     </div>
 
@@ -1989,14 +1968,14 @@ onMounted(async () => {
                             {{
                               evidence.title ||
                               evidence.source_id ||
-                              'Knowledge Evidence'
+                              t('interface.knowledgeEvidence')
                             }}
                           </strong>
 
                           <span>
                             {{
                               evidence.source ||
-                              'Unknown source'
+                              t('interface.unknownSource')
                             }}
                             ·
                             {{
@@ -2024,7 +2003,7 @@ onMounted(async () => {
                         </el-tag>
 
                         <span class="score-pill">
-                          score
+                          {{ t('interface.score') }}
                           {{
                             formatScore(
                               evidence.score,
@@ -2035,7 +2014,7 @@ onMounted(async () => {
 
                       <div class="evidence-fields">
                         <div>
-                          <span>Source ID</span>
+                          <span>{{ t('interface.sourceId') }}</span>
                           <strong>
                             {{
                               evidence.source_id ||
@@ -2045,7 +2024,7 @@ onMounted(async () => {
                         </div>
 
                         <div>
-                          <span>Chunk</span>
+                          <span>{{ t('interface.chunk') }}</span>
                           <strong>
                             {{
                               evidence.chunk_index ??
@@ -2055,7 +2034,7 @@ onMounted(async () => {
                         </div>
 
                         <div class="wide-field">
-                          <span>Document ID</span>
+                          <span>{{ t('interface.documentId') }}</span>
                           <code>
                             {{
                               evidence.document_id ||
@@ -2065,7 +2044,7 @@ onMounted(async () => {
                         </div>
 
                         <div class="wide-field">
-                          <span>Parent ID</span>
+                          <span>{{ t('interface.parentId') }}</span>
                           <code>
                             {{
                               evidence.parent_id ||
@@ -2075,7 +2054,7 @@ onMounted(async () => {
                         </div>
 
                         <div class="wide-field">
-                          <span>Source URL</span>
+                          <span>{{ t('interface.sourceUrl') }}</span>
 
                           <a
                             v-if="evidence.source_url"
@@ -2083,7 +2062,7 @@ onMounted(async () => {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            Open authoritative source ↗
+                            {{ t('interface.openAuthoritativeSource') }}
                           </a>
 
                           <strong v-else>
@@ -2092,7 +2071,7 @@ onMounted(async () => {
                         </div>
 
                         <div class="wide-field">
-                          <span>Content SHA-256</span>
+                          <span>{{ t('interface.contentSha256') }}</span>
                           <code
                             :title="
                               evidence.content_sha256 ||
@@ -2113,7 +2092,7 @@ onMounted(async () => {
                   <el-empty
                     v-else
                     :image-size="48"
-                    description="No provenance evidence recorded for this run"
+                    :description="t('interface.noProvenanceEvidenceRecordedForThisRun')"
                   />
                 </section>
 
@@ -2124,18 +2103,18 @@ onMounted(async () => {
                   <div class="provenance-section-heading">
                     <div>
                       <span class="provenance-kicker">
-                        STRUCTURED INTELLIGENCE
+                        {{ t('interface.structuredIntelligence') }}
                       </span>
 
                       <strong>
-                        Threat Intelligence Signals
+                        {{ t('interface.threatIntelligenceSignals') }}
                       </strong>
                     </div>
                   </div>
 
                   <div class="intel-grid">
                     <div>
-                      <span>Template</span>
+                      <span>{{ t('interface.template') }}</span>
                       <strong>
                         {{
                           researchIntelligence
@@ -2146,7 +2125,7 @@ onMounted(async () => {
                     </div>
 
                     <div>
-                      <span>CISA KEV</span>
+                      <span>{{ t('interface.cisaKev') }}</span>
                       <strong>
                         {{
                           booleanLabel(
@@ -2160,12 +2139,12 @@ onMounted(async () => {
                           researchIntelligence
                             .kev_record_count ??
                           0
-                        }} record(s)
+                        }} {{ t('interface.recordS') }}
                       </small>
                     </div>
 
                     <div>
-                      <span>NVD</span>
+                      <span>{{ t('interface.nvd') }}</span>
                       <strong>
                         {{
                           booleanLabel(
@@ -2179,14 +2158,14 @@ onMounted(async () => {
                           researchIntelligence
                             .nvd_record_count ??
                           0
-                        }} record(s)
+                        }} {{ t('interface.recordS') }}
                       </small>
                     </div>
                   </div>
 
                   <div class="intel-identifiers">
                     <div>
-                      <span>CVE IDs</span>
+                      <span>{{ t('interface.cveIds') }}</span>
 
                       <div
                         v-if="
@@ -2216,7 +2195,7 @@ onMounted(async () => {
                     </div>
 
                     <div>
-                      <span>CWE IDs</span>
+                      <span>{{ t('interface.cweIds') }}</span>
 
                       <div
                         v-if="
@@ -2265,11 +2244,11 @@ onMounted(async () => {
           <span
             class="provenance-kicker"
           >
-            RESPONSE PLAN
+            {{ t('interface.responsePlan304') }}
           </span>
 
           <strong>
-            Governed Response Proposal
+            {{ t('interface.governedResponseProposal') }}
           </strong>
         </div>
 
@@ -2280,18 +2259,16 @@ onMounted(async () => {
               : 'success'
           "
         >
-          {{
-            responsePlan.dry_run
-              ? 'DRY RUN'
-              : 'LIVE'
-          }}
+          {{ label(responsePlan.dry_run
+              ? t('interface.dryRun306')
+              : t('interface.live')) }}
         </el-tag>
       </div>
 
       <div class="retrieval-grid">
         <div>
           <span>
-            Finding
+            {{ t('interface.finding259') }}
           </span>
 
           <strong>
@@ -2307,49 +2284,43 @@ onMounted(async () => {
 
         <div>
           <span>
-            Verdict
+            {{ t('interface.verdict') }}
           </span>
 
           <strong>
-            {{
-              responsePlan
+            {{ label(responsePlan
                 .grounded_verdict ||
-              '—'
-            }}
+              '—') }}
           </strong>
         </div>
 
         <div>
           <span>
-            Action
+            {{ t('interface.action') }}
           </span>
 
           <strong>
-            {{
-              responsePlan
+            {{ label(responsePlan
                 .decision_action ||
-              '—'
-            }}
+              '—') }}
           </strong>
         </div>
 
         <div>
           <span>
-            Priority
+            {{ t('interface.priority309') }}
           </span>
 
           <strong>
-            {{
-              responsePlan
+            {{ label(responsePlan
                 .priority ||
-              '—'
-            }}
+              '—') }}
           </strong>
         </div>
 
         <div>
           <span>
-            Human Review
+            {{ t('interface.humanReview') }}
           </span>
 
           <strong>
@@ -2364,7 +2335,7 @@ onMounted(async () => {
 
         <div>
           <span>
-            Tool Requests
+            {{ t('interface.toolRequests') }}
           </span>
 
           <strong>
@@ -2383,7 +2354,7 @@ onMounted(async () => {
         class="governance-note"
       >
         <span>
-          Response Summary
+          {{ t('interface.responseSummary') }}
         </span>
 
         <p>
@@ -2418,11 +2389,11 @@ onMounted(async () => {
           <span
             class="provenance-kicker"
           >
-            RESPONSE STEPS
+            {{ t('interface.responseSteps') }}
           </span>
 
           <strong>
-            Contain · Remediate · Verify
+            {{ t('interface.containRemediateVerify') }}
           </strong>
         </div>
       </div>
@@ -2430,7 +2401,7 @@ onMounted(async () => {
       <div class="plan-grid">
         <div class="plan-card">
           <span>
-            Containment
+            {{ t('interface.containment') }}
           </span>
 
           <ul
@@ -2456,13 +2427,13 @@ onMounted(async () => {
           </ul>
 
           <small v-else>
-            No containment action
+            {{ t('interface.noContainmentAction') }}
           </small>
         </div>
 
         <div class="plan-card">
           <span>
-            Remediation
+            {{ t('interface.remediation') }}
           </span>
 
           <ul
@@ -2488,13 +2459,13 @@ onMounted(async () => {
           </ul>
 
           <small v-else>
-            No remediation step
+            {{ t('interface.noRemediationStep') }}
           </small>
         </div>
 
         <div class="plan-card">
           <span>
-            Verification
+            {{ t('interface.verification') }}
           </span>
 
           <ul
@@ -2520,7 +2491,7 @@ onMounted(async () => {
           </ul>
 
           <small v-else>
-            No verification step
+            {{ t('interface.noVerificationStep') }}
           </small>
         </div>
       </div>
@@ -2540,11 +2511,11 @@ onMounted(async () => {
           <span
             class="provenance-kicker"
           >
-            TOOL REQUESTS
+            {{ t('interface.toolRequests319') }}
           </span>
 
           <strong>
-            Proposed Agent Actions
+            {{ t('interface.proposedAgentActions') }}
           </strong>
         </div>
       </div>
@@ -2565,17 +2536,15 @@ onMounted(async () => {
           >
             <div>
               <strong>
-                {{
-                  request
+                {{ label(request
                     .tool_name ||
-                  'Unknown tool'
-                }}
+                  t('interface.unknownTool')) }}
               </strong>
 
               <small>
                 {{
                   request.target ||
-                  'No target'
+                  t('interface.noTarget')
                 }}
               </small>
             </div>
@@ -2584,7 +2553,7 @@ onMounted(async () => {
               type="warning"
               size="small"
             >
-              REQUEST #{{ index }}
+              {{ t('interface.request') }}{{ index }}
             </el-tag>
           </div>
 
@@ -2593,7 +2562,7 @@ onMounted(async () => {
             class="governance-note"
           >
             <span>
-              Reason
+              {{ t('interface.reason') }}
             </span>
 
             <p>
@@ -2635,28 +2604,26 @@ onMounted(async () => {
           <span
             class="provenance-kicker"
           >
-            POLICY DECISION
+            {{ t('interface.policyDecision325') }}
           </span>
 
           <strong>
-            Governance Evaluation
+            {{ t('interface.governanceEvaluation') }}
           </strong>
         </div>
 
         <el-tag type="info">
-          {{
-            policyEvaluation
+          {{ label(policyEvaluation
               .dry_run
-              ? 'DRY RUN'
-              : 'POLICY'
-          }}
+              ? t('interface.dryRun306')
+              : t('interface.policy')) }}
         </el-tag>
       </div>
 
       <div class="retrieval-grid">
         <div>
           <span>
-            Finding
+            {{ t('interface.finding259') }}
           </span>
 
           <strong>
@@ -2672,21 +2639,19 @@ onMounted(async () => {
 
         <div>
           <span>
-            Verdict
+            {{ t('interface.verdict') }}
           </span>
 
           <strong>
-            {{
-              policyEvaluation
+            {{ label(policyEvaluation
                 .grounded_verdict ||
-              '—'
-            }}
+              '—') }}
           </strong>
         </div>
 
         <div>
           <span>
-            ALLOW
+            {{ t('interface.allow') }}
           </span>
 
           <strong>
@@ -2699,7 +2664,7 @@ onMounted(async () => {
 
         <div>
           <span>
-            DENY
+            {{ t('interface.deny') }}
           </span>
 
           <strong>
@@ -2712,7 +2677,7 @@ onMounted(async () => {
 
         <div>
           <span>
-            REQUIRE APPROVAL
+            {{ t('interface.requireApproval') }}
           </span>
 
           <strong>
@@ -2726,7 +2691,7 @@ onMounted(async () => {
 
         <div>
           <span>
-            Evaluated Requests
+            {{ t('interface.evaluatedRequests') }}
           </span>
 
           <strong>
@@ -2751,11 +2716,11 @@ onMounted(async () => {
           <span
             class="provenance-kicker"
           >
-            DECISION RECORDS
+            {{ t('interface.decisionRecords') }}
           </span>
 
           <strong>
-            Per-request Policy Results
+            {{ t('interface.perRequestPolicyResults') }}
           </strong>
         </div>
       </div>
@@ -2773,17 +2738,14 @@ onMounted(async () => {
           >
             <div>
               <strong>
-                {{
-                  result
+                {{ label(result
                     .tool_request
                     ?.tool_name ||
-                  'Unknown tool'
-                }}
+                  t('interface.unknownTool')) }}
               </strong>
 
               <small>
-                Request
-                #{{
+                {{ t('interface.request332') }}{{
                   result
                     .request_index
                 }}
@@ -2792,7 +2754,7 @@ onMounted(async () => {
                   result
                     .tool_request
                     ?.target ||
-                  'No target'
+                  t('interface.noTarget')
                 }}
               </small>
             </div>
@@ -2804,21 +2766,19 @@ onMounted(async () => {
                 )
               "
             >
-              {{
-                result.decision
-              }}
+              {{ label(result.decision) }}
             </el-tag>
           </div>
 
           <div class="governance-note">
             <span>
-              Policy Reason
+              {{ t('interface.policyReason') }}
             </span>
 
             <p>
               {{
                 result.reason ||
-                'No policy reason recorded.'
+                t('interface.noPolicyReasonRecorded')
               }}
             </p>
           </div>
@@ -2827,7 +2787,7 @@ onMounted(async () => {
             class="governance-flags"
           >
             <span>
-              Human Approval
+              {{ t('interface.humanApproval') }}
             </span>
 
             <strong>
@@ -2858,11 +2818,11 @@ onMounted(async () => {
             <span
               class="provenance-kicker"
             >
-              HUMAN APPROVAL
+              {{ t('interface.humanApproval335') }}
             </span>
 
             <strong>
-              Governance Checkpoint
+              {{ t('interface.governanceCheckpoint') }}
             </strong>
           </div>
 
@@ -2876,22 +2836,20 @@ onMounted(async () => {
               )
             "
           >
-            {{
-              (
+            {{ label((
                 approvalRecord
                   .status ||
                 approvalRecord
                   .approval_status ||
                 'unknown'
-              ).toUpperCase()
-            }}
+              ).toUpperCase()) }}
           </el-tag>
         </div>
 
         <div class="retrieval-grid">
           <div>
             <span>
-              Finding
+              {{ t('interface.finding259') }}
             </span>
 
             <strong>
@@ -2907,7 +2865,7 @@ onMounted(async () => {
 
           <div>
             <span>
-              Request Index
+              {{ t('interface.requestIndex') }}
             </span>
 
             <strong>
@@ -2921,7 +2879,7 @@ onMounted(async () => {
 
           <div>
             <span>
-              Reviewer
+              {{ t('interface.reviewer') }}
             </span>
 
             <strong>
@@ -2935,22 +2893,20 @@ onMounted(async () => {
 
           <div>
             <span>
-              Tool
+              {{ t('interface.tool') }}
             </span>
 
             <strong>
-              {{
-                approvalToolRequest
+              {{ label(approvalToolRequest
                   ?.tool_name ||
-                '—'
-              }}
+                '—') }}
             </strong>
           </div>
         </div>
 
         <div class="governance-note">
           <span>
-            Policy Reason
+            {{ t('interface.policyReason') }}
           </span>
 
           <p>
@@ -2970,7 +2926,7 @@ onMounted(async () => {
           class="governance-note"
         >
           <span>
-            Review Reason
+            {{ t('interface.reviewReason') }}
           </span>
 
           <p>
@@ -2995,11 +2951,11 @@ onMounted(async () => {
             <span
               class="provenance-kicker"
             >
-              APPROVAL SUBJECT
+              {{ t('interface.approvalSubject') }}
             </span>
 
             <strong>
-              Requested Tool Action
+              {{ t('interface.requestedToolAction') }}
             </strong>
           </div>
         </div>
@@ -3010,17 +2966,15 @@ onMounted(async () => {
           >
             <div>
               <strong>
-                {{
-                  approvalToolRequest
-                    .tool_name
-                }}
+                {{ label(approvalToolRequest
+                    .tool_name) }}
               </strong>
 
               <small>
                 {{
                   approvalToolRequest
                     .target ||
-                  'No target'
+                  t('interface.noTarget')
                 }}
               </small>
             </div>
@@ -3034,7 +2988,7 @@ onMounted(async () => {
             class="governance-note"
           >
             <span>
-              Request Reason
+              {{ t('interface.requestReason') }}
             </span>
 
             <p>
@@ -3062,11 +3016,11 @@ onMounted(async () => {
             <span
               class="provenance-kicker"
             >
-              TOOL BROKER
+              {{ t('interface.toolBroker344') }}
             </span>
 
             <strong>
-              Governed Tool Execution
+              {{ t('interface.governedToolExecution') }}
             </strong>
           </div>
 
@@ -3080,38 +3034,34 @@ onMounted(async () => {
               )
             "
           >
-            {{
-              (
+            {{ label((
                 executionRecord
                   .status ||
                 executionRecord
                   .broker_status ||
                 'unknown'
-              ).toUpperCase()
-            }}
+              ).toUpperCase()) }}
           </el-tag>
         </div>
 
         <div class="retrieval-grid">
           <div>
             <span>
-              Tool
+              {{ t('interface.tool') }}
             </span>
 
             <strong>
-              {{
-                executionToolRequest
+              {{ label(executionToolRequest
                   ?.tool_name ||
                 selectedMetadata
                   .tool_name ||
-                '—'
-              }}
+                '—') }}
             </strong>
           </div>
 
           <div>
             <span>
-              Target
+              {{ t('interface.target') }}
             </span>
 
             <strong>
@@ -3127,21 +3077,19 @@ onMounted(async () => {
 
           <div>
             <span>
-              Policy
+              {{ t('interface.policy346') }}
             </span>
 
             <strong>
-              {{
-                executionRecord
+              {{ label(executionRecord
                   .policy_decision ||
-                '—'
-              }}
+                '—') }}
             </strong>
           </div>
 
           <div>
             <span>
-              Authorized
+              {{ t('interface.authorized') }}
             </span>
 
             <strong>
@@ -3156,7 +3104,7 @@ onMounted(async () => {
 
           <div>
             <span>
-              Executed
+              {{ t('interface.executed') }}
             </span>
 
             <strong>
@@ -3171,7 +3119,7 @@ onMounted(async () => {
 
           <div>
             <span>
-              Dry Run
+              {{ t('interface.dryRun349') }}
             </span>
 
             <strong>
@@ -3192,7 +3140,7 @@ onMounted(async () => {
           class="governance-note"
         >
           <span>
-            Broker Message
+            {{ t('interface.brokerMessage') }}
           </span>
 
           <p>
@@ -3220,11 +3168,11 @@ onMounted(async () => {
             <span
               class="provenance-kicker"
             >
-              EXECUTION OUTPUT
+              {{ t('interface.executionOutput') }}
             </span>
 
             <strong>
-              Tool Result
+              {{ t('interface.toolResult') }}
             </strong>
           </div>
         </div>
@@ -3242,7 +3190,7 @@ onMounted(async () => {
 
             <template v-else>
               <div class="metadata-title">
-                Event Metadata
+                {{ t('interface.eventMetadata') }}
               </div>
 
               <pre class="metadata-block">{{
@@ -3267,7 +3215,7 @@ onMounted(async () => {
       <span
         class="raw-metadata-title"
       >
-        Raw Audit Metadata
+        {{ t('interface.rawAuditMetadata') }}
       </span>
     </template>
 
@@ -3292,11 +3240,11 @@ onMounted(async () => {
           class="panel error-panel"
         >
           <span class="section-label">
-            FAILURE RECORD
+            {{ t('interface.failureRecord') }}
           </span>
 
           <h3>
-            Investigation Error
+            {{ t('interface.investigationError') }}
           </h3>
 
           <pre>{{

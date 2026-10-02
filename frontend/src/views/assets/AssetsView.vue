@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+import { useDisplayLabels } from '../../i18n/display'
+const { t, locale } = useI18n()
+const { label } = useDisplayLabels()
+
 import {
   computed,
   onMounted,
@@ -88,7 +93,7 @@ function formatDate(value) {
     return value
   }
 
-  return date.toLocaleString()
+  return date.toLocaleString(locale.value)
 }
 
 function statusType(status) {
@@ -116,7 +121,7 @@ async function loadAssets() {
     console.error(error)
 
     ElMessage.error(
-      '资产列表加载失败',
+      t('interface.failedToLoadAssets'),
     )
   } finally {
     loading.value = false
@@ -137,7 +142,7 @@ async function submitAsset() {
 
   if (!name || !target) {
     ElMessage.warning(
-      '请填写资产名称和目标地址',
+      t('interface.pleaseEnterAnAssetNameAndTargetAddress'),
     )
 
     return
@@ -153,7 +158,7 @@ async function submitAsset() {
     })
 
     ElMessage.success(
-      '资产创建成功',
+      t('interface.assetCreatedSuccessfully'),
     )
 
     createDialogVisible.value = false
@@ -176,15 +181,15 @@ onMounted(() => {
     <div class="page-heading">
       <div>
         <div class="eyebrow">
-          ASSET MANAGEMENT
+          {{ t('interface.assetManagement') }}
         </div>
 
         <h2>
-          Assets
+          {{ t('interface.assets') }}
         </h2>
 
         <p>
-          管理 SentinelAgent 扫描目标与资产状态
+          {{ t('interface.manageSentinelagentScanTargetsAndAssetStatus') }}
         </p>
       </div>
 
@@ -193,7 +198,7 @@ onMounted(() => {
           :icon="Refresh"
           @click="loadAssets"
         >
-          刷新
+          {{ t('interface.refresh') }}
         </el-button>
 
         <el-button
@@ -201,7 +206,7 @@ onMounted(() => {
           :icon="Plus"
           @click="openCreateDialog"
         >
-          添加资产
+          {{ t('interface.addAsset') }}
         </el-button>
       </div>
     </div>
@@ -209,7 +214,7 @@ onMounted(() => {
     <section class="panel summary-grid">
       <div class="summary-card">
         <span>
-          总资产
+          {{ t('interface.totalAssets') }}
         </span>
 
         <strong>
@@ -219,7 +224,7 @@ onMounted(() => {
 
       <div class="summary-card">
         <span>
-          Active
+          {{ t('interface.active') }}
         </span>
 
         <strong>
@@ -234,7 +239,7 @@ onMounted(() => {
 
       <div class="summary-card">
         <span>
-          Host
+          {{ t('interface.host') }}
         </span>
 
         <strong>
@@ -253,7 +258,7 @@ onMounted(() => {
         <el-input
           v-model="keyword"
           class="search-input"
-          placeholder="搜索名称、IP、类型或状态"
+          :placeholder="t('interface.searchNameIpTypeOrStatus')"
           clearable
         >
           <template #prefix>
@@ -264,23 +269,23 @@ onMounted(() => {
         </el-input>
 
         <span class="muted">
-          {{ filteredAssets.length }} 个资产
+          {{ filteredAssets.length }} {{ t('interface.assets12') }}
         </span>
       </div>
 
       <el-table
         v-loading="loading"
         :data="filteredAssets"
-        empty-text="暂无资产"
+        :empty-text="t('interface.noAssets')"
       >
         <el-table-column
           prop="id"
-          label="ID"
+          :label="t('interface.id')"
           width="80"
         />
 
         <el-table-column
-          label="资产"
+          :label="t('interface.asset')"
           min-width="220"
         >
           <template #default="{ row }">
@@ -306,7 +311,7 @@ onMounted(() => {
 
         <el-table-column
           prop="asset_type"
-          label="类型"
+          :label="t('interface.type')"
           width="130"
         >
           <template #default="{ row }">
@@ -314,14 +319,14 @@ onMounted(() => {
               effect="plain"
               type="info"
             >
-              {{ row.asset_type }}
+              {{ label(row.asset_type) }}
             </el-tag>
           </template>
         </el-table-column>
 
         <el-table-column
           prop="status"
-          label="状态"
+          :label="t('interface.status')"
           width="130"
         >
           <template #default="{ row }">
@@ -329,13 +334,13 @@ onMounted(() => {
               :type="statusType(row.status)"
               effect="light"
             >
-              {{ row.status }}
+              {{ label(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="创建时间"
+          :label="t('interface.createdAt')"
           min-width="190"
         >
           <template #default="{ row }">
@@ -344,7 +349,7 @@ onMounted(() => {
         </el-table-column>
 
         <el-table-column
-          label="扫描"
+          :label="t('interface.scan')"
           width="120"
           align="right"
         >
@@ -362,7 +367,7 @@ onMounted(() => {
                 <Position />
               </el-icon>
 
-              扫描
+              {{ t('interface.scan') }}
             </router-link>
           </template>
         </el-table-column>
@@ -371,41 +376,41 @@ onMounted(() => {
 
     <el-dialog
       v-model="createDialogVisible"
-      title="添加资产"
+      :title="t('interface.addAsset')"
       width="520px"
     >
       <el-form label-position="top">
-        <el-form-item label="资产名称">
+        <el-form-item :label="t('interface.assetName')">
           <el-input
             v-model="form.name"
-            placeholder="例如 Local Test Server"
+            :placeholder="t('interface.eGLocalTestServer')"
           />
         </el-form-item>
 
-        <el-form-item label="目标地址">
+        <el-form-item :label="t('interface.targetAddress')">
           <el-input
             v-model="form.target"
-            placeholder="例如 127.0.0.1"
+            :placeholder="t('interface.eG127001')"
           />
         </el-form-item>
 
-        <el-form-item label="资产类型">
+        <el-form-item :label="t('interface.assetType')">
           <el-select
             v-model="form.asset_type"
             style="width: 100%"
           >
             <el-option
-              label="Host"
+              :label="t('interface.host')"
               value="host"
             />
 
             <el-option
-              label="Domain"
+              :label="t('interface.domain')"
               value="domain"
             />
 
             <el-option
-              label="URL"
+              :label="t('interface.url')"
               value="url"
             />
           </el-select>
@@ -418,7 +423,7 @@ onMounted(() => {
             createDialogVisible = false
           "
         >
-          取消
+          {{ t('interface.cancel') }}
         </el-button>
 
         <el-button
@@ -426,7 +431,7 @@ onMounted(() => {
           :loading="creating"
           @click="submitAsset"
         >
-          创建资产
+          {{ t('interface.createAsset') }}
         </el-button>
       </template>
     </el-dialog>

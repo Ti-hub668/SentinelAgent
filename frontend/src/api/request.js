@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
@@ -15,10 +16,10 @@ request.interceptors.response.use(
     const message = typeof detail === 'string'
       ? detail
       : Array.isArray(detail)
-        ? detail.map((item) => item.msg).filter(Boolean).join('；') || '请求参数有误'
+        ? detail.map((item) => item.msg).filter(Boolean).join(i18n.global.locale.value === 'zh-CN' ? '；' : '; ') || i18n.global.t('feedback.requestInvalid')
         : error.code === 'ECONNABORTED'
-          ? '请求超时，请稍后重试'
-          : error.response ? `请求失败（${error.response.status}）` : '无法连接服务，请检查后端是否启动'
+          ? i18n.global.t('feedback.requestTimeout')
+          : error.response ? i18n.global.t('feedback.requestFailed', { status: error.response.status }) : i18n.global.t('feedback.requestDisconnected')
     if (!error.config?.silent) ElMessage.error(message)
     return Promise.reject(error)
   },

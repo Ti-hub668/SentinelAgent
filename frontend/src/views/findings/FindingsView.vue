@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+import { useDisplayLabels } from '../../i18n/display'
+const { t, locale } = useI18n()
+const { label } = useDisplayLabels()
+
 import {
   computed,
   onMounted,
@@ -216,7 +221,7 @@ function formatDate(value) {
     return value
   }
 
-  return date.toLocaleString()
+  return date.toLocaleString(locale.value)
 }
 
 function normalizeRiskScore(score) {
@@ -278,7 +283,7 @@ async function loadFindings() {
     console.error(error)
 
     ElMessage.error(
-      'Findings 加载失败',
+      t('interface.failedToLoadFindings'),
     )
   } finally {
     loading.value = false
@@ -317,7 +322,7 @@ async function selectFinding(findingId) {
       selectedFinding.value = fallback
     } else {
       ElMessage.error(
-        'Finding 详情加载失败',
+        t('interface.failedToLoadFindingDetails'),
       )
     }
   } finally {
@@ -380,15 +385,15 @@ onMounted(() => {
     <div class="page-heading">
       <div>
         <div class="eyebrow">
-          SECURITY OPERATIONS
+          {{ t('interface.securityOperations') }}
         </div>
 
         <h2>
-          Security Findings
+          {{ t('interface.securityFindings') }}
         </h2>
 
         <p>
-          汇总扫描发现、风险评估结果与证据上下文
+          {{ t('interface.scanFindingsRiskAssessmentsAndEvidenceContext') }}
         </p>
       </div>
 
@@ -397,14 +402,14 @@ onMounted(() => {
         :loading="loading"
         @click="loadFindings"
       >
-        刷新
+        {{ t('interface.refresh') }}
       </el-button>
     </div>
 
     <div class="summary-grid">
       <section class="panel summary-card">
         <span>
-          Total Findings
+          {{ t('interface.totalFindings') }}
         </span>
 
         <strong>
@@ -412,13 +417,13 @@ onMounted(() => {
         </strong>
 
         <small>
-          全部安全发现
+          {{ t('interface.allSecurityFindings') }}
         </small>
       </section>
 
       <section class="panel summary-card">
         <span>
-          Open
+          {{ t('interface.open') }}
         </span>
 
         <strong>
@@ -426,13 +431,13 @@ onMounted(() => {
         </strong>
 
         <small>
-          当前待处理
+          {{ t('interface.awaitingReview') }}
         </small>
       </section>
 
       <section class="panel summary-card">
         <span>
-          High / Critical
+          {{ t('interface.highCritical') }}
         </span>
 
         <strong>
@@ -443,13 +448,13 @@ onMounted(() => {
         </strong>
 
         <small>
-          高风险发现
+          {{ t('interface.highRiskFindings') }}
         </small>
       </section>
 
       <section class="panel summary-card">
         <span>
-          Low / Info
+          {{ t('interface.lowInfo') }}
         </span>
 
         <strong>
@@ -460,7 +465,7 @@ onMounted(() => {
         </strong>
 
         <small>
-          低风险与信息发现
+          {{ t('interface.lowRiskAndInformationalFindings') }}
         </small>
       </section>
     </div>
@@ -470,7 +475,7 @@ onMounted(() => {
         <el-input
           v-model="keyword"
           class="search-input"
-          placeholder="搜索标题、Target、Source、Finding ID"
+          :placeholder="t('interface.searchTitleTargetSourceOrFindingId')"
           clearable
         >
           <template #prefix>
@@ -483,31 +488,31 @@ onMounted(() => {
         <el-select
           v-model="severityFilter"
           class="filter-select"
-          placeholder="Severity"
+          :placeholder="t('interface.severity')"
           clearable
         >
           <el-option
-            label="Critical"
+            :label="t('interface.critical')"
             value="critical"
           />
 
           <el-option
-            label="High"
+            :label="t('interface.high')"
             value="high"
           />
 
           <el-option
-            label="Medium"
+            :label="t('interface.medium')"
             value="medium"
           />
 
           <el-option
-            label="Low"
+            :label="t('interface.low')"
             value="low"
           />
 
           <el-option
-            label="Info"
+            :label="t('interface.info')"
             value="info"
           />
         </el-select>
@@ -515,31 +520,31 @@ onMounted(() => {
         <el-select
           v-model="riskFilter"
           class="filter-select"
-          placeholder="Risk Level"
+          :placeholder="t('interface.riskLevel')"
           clearable
         >
           <el-option
-            label="Critical"
+            :label="t('interface.critical')"
             value="critical"
           />
 
           <el-option
-            label="High"
+            :label="t('interface.high')"
             value="high"
           />
 
           <el-option
-            label="Medium"
+            :label="t('interface.medium')"
             value="medium"
           />
 
           <el-option
-            label="Low"
+            :label="t('interface.low')"
             value="low"
           />
 
           <el-option
-            label="Info"
+            :label="t('interface.info')"
             value="info"
           />
         </el-select>
@@ -547,13 +552,13 @@ onMounted(() => {
         <el-select
           v-model="statusFilter"
           class="filter-select"
-          placeholder="Status"
+          :placeholder="t('interface.status94')"
           clearable
         >
           <el-option
             v-for="status in statusOptions"
             :key="status"
-            :label="status"
+            :label="label(status)"
             :value="status"
           />
         </el-select>
@@ -561,7 +566,7 @@ onMounted(() => {
         <el-select
           v-model="sourceFilter"
           class="filter-select"
-          placeholder="Source"
+          :placeholder="t('interface.source')"
           clearable
         >
           <el-option
@@ -576,7 +581,7 @@ onMounted(() => {
           text
           @click="resetFilters"
         >
-          重置
+          {{ t('interface.reset') }}
         </el-button>
       </div>
 
@@ -592,11 +597,11 @@ onMounted(() => {
         <div class="section-heading">
           <div>
             <h3>
-              Findings Queue
+              {{ t('interface.findingsQueue') }}
             </h3>
 
             <p>
-              点击安全发现查看完整证据
+              {{ t('interface.selectAFindingToViewItsFullEvidence') }}
             </p>
           </div>
         </div>
@@ -610,7 +615,7 @@ onMounted(() => {
               !loading &&
               filteredFindings.length === 0
             "
-            description="没有符合条件的 Findings"
+            :description="t('interface.noMatchingFindings')"
           />
 
           <button
@@ -645,10 +650,8 @@ onMounted(() => {
                   )
                 "
               >
-                {{
-                  finding.severity ||
-                  'unknown'
-                }}
+                {{ label(finding.severity ||
+                  'unknown') }}
               </el-tag>
             </div>
 
@@ -679,14 +682,12 @@ onMounted(() => {
                   )
                 "
               >
-                {{
-                  finding.risk_level ||
-                  'unknown'
-                }}
+                {{ label(finding.risk_level ||
+                  'unknown') }}
               </span>
 
               <span class="status-text">
-                {{ finding.status }}
+                {{ label(finding.status) }}
               </span>
 
               <span class="time-text">
@@ -713,15 +714,14 @@ onMounted(() => {
               !detailLoading &&
               !selectedFinding
             "
-            description="选择一个 Finding 查看详情"
+            :description="t('interface.selectAFindingToViewDetails')"
           />
 
           <template v-if="selectedFinding">
             <div class="detail-header">
               <div class="detail-header-main">
                 <div class="detail-id">
-                  FINDING
-                  #{{ selectedFinding.id }}
+                  {{ t('interface.finding') }}{{ selectedFinding.id }}
                 </div>
 
                 <h3>
@@ -736,10 +736,8 @@ onMounted(() => {
                       )
                     "
                   >
-                    Severity:
-                    {{
-                      selectedFinding.severity
-                    }}
+                    {{ t('interface.severity102') }}
+                    {{ label(selectedFinding.severity) }}
                   </el-tag>
 
                   <span
@@ -750,11 +748,9 @@ onMounted(() => {
                       )
                     "
                   >
-                    Risk:
-                    {{
-                      selectedFinding.risk_level ||
-                      'unknown'
-                    }}
+                    {{ t('interface.risk') }}
+                    {{ label(selectedFinding.risk_level ||
+                      'unknown') }}
                   </span>
 
                   <el-tag
@@ -773,7 +769,7 @@ onMounted(() => {
                 :icon="Cpu"
                 @click="startInvestigation"
               >
-                启动 AI Investigation
+                {{ t('interface.startAiInvestigation') }}
               </el-button>
             </div>
 
@@ -781,13 +777,13 @@ onMounted(() => {
               <div class="section-title">
                 <View />
 
-                Finding Overview
+                {{ t('interface.findingOverview') }}
               </div>
 
               <div class="metadata-grid">
                 <div>
                   <span>
-                    Finding ID
+                    {{ t('interface.findingId') }}
                   </span>
 
                   <strong>
@@ -797,7 +793,7 @@ onMounted(() => {
 
                 <div>
                   <span>
-                    Asset ID
+                    {{ t('interface.assetId') }}
                   </span>
 
                   <strong>
@@ -807,7 +803,7 @@ onMounted(() => {
 
                 <div>
                   <span>
-                    Scan Task
+                    {{ t('interface.scanTask') }}
                   </span>
 
                   <strong>
@@ -817,7 +813,7 @@ onMounted(() => {
 
                 <div>
                   <span>
-                    Finding Type
+                    {{ t('interface.findingType') }}
                   </span>
 
                   <strong>
@@ -829,7 +825,7 @@ onMounted(() => {
 
                 <div>
                   <span>
-                    Target
+                    {{ t('interface.target') }}
                   </span>
 
                   <strong>
@@ -841,19 +837,17 @@ onMounted(() => {
 
                 <div>
                   <span>
-                    Status
+                    {{ t('interface.status94') }}
                   </span>
 
                   <strong>
-                    {{
-                      selectedFinding.status
-                    }}
+                    {{ label(selectedFinding.status) }}
                   </strong>
                 </div>
 
                 <div>
                   <span>
-                    Source
+                    {{ t('interface.source') }}
                   </span>
 
                   <strong>
@@ -865,7 +859,7 @@ onMounted(() => {
 
                 <div>
                   <span>
-                    Created
+                    {{ t('interface.created') }}
                   </span>
 
                   <strong>
@@ -883,13 +877,13 @@ onMounted(() => {
               <div class="section-title">
                 <WarningFilled />
 
-                Deterministic Risk
+                {{ t('interface.deterministicRisk') }}
               </div>
 
               <div class="risk-score-box">
                 <div class="risk-score-value">
                   <span>
-                    Risk Score
+                    {{ t('interface.riskScore') }}
                   </span>
 
                   <strong>
@@ -907,14 +901,12 @@ onMounted(() => {
                 <div class="risk-progress">
                   <div class="risk-progress-heading">
                     <span>
-                      Risk Level
+                      {{ t('interface.riskLevel') }}
                     </span>
 
                     <strong>
-                      {{
-                        selectedFinding.risk_level ||
-                        'unknown'
-                      }}
+                      {{ label(selectedFinding.risk_level ||
+                        'unknown') }}
                     </strong>
                   </div>
 
@@ -951,13 +943,13 @@ onMounted(() => {
               <div class="section-title">
                 <Document />
 
-                Description
+                {{ t('interface.description') }}
               </div>
 
               <div class="text-block">
                 {{
                   selectedFinding.description ||
-                  '暂无描述'
+                  t('interface.noDescription')
                 }}
               </div>
             </div>
@@ -966,12 +958,12 @@ onMounted(() => {
               <div class="section-title">
                 <Clock />
 
-                Evidence
+                {{ t('interface.evidence') }}
               </div>
 
               <pre class="evidence-block">{{
                 selectedFinding.evidence ||
-                '暂无证据'
+                t('interface.noEvidence')
               }}</pre>
             </div>
 
@@ -979,13 +971,13 @@ onMounted(() => {
               <div class="section-title">
                 <Document />
 
-                Remediation
+                {{ t('interface.remediation') }}
               </div>
 
               <div class="text-block">
                 {{
                   selectedFinding.remediation ||
-                  '当前 Finding 尚未生成修复建议。后续由 AI Investigation 和 Response Agent 补充。'
+                  t('interface.noRemediationRecommendationsYetAiInvestigationAndResponseAgentWillProvideThemLater')
                 }}
               </div>
             </div>
@@ -993,17 +985,15 @@ onMounted(() => {
             <div class="investigation-callout">
               <div>
                 <span class="callout-label">
-                  SENTINEL AGENT
+                  {{ t('interface.sentinelAgent') }}
                 </span>
 
                 <h4>
-                  AI Investigation
+                  {{ t('interface.aiInvestigation') }}
                 </h4>
 
                 <p>
-                  将 Finding、资产、扫描上下文、RAG
-                  知识和威胁情报送入 LangGraph
-                  Investigator，生成有证据支撑的风险结论。
+                  {{ t('interface.sendFindingAssetAndScanContextRagKnowledgeAndThreatIntelligenceToLanggraphInvestigatorForEvidenceBackedRiskConclusions') }}
                 </p>
               </div>
 
@@ -1012,7 +1002,7 @@ onMounted(() => {
                 :icon="Cpu"
                 @click="startInvestigation"
               >
-                调查此 Finding
+                {{ t('interface.investigateThisFinding') }}
               </el-button>
             </div>
           </template>
