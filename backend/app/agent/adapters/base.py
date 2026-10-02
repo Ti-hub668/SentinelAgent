@@ -2,7 +2,9 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-
+from app.schemas.reconciliation import (
+    ToolReconciliationResult,
+)
 
 @dataclass(
     frozen=True,
@@ -39,3 +41,17 @@ class ToolAdapter(ABC):
         execution_context: ToolExecutionContext | None = None,
     ) -> dict:
         pass
+
+    def reconcile(
+        self,
+        *,
+        execution_context: ToolExecutionContext,
+    ) -> ToolReconciliationResult:
+        return ToolReconciliationResult(
+            state="unsupported",
+            message=(
+                "This adapter does not support "
+                "external reconciliation."
+            ),
+            output={},
+        )

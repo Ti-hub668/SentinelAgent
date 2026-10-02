@@ -85,3 +85,23 @@ def redact_tool_secrets(value):
     if isinstance(value, (list, tuple)):
         return [redact_tool_secrets(v) for v in value]
     return value
+
+def get_execution_claim_stale_seconds() -> int:
+    raw = (
+        os.getenv(
+            "SENTINEL_EXECUTION_CLAIM_STALE_SECONDS",
+            "60",
+        )
+        .strip()
+    )
+
+    try:
+        value = int(raw)
+
+    except ValueError:
+        return 60
+
+    return max(
+        value,
+        1,
+    )

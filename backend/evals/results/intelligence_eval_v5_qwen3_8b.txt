@@ -1,0 +1,43 @@
+
+======================================================================
+SentinelAgent Structured Intelligence Evaluation
+======================================================================
+Prompt Version : v5
+Cases          : 4
+======================================================================
+
+[PASS] intel_001
+Category : kev_evidence_boundary
+Expected : needs_review
+Actual   : needs_review
+Confidence: 0.75
+KEV Match : True
+
+[PASS] intel_002
+Category : kev_confirmed_evidence
+Expected : likely_true_positive
+Actual   : likely_true_positive
+Confidence: 0.95
+KEV Match : True
+
+[PASS] intel_003
+Category : kev_contradicted_evidence
+Expected : likely_false_positive
+Actual   : likely_false_positive
+Confidence: 0.95
+KEV Match : True
+
+[PASS] intel_004
+Category : unknown_cve_no_kev_match
+Expected : needs_review
+Actual   : needs_review
+Confidence: 0.5
+KEV Match : False
+
+======================================================================
+Evaluation Summary
+======================================================================
+Passed   : 4
+Failed   : 0
+Accuracy : 100.0%
+======================================================================

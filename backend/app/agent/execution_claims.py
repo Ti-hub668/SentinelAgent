@@ -5,7 +5,10 @@ Only confirmed dry-run failures may be retried, at most three attempts per slot.
 An uncertain outcome stays claimed and requires operator reconciliation.
 """
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import (
+    datetime,
+    timedelta,
+)
 from uuid import uuid4
 
 from sqlalchemy import select, update
@@ -18,9 +21,41 @@ from app.agent.ledger import (
 )
 from app.models.execution_claim import ExecutionClaim
 from app.schemas.execution import ExecutionIntent
+from app.core.tool_settings import (
+    get_execution_claim_stale_seconds,
+)
+
 
 MAX_ATTEMPTS = 3
 
+
+def _is_claim_stale(
+    claim: ExecutionClaim,
+) -> bool:
+    """
+    Return True when a claimed execution slot
+    has not been updated within the configured
+    recovery threshold.
+
+    Detection alone does not transfer ownership.
+    """
+
+    stale_seconds = (
+        get_execution_claim_stale_seconds()
+    )
+
+    cutoff = (
+        datetime.utcnow()
+        - timedelta(
+            seconds=stale_seconds
+        )
+    )
+
+    return (
+        claim.status == "claimed"
+        and claim.updated_at
+        <= cutoff
+    )
 
 @dataclass(frozen=True)
 class ClaimDecision:
@@ -31,6 +66,169 @@ class ClaimDecision:
     event_id: int | None = None
     receipt: dict | None = None
 
+def acquire_reconciliation_claim(
+    db: Session,
+    *,
+    claim_id: int,
+) -> ClaimDecision:
+    """
+    Acquire exclusive ownership for reconciling
+    one stale execution claim.
+
+    This never grants permission to execute the
+    original adapter again.
+    """
+
+    if db.new or db.dirty or db.deleted:
+        raise ValueError(
+            "Reconciliation acquisition requires "
+            "a session without pending writes."
+        )
+
+    db.rollback()
+
+    existing = db.get(
+        ExecutionClaim,
+        claim_id,
+    )
+
+    if existing is None:
+        db.rollback()
+
+        return ClaimDecision(
+            "missing",
+            0,
+        )
+
+    attempt = existing.attempt
+
+    if existing.status == "completed":
+        decision = ClaimDecision(
+            "completed",
+            attempt,
+            output=existing.output,
+            event_id=existing.event_id,
+            receipt=existing.receipt,
+        )
+
+        db.rollback()
+        return decision
+
+    if existing.status != "claimed":
+        db.rollback()
+
+        return ClaimDecision(
+            "not_reconcilable",
+            attempt,
+        )
+
+    if not _is_claim_stale(
+        existing
+    ):
+        db.rollback()
+
+        return ClaimDecision(
+            "not_stale",
+            attempt,
+        )
+
+    observed_token = (
+        existing.owner_token
+    )
+
+    observed_updated_at = (
+        existing.updated_at
+    )
+
+    token = uuid4().hex
+
+    db.rollback()
+
+    changed = db.execute(
+        update(
+            ExecutionClaim
+        )
+        .where(
+            ExecutionClaim.id == claim_id,
+            ExecutionClaim.status
+            == "claimed",
+            ExecutionClaim.owner_token
+            == observed_token,
+            ExecutionClaim.updated_at
+            == observed_updated_at,
+        )
+        .values(
+            owner_token=token,
+            updated_at=datetime.utcnow(),
+        ),
+        execution_options={
+            "synchronize_session": False
+        },
+    ).rowcount
+
+    db.commit()
+
+    if changed == 1:
+        return ClaimDecision(
+            state="acquired",
+            attempt=attempt,
+            owner_token=token,
+        )
+
+    return ClaimDecision(
+        state="in_progress",
+        attempt=attempt,
+    )
+
+def finish_reconciled_claim(
+    db: Session,
+    *,
+    claim_id: int,
+    owner_token: str,
+    attempt: int,
+    receipt: dict,
+    output: dict,
+    event_id: int,
+) -> None:
+    """
+    Finalize an externally confirmed stale claim.
+
+    The caller must commit this mutation in the
+    same transaction as the reconciliation ledger
+    event.
+    """
+
+    changed = db.execute(
+        update(
+            ExecutionClaim
+        )
+        .where(
+            ExecutionClaim.id == claim_id,
+            ExecutionClaim.status
+            == "claimed",
+            ExecutionClaim.owner_token
+            == owner_token,
+            ExecutionClaim.attempt
+            == attempt,
+        )
+        .values(
+            status="completed",
+            receipt=receipt,
+            output=output,
+            event_id=event_id,
+            updated_at=datetime.utcnow(),
+            completed_at=datetime.utcnow(),
+        ),
+        execution_options={
+            "synchronize_session": False
+        },
+    ).rowcount
+
+    if changed != 1:
+        raise RuntimeError(
+            "Reconciliation claim ownership lost; "
+            "completion rejected."
+        )
 
 def acquire_claim(db: Session, intent: ExecutionIntent) -> ClaimDecision:
     if db.new or db.dirty or db.deleted:
@@ -54,6 +252,7 @@ def acquire_claim(db: Session, intent: ExecutionIntent) -> ClaimDecision:
         run_id=intent.run_id, request_index=intent.request_index,
         idempotency_key=key, request_fingerprint=intent.request_fingerprint,
         execution_id=intent.execution_id, owner_token=token,
+        tool_name=intent.tool_name,
         status="completed" if legacy else "claimed", attempt=initial_attempt,
         completed_at=datetime.utcnow() if legacy else None,
         receipt=legacy_metadata.get("execution_receipt"),
@@ -84,8 +283,72 @@ def acquire_claim(db: Session, intent: ExecutionIntent) -> ClaimDecision:
         decision = ClaimDecision("conflict", attempt)
     elif existing.status == "completed":
         decision = ClaimDecision("completed", attempt, output=existing.output, event_id=existing.event_id, receipt=existing.receipt)
-    elif existing.status not in {"failed", "released"}:
-        decision = ClaimDecision("in_progress", attempt)
+    elif existing.status not in {
+        "failed",
+        "released",
+    }:
+        if not _is_claim_stale(
+            existing
+        ):
+            decision = ClaimDecision(
+                "in_progress",
+                attempt,
+            )
+
+        else:
+            observed_token = (
+                existing.owner_token
+            )
+
+            observed_updated_at = (
+                existing.updated_at
+            )
+
+            db.rollback()
+
+            changed = db.execute(
+                update(
+                    ExecutionClaim
+                )
+                .where(
+                    ExecutionClaim.idempotency_key
+                    == key,
+                    ExecutionClaim.request_fingerprint
+                    == intent.request_fingerprint,
+                    ExecutionClaim.status
+                    == "claimed",
+                    ExecutionClaim.attempt
+                    == attempt,
+                    ExecutionClaim.owner_token
+                    == observed_token,
+                    ExecutionClaim.updated_at
+                    == observed_updated_at,
+                )
+                .values(
+                    owner_token=token,
+                    updated_at=datetime.utcnow(),
+                ),
+                execution_options={
+                    "synchronize_session":
+                        False
+                },
+            ).rowcount
+
+            db.commit()
+
+            if changed == 1:
+                return ClaimDecision(
+                    state=(
+                        "reconciliation_required"
+                    ),
+                    attempt=attempt,
+                    owner_token=token,
+                )
+
+            return ClaimDecision(
+                state="in_progress",
+                attempt=attempt,
+            )
     elif attempt >= MAX_ATTEMPTS:
         decision = ClaimDecision("retry_exhausted", attempt)
     else:

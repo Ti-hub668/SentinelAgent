@@ -1,0 +1,451 @@
+======================================================================
+SentinelAgent Evidence Assessment Evaluation
+======================================================================
+Evidence Prompt Version : v1
+Cases                   : 15
+======================================================================
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1133
+eval_count: 81
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "vulnerability", "evidence_status": "insufficient", "preliminary_verdict": "needs_review", "confidence": 0.85, "reason": "The finding claims a specific vulnerability (CVE-2026-7273) but the evidence only indicates a network response without confirming the affected product version or vulnerability condition."}
+================================================================================
+
+
+[PASS] evidence_001
+Dataset Category : vulnerability_insufficient
+Finding Category : vulnerability
+Expected Category: vulnerability
+Category Match   : True
+Evidence Status  : insufficient
+Expected Status  : insufficient
+Status Match     : True
+Actual Verdict   : needs_review
+Expected Verdict : needs_review
+Verdict Match    : True
+Confidence       : 0.85
+Reason           : The finding claims a specific vulnerability (CVE-2026-7273) but the evidence only indicates a network response without confirming the affected product version or vulnerability condition.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1117
+eval_count: 77
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "vulnerability", "evidence_status": "confirmed", "preliminary_verdict": "likely_true_positive", "confidence": 0.95, "reason": "The evidence confirms that the detected product and version matched the scanner rule, and the vulnerability-specific detection condition was confirmed, directly supporting the finding's claim of a vulnerability."}
+================================================================================
+
+
+[PASS] evidence_002
+Dataset Category : vulnerability_confirmed
+Finding Category : vulnerability
+Expected Category: vulnerability
+Category Match   : True
+Evidence Status  : confirmed
+Expected Status  : confirmed
+Status Match     : True
+Actual Verdict   : likely_true_positive
+Expected Verdict : likely_true_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence confirms that the detected product and version matched the scanner rule, and the vulnerability-specific detection condition was confirmed, directly supporting the finding's claim of a vulnerability.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1118
+eval_count: 76
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "ambiguous_security_signal", "evidence_status": "contradicted", "preliminary_verdict": "likely_false_positive", "confidence": 0.95, "reason": "The evidence contradicts the finding by indicating that the original match was from a generic response pattern and a different product was identified, which is not affected."}
+================================================================================
+
+
+[FAIL] evidence_003
+Dataset Category : vulnerability_contradicted
+Finding Category : ambiguous_security_signal
+Expected Category: vulnerability
+Category Match   : False
+Evidence Status  : contradicted
+Expected Status  : contradicted
+Status Match     : True
+Actual Verdict   : likely_false_positive
+Expected Verdict : likely_false_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence contradicts the finding by indicating that the original match was from a generic response pattern and a different product was identified, which is not affected.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1109
+eval_count: 76
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "information_observation", "evidence_status": "confirmed", "preliminary_verdict": "informational", "confidence": 0.95, "reason": "The Finding describes web framework detection, which is an informational observation. The Evidence confirms the presence of framework-specific headers and page markers, directly supporting the Finding's claim."}
+================================================================================
+
+
+[PASS] evidence_004
+Dataset Category : information_confirmed
+Finding Category : information_observation
+Expected Category: information_observation
+Category Match   : True
+Evidence Status  : confirmed
+Expected Status  : confirmed
+Status Match     : True
+Actual Verdict   : informational
+Expected Verdict : informational
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The Finding describes web framework detection, which is an informational observation. The Evidence confirms the presence of framework-specific headers and page markers, directly supporting the Finding's claim.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1115
+eval_count: 73
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "information_observation", "evidence_status": "insufficient", "preliminary_verdict": "needs_review", "confidence": 0.85, "reason": "The evidence indicates a generic header without framework-specific markers, which is insufficient to confirm the presence of a specific framework. The technology identification remains uncertain."}
+================================================================================
+
+
+[PASS] evidence_005
+Dataset Category : information_insufficient
+Finding Category : information_observation
+Expected Category: information_observation
+Category Match   : True
+Evidence Status  : insufficient
+Expected Status  : insufficient
+Status Match     : True
+Actual Verdict   : needs_review
+Expected Verdict : needs_review
+Verdict Match    : True
+Confidence       : 0.85
+Reason           : The evidence indicates a generic header without framework-specific markers, which is insufficient to confirm the presence of a specific framework. The technology identification remains uncertain.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1125
+eval_count: 79
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "security_misconfiguration", "evidence_status": "confirmed", "preliminary_verdict": "likely_true_positive", "confidence": 0.95, "reason": "The evidence directly confirms the absence of the Content-Security-Policy header in the HTTP response, which aligns with the finding's claim of a missing security header configuration."}
+================================================================================
+
+
+[PASS] evidence_006
+Dataset Category : misconfiguration_confirmed
+Finding Category : security_misconfiguration
+Expected Category: security_misconfiguration
+Category Match   : True
+Evidence Status  : confirmed
+Expected Status  : confirmed
+Status Match     : True
+Actual Verdict   : likely_true_positive
+Expected Verdict : likely_true_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence directly confirms the absence of the Content-Security-Policy header in the HTTP response, which aligns with the finding's claim of a missing security header configuration.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1121
+eval_count: 86
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "security_misconfiguration", "evidence_status": "insufficient", "preliminary_verdict": "needs_review", "confidence": 0.85, "reason": "The finding claims a security header may be missing, but the evidence does not include the actual response headers or specify which header was missing. The evidence is incomplete, making it insufficient to confirm the misconfiguration."}
+================================================================================
+
+
+[PASS] evidence_007
+Dataset Category : misconfiguration_insufficient
+Finding Category : security_misconfiguration
+Expected Category: security_misconfiguration
+Category Match   : True
+Evidence Status  : insufficient
+Expected Status  : insufficient
+Status Match     : True
+Actual Verdict   : needs_review
+Expected Verdict : needs_review
+Verdict Match    : True
+Confidence       : 0.85
+Reason           : The finding claims a security header may be missing, but the evidence does not include the actual response headers or specify which header was missing. The evidence is incomplete, making it insufficient to confirm the misconfiguration.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1123
+eval_count: 70
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "security_misconfiguration", "evidence_status": "contradicted", "preliminary_verdict": "likely_false_positive", "confidence": 0.95, "reason": "The evidence directly contradicts the finding by showing the Strict-Transport-Security header is present in the HTTPS response."}
+================================================================================
+
+
+[PASS] evidence_008
+Dataset Category : misconfiguration_contradicted
+Finding Category : security_misconfiguration
+Expected Category: security_misconfiguration
+Category Match   : True
+Evidence Status  : contradicted
+Expected Status  : contradicted
+Status Match     : True
+Actual Verdict   : likely_false_positive
+Expected Verdict : likely_false_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence directly contradicts the finding by showing the Strict-Transport-Security header is present in the HTTPS response.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1119
+eval_count: 73
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "exposure", "evidence_status": "confirmed", "preliminary_verdict": "likely_true_positive", "confidence": 0.95, "reason": "The evidence directly confirms the exposure of a metrics endpoint by returning HTTP 200 with metrics data, which aligns with the finding's claim."}
+================================================================================
+
+
+[PASS] evidence_009
+Dataset Category : exposure_confirmed
+Finding Category : exposure
+Expected Category: exposure
+Category Match   : True
+Evidence Status  : confirmed
+Expected Status  : confirmed
+Status Match     : True
+Actual Verdict   : likely_true_positive
+Expected Verdict : likely_true_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence directly confirms the exposure of a metrics endpoint by returning HTTP 200 with metrics data, which aligns with the finding's claim.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1127
+eval_count: 81
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "exposure", "evidence_status": "insufficient", "preliminary_verdict": "needs_review", "confidence": 0.65, "reason": "The evidence indicates the resource exists but lacks confirmation of its sensitive nature. The response body was not captured, making it impossible to verify if the file is indeed a backup or contains sensitive data."}
+================================================================================
+
+
+[PASS] evidence_010
+Dataset Category : exposure_insufficient
+Finding Category : exposure
+Expected Category: exposure
+Category Match   : True
+Evidence Status  : insufficient
+Expected Status  : insufficient
+Status Match     : True
+Actual Verdict   : needs_review
+Expected Verdict : needs_review
+Verdict Match    : True
+Confidence       : 0.65
+Reason           : The evidence indicates the resource exists but lacks confirmation of its sensitive nature. The response body was not captured, making it impossible to verify if the file is indeed a backup or contains sensitive data.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1126
+eval_count: 72
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "exposure", "evidence_status": "contradicted", "preliminary_verdict": "likely_false_positive", "confidence": 0.95, "reason": "The evidence directly contradicts the finding by confirming the URL is a generic 200-status custom error page without an administration interface."}
+================================================================================
+
+
+[PASS] evidence_011
+Dataset Category : exposure_contradicted
+Finding Category : exposure
+Expected Category: exposure
+Category Match   : True
+Evidence Status  : contradicted
+Expected Status  : contradicted
+Status Match     : True
+Actual Verdict   : likely_false_positive
+Expected Verdict : likely_false_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence directly contradicts the finding by confirming the URL is a generic 200-status custom error page without an administration interface.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1125
+eval_count: 94
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "ambiguous_security_signal", "evidence_status": "insufficient", "preliminary_verdict": "needs_review", "confidence": 0.65, "reason": "The finding describes a suspicious response but lacks specific evidence linking it to a known vulnerability, exposure, or misconfiguration. The evidence indicates a change in response status and body, but without additional context or confirmation of malicious intent, the security signal remains ambiguous."}
+================================================================================
+
+
+[PASS] evidence_012
+Dataset Category : ambiguous_insufficient
+Finding Category : ambiguous_security_signal
+Expected Category: ambiguous_security_signal
+Category Match   : True
+Evidence Status  : insufficient
+Expected Status  : insufficient
+Status Match     : True
+Actual Verdict   : needs_review
+Expected Verdict : needs_review
+Verdict Match    : True
+Confidence       : 0.65
+Reason           : The finding describes a suspicious response but lacks specific evidence linking it to a known vulnerability, exposure, or misconfiguration. The evidence indicates a change in response status and body, but without additional context or confirmation of malicious intent, the security signal remains ambiguous.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1112
+eval_count: 89
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "information_observation", "evidence_status": "confirmed", "preliminary_verdict": "informational", "confidence": 0.95, "reason": "The Finding describes the detection of an SSH service and its version via a banner. The Evidence confirms that port 22 returned an SSH banner identifying the implementation and version. This is purely informational and does not indicate a security issue."}
+================================================================================
+
+
+[PASS] evidence_013
+Dataset Category : information_confirmed_version
+Finding Category : information_observation
+Expected Category: information_observation
+Category Match   : True
+Evidence Status  : confirmed
+Expected Status  : confirmed
+Status Match     : True
+Actual Verdict   : informational
+Expected Verdict : informational
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The Finding describes the detection of an SSH service and its version via a banner. The Evidence confirms that port 22 returned an SSH banner identifying the implementation and version. This is purely informational and does not indicate a security issue.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1115
+eval_count: 79
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "exposure", "evidence_status": "confirmed", "preliminary_verdict": "likely_true_positive", "confidence": 0.95, "reason": "The evidence directly supports the exposure finding by showing the debug endpoint returned HTTP 200 and exposed diagnostic information, which aligns with the finding's claim of debug endpoint exposure."}
+================================================================================
+
+
+[PASS] evidence_014
+Dataset Category : exposure_confirmed_debug
+Finding Category : exposure
+Expected Category: exposure
+Category Match   : True
+Evidence Status  : confirmed
+Expected Status  : confirmed
+Status Match     : True
+Actual Verdict   : likely_true_positive
+Expected Verdict : likely_true_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence directly supports the exposure finding by showing the debug endpoint returned HTTP 200 and exposed diagnostic information, which aligns with the finding's claim of debug endpoint exposure.
+
+================================================================================
+OLLAMA TOKEN DEBUG
+================================================================================
+prompt_eval_count: 1118
+eval_count: 69
+================================================================================
+
+
+================================================================================
+EVIDENCE ASSESSMENT RAW RESPONSE
+================================================================================
+{"finding_category": "security_misconfiguration", "evidence_status": "confirmed", "preliminary_verdict": "likely_true_positive", "confidence": 0.95, "reason": "The evidence directly confirms that the session cookie lacks the Secure attribute, which is a known misconfiguration for secure cookie handling."}
+================================================================================
+
+
+[PASS] evidence_015
+Dataset Category : misconfiguration_confirmed_cookie
+Finding Category : security_misconfiguration
+Expected Category: security_misconfiguration
+Category Match   : True
+Evidence Status  : confirmed
+Expected Status  : confirmed
+Status Match     : True
+Actual Verdict   : likely_true_positive
+Expected Verdict : likely_true_positive
+Verdict Match    : True
+Confidence       : 0.95
+Reason           : The evidence directly confirms that the session cookie lacks the Secure attribute, which is a known misconfiguration for secure cookie handling.
+
+======================================================================
+Evidence Assessment Summary
+======================================================================
+Finding Category Accuracy : 14/15 (93.3%)
+Evidence Status Accuracy  : 15/15 (100.0%)
+Verdict Accuracy          : 15/15 (100.0%)
+Full Assessment Accuracy  : 14/15 (93.3%)
+Errors                    : 0
+======================================================================

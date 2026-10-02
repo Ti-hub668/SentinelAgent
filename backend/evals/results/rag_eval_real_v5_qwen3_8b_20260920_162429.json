@@ -1,0 +1,292 @@
+{
+  "summary": {
+    "dataset": "real",
+    "prompt_version": "v5",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "top_k": 3,
+    "total_cases": 6,
+    "no_rag": {
+      "successful_cases": 6,
+      "correct_cases": 6,
+      "schema_success_rate": 100.0,
+      "verdict_accuracy": 100.0,
+      "average_latency_seconds": 43.42,
+      "average_confidence": 0.92
+    },
+    "rag": {
+      "successful_cases": 6,
+      "correct_cases": 6,
+      "schema_success_rate": 100.0,
+      "verdict_accuracy": 100.0,
+      "average_latency_seconds": 65.39,
+      "average_confidence": 0.93
+    },
+    "comparison": {
+      "improved_cases": 0,
+      "regressed_cases": 0,
+      "unchanged_cases": 6
+    },
+    "evaluated_at": "2026-09-20T16:24:29"
+  },
+  "cases": [
+    {
+      "case_id": "real_001",
+      "title": "Public Swagger API - Detect",
+      "expected_verdict": "informational",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_api_docs_001_chunk_0",
+          "title": "Public API Documentation",
+          "category": "information_observation",
+          "score": 0.7262
+        },
+        {
+          "rank": 2,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6565
+        },
+        {
+          "rank": 3,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6379
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 33.84,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 72.06,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "real_002",
+      "title": "HTTP Missing Security Headers",
+      "expected_verdict": "needs_review",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.8159
+        },
+        {
+          "rank": 2,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.745
+        },
+        {
+          "rank": 3,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.5969
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "needs_review",
+        "confidence": 0.75,
+        "correct": true,
+        "latency_seconds": 45.03,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "needs_review",
+        "confidence": 0.85,
+        "correct": true,
+        "latency_seconds": 63.64,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "real_003",
+      "title": "Prometheus Metrics - Detect",
+      "expected_verdict": "likely_true_positive",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_metrics_001_chunk_0",
+          "title": "Prometheus Metrics Exposure",
+          "category": "exposure",
+          "score": 0.7335
+        },
+        {
+          "rank": 2,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.6828
+        },
+        {
+          "rank": 3,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6772
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "likely_true_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 50.34,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "likely_true_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 70.55,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "real_004",
+      "title": "Public Swagger API - Detect",
+      "expected_verdict": "informational",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_api_docs_001_chunk_0",
+          "title": "Public API Documentation",
+          "category": "information_observation",
+          "score": 0.7211
+        },
+        {
+          "rank": 2,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6632
+        },
+        {
+          "rank": 3,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.648
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 40.84,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 58.93,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "real_005",
+      "title": "ReDoc API Docs - Detect",
+      "expected_verdict": "informational",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_api_docs_001_chunk_0",
+          "title": "Public API Documentation",
+          "category": "information_observation",
+          "score": 0.7652
+        },
+        {
+          "rank": 2,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6767
+        },
+        {
+          "rank": 3,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6498
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 47.77,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 62.13,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "real_006",
+      "title": "OpenAPI - Detect",
+      "expected_verdict": "informational",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_api_docs_001_chunk_0",
+          "title": "Public API Documentation",
+          "category": "information_observation",
+          "score": 0.6993
+        },
+        {
+          "rank": 2,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.6522
+        },
+        {
+          "rank": 3,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6423
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 42.72,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 65.02,
+        "error": null
+      },
+      "comparison": "unchanged"
+    }
+  ]
+}

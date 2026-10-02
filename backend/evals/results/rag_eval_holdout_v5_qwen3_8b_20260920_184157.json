@@ -1,0 +1,378 @@
+{
+  "summary": {
+    "dataset": "holdout",
+    "prompt_version": "v5",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "top_k": 3,
+    "total_cases": 8,
+    "no_rag": {
+      "successful_cases": 8,
+      "correct_cases": 8,
+      "schema_success_rate": 100.0,
+      "verdict_accuracy": 100.0,
+      "average_latency_seconds": 43.64,
+      "average_confidence": 0.89
+    },
+    "rag": {
+      "successful_cases": 8,
+      "correct_cases": 8,
+      "schema_success_rate": 100.0,
+      "verdict_accuracy": 100.0,
+      "average_latency_seconds": 54.08,
+      "average_confidence": 0.91
+    },
+    "comparison": {
+      "improved_cases": 0,
+      "regressed_cases": 0,
+      "unchanged_cases": 8
+    },
+    "evaluated_at": "2026-09-20T18:41:57"
+  },
+  "cases": [
+    {
+      "case_id": "holdout_001",
+      "title": "HTTP Server Banner Detection",
+      "expected_verdict": "informational",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.7174
+        },
+        {
+          "rank": 2,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6907
+        },
+        {
+          "rank": 3,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.6334
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 118.19,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 50.37,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "holdout_002",
+      "title": "Missing Content Security Policy Header",
+      "expected_verdict": "likely_true_positive",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.7992
+        },
+        {
+          "rank": 2,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.7867
+        },
+        {
+          "rank": 3,
+          "document_id": "web_api_docs_001_chunk_0",
+          "title": "Public API Documentation",
+          "category": "information_observation",
+          "score": 0.6054
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "likely_true_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 29.84,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "likely_true_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 50.94,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "holdout_003",
+      "title": "Possible SQL Injection Behavior",
+      "expected_verdict": "needs_review",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6816
+        },
+        {
+          "rank": 2,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6286
+        },
+        {
+          "rank": 3,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.6038
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "needs_review",
+        "confidence": 0.75,
+        "correct": true,
+        "latency_seconds": 31.37,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "needs_review",
+        "confidence": 0.75,
+        "correct": true,
+        "latency_seconds": 53.9,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "holdout_004",
+      "title": "Possible Git Repository Exposure",
+      "expected_verdict": "likely_false_positive",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6659
+        },
+        {
+          "rank": 2,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6512
+        },
+        {
+          "rank": 3,
+          "document_id": "web_api_docs_001_chunk_0",
+          "title": "Public API Documentation",
+          "category": "information_observation",
+          "score": 0.6507
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "likely_false_positive",
+        "confidence": 0.85,
+        "correct": true,
+        "latency_seconds": 36.6,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "likely_false_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 57.16,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "holdout_005",
+      "title": "TLS Certificate Information",
+      "expected_verdict": "informational",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6825
+        },
+        {
+          "rank": 2,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.6612
+        },
+        {
+          "rank": 3,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6377
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 32.15,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "informational",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 51.62,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "holdout_006",
+      "title": "Default Credential Authentication Confirmed",
+      "expected_verdict": "likely_true_positive",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.648
+        },
+        {
+          "rank": 2,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6393
+        },
+        {
+          "rank": 3,
+          "document_id": "web_api_docs_001_chunk_0",
+          "title": "Public API Documentation",
+          "category": "information_observation",
+          "score": 0.6216
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "likely_true_positive",
+        "confidence": 0.98,
+        "correct": true,
+        "latency_seconds": 29.37,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "likely_true_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 50.47,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "holdout_007",
+      "title": "Possible Directory Listing",
+      "expected_verdict": "needs_review",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.607
+        },
+        {
+          "rank": 2,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.5958
+        },
+        {
+          "rank": 3,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.5946
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "needs_review",
+        "confidence": 0.75,
+        "correct": true,
+        "latency_seconds": 34.93,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "needs_review",
+        "confidence": 0.85,
+        "correct": true,
+        "latency_seconds": 61.53,
+        "error": null
+      },
+      "comparison": "unchanged"
+    },
+    {
+      "case_id": "holdout_008",
+      "title": "Possible Secret Exposure",
+      "expected_verdict": "likely_false_positive",
+      "retrieval": [
+        {
+          "rank": 1,
+          "document_id": "web_tech_001_chunk_0",
+          "title": "Technology Detection",
+          "category": "information_observation",
+          "score": 0.6673
+        },
+        {
+          "rank": 2,
+          "document_id": "web_headers_001_chunk_0",
+          "title": "Missing HTTP Security Headers",
+          "category": "security_misconfiguration",
+          "score": 0.6614
+        },
+        {
+          "rank": 3,
+          "document_id": "web_csp_001_chunk_0",
+          "title": "Content Security Policy Header",
+          "category": "security_misconfiguration",
+          "score": 0.6299
+        }
+      ],
+      "no_rag": {
+        "actual_verdict": "likely_false_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 36.69,
+        "error": null
+      },
+      "rag": {
+        "actual_verdict": "likely_false_positive",
+        "confidence": 0.95,
+        "correct": true,
+        "latency_seconds": 56.62,
+        "error": null
+      },
+      "comparison": "unchanged"
+    }
+  ]
+}

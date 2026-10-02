@@ -1,0 +1,449 @@
+
+  app\agent\graph.py:85:    Perform deterministic investigation triage.
+  app\agent\graph.py:86:
+  app\agent\graph.py:87:    Triage decides whether additional RAG / intelligence
+> app\agent\graph.py:88:    research is useful before deeper analysis.
+  app\agent\graph.py:89:    """
+  app\agent\graph.py:90:
+  app\agent\graph.py:91:    context = state.get("context")
+  app\agent\graph.py:92:
+  app\agent\graph.py:93:    if context is None:
+  app\agent\graph.py:94:        raise RuntimeError(
+  app\agent\graph.py:95:            "Investigation context is missing."
+  app\agent\graph.py:96:        )
+  app\agent\graph.py:123:        "critical",
+  app\agent\graph.py:124:    }:
+  app\agent\graph.py:125:        signals.append(
+> app\agent\graph.py:126:            "Finding severity warrants additional research."
+  app\agent\graph.py:127:        )
+  app\agent\graph.py:128:
+  app\agent\graph.py:129:    # Deterministic risk signal
+  app\agent\graph.py:130:    if (
+  app\agent\graph.py:131:        context.deterministic_risk.risk_score
+  app\agent\graph.py:132:        is not None
+  app\agent\graph.py:133:        and context.deterministic_risk.risk_score
+  app\agent\graph.py:134:        >= 40
+  app\agent\graph.py:135:    ):
+  app\agent\graph.py:136:        signals.append(
+> app\agent\graph.py:137:            "Deterministic risk score warrants research."
+  app\agent\graph.py:138:        )
+  app\agent\graph.py:139:
+> app\agent\graph.py:140:    needs_research = bool(signals)
+  app\agent\graph.py:141:
+> app\agent\graph.py:142:    if needs_research:
+  app\agent\graph.py:143:        triage_reason = " ".join(signals)
+  app\agent\graph.py:144:
+  app\agent\graph.py:145:    else:
+  app\agent\graph.py:146:        triage_reason = (
+  app\agent\graph.py:147:            "No explicit vulnerability identifier, scanner "
+  app\agent\graph.py:148:            "template, elevated severity, or elevated risk "
+> app\agent\graph.py:149:            "signal requires additional research."
+  app\agent\graph.py:150:        )
+  app\agent\graph.py:151:
+  app\agent\graph.py:152:    return {
+> app\agent\graph.py:153:        "needs_research": needs_research,
+  app\agent\graph.py:154:        "triage_reason": triage_reason,
+  app\agent\graph.py:155:        "status": "triage_completed",
+  app\agent\graph.py:156:        "error": None,
+  app\agent\graph.py:157:    }
+  app\agent\graph.py:158:
+> app\agent\graph.py:159:def research_node(
+  app\agent\graph.py:160:    state: SentinelInvestigationState,
+  app\agent\graph.py:161:) -> dict:
+  app\agent\graph.py:162:    """
+> app\agent\graph.py:163:    Run SentinelAgent typed security research tools.
+  app\agent\graph.py:164:
+> app\agent\graph.py:165:    Research enriches the investigation context with:
+  app\agent\graph.py:166:    1. RAG security knowledge
+  app\agent\graph.py:167:    2. Structured vulnerability intelligence
+  app\agent\graph.py:168:    """
+  app\agent\graph.py:169:
+  app\agent\graph.py:170:    context = state.get("context")
+  app\agent\graph.py:171:
+  app\agent\graph.py:172:    if context is None:
+  app\agent\graph.py:173:        raise RuntimeError(
+  app\agent\graph.py:188:    return {
+  app\agent\graph.py:189:        "rag_result": rag_result,
+  app\agent\graph.py:190:        "intelligence_result": intelligence_result,
+> app\agent\graph.py:191:        "status": "research_completed",
+  app\agent\graph.py:192:        "error": None,
+  app\agent\graph.py:193:    }
+  app\agent\graph.py:194:
+  app\agent\graph.py:195:
+  app\agent\graph.py:196:def analyze_node(
+  app\agent\graph.py:197:    state: SentinelInvestigationState,
+  app\agent\graph.py:198:) -> dict:
+  app\agent\graph.py:199:    """
+  app\agent\graph.py:248:        "intelligence_result"
+  app\agent\graph.py:249:    )
+  app\agent\graph.py:250:
+> app\agent\graph.py:251:    rag_context = None
+  app\agent\graph.py:252:
+  app\agent\graph.py:253:    if rag_result is not None:
+> app\agent\graph.py:254:        rag_context = rag_result.prompt_context
+  app\agent\graph.py:255:
+> app\agent\graph.py:256:    structured_intelligence = None
+  app\agent\graph.py:257:
+  app\agent\graph.py:258:    if intelligence_result is not None:
+> app\agent\graph.py:259:        structured_intelligence = (
+  app\agent\graph.py:260:            intelligence_result.model_dump_json(
+  app\agent\graph.py:261:                indent=2
+  app\agent\graph.py:262:            )
+  app\agent\graph.py:263:        )
+  app\agent\graph.py:264:
+  app\agent\graph.py:265:    (
+  app\agent\graph.py:266:        evidence_result,
+  app\agent\graph.py:267:        enrichment_result,
+  app\agent\graph.py:268:    ) = analyze_finding_two_stage(
+  app\agent\graph.py:269:        analysis_input,
+> app\agent\graph.py:270:        structured_intelligence=(
+> app\agent\graph.py:271:            structured_intelligence
+  app\agent\graph.py:272:        ),
+> app\agent\graph.py:273:        rag_context=rag_context,
+  app\agent\graph.py:274:    )
+  app\agent\graph.py:275:
+  app\agent\graph.py:276:    return {
+  app\agent\graph.py:277:        "evidence_assessment": evidence_result,
+  app\agent\graph.py:278:        "risk_enrichment": enrichment_result,
+  app\agent\graph.py:279:        "status": "analysis_completed",
+  app\agent\graph.py:280:        "error": None,
+  app\agent\graph.py:281:    }
+  app\agent\graph.py:301:def route_after_triage(
+  app\agent\graph.py:302:    state: SentinelInvestigationState,
+  app\agent\graph.py:303:) -> Literal[
+> app\agent\graph.py:304:    "research",
+  app\agent\graph.py:305:    "analyze",
+  app\agent\graph.py:306:]:
+  app\agent\graph.py:307:    """
+  app\agent\graph.py:308:    Route after deterministic triage.
+  app\agent\graph.py:309:
+> app\agent\graph.py:310:    Research is optional, but every Finding must still
+  app\agent\graph.py:311:    enter the two-stage analysis pipeline.
+  app\agent\graph.py:312:    """
+  app\agent\graph.py:313:
+  app\agent\graph.py:314:    if state.get(
+> app\agent\graph.py:315:        "needs_research",
+  app\agent\graph.py:316:        False,
+  app\agent\graph.py:317:    ):
+> app\agent\graph.py:318:        return "research"
+  app\agent\graph.py:319:
+  app\agent\graph.py:320:    return "analyze"
+  app\agent\graph.py:321:
+  app\agent\graph.py:322:def route_after_node(
+  app\agent\graph.py:323:    state: SentinelInvestigationState,
+  app\agent\graph.py:324:) -> Literal[
+  app\agent\graph.py:325:    "continue",
+  app\agent\graph.py:326:    "end",
+  app\agent\graph.py:360:    )
+  app\agent\graph.py:361:
+  app\agent\graph.py:362:    builder.add_node(
+> app\agent\graph.py:363:        "research",
+  app\agent\graph.py:364:        safe_node(
+> app\agent\graph.py:365:            "research",
+> app\agent\graph.py:366:            research_node,
+  app\agent\graph.py:367:        ),
+  app\agent\graph.py:368:    )
+  app\agent\graph.py:369:
+  app\agent\graph.py:370:    builder.add_node(
+  app\agent\graph.py:371:        "analyze",
+  app\agent\graph.py:372:        safe_node(
+  app\agent\graph.py:373:            "analyze",
+  app\agent\graph.py:374:            analyze_node,
+  app\agent\graph.py:401:        "triage",
+  app\agent\graph.py:402:        route_after_triage,
+  app\agent\graph.py:403:        {
+> app\agent\graph.py:404:            "research": "research",
+  app\agent\graph.py:405:            "analyze": "analyze",
+  app\agent\graph.py:406:        },
+  app\agent\graph.py:407:    )
+  app\agent\graph.py:408:
+  app\agent\graph.py:409:    builder.add_conditional_edges(
+> app\agent\graph.py:410:        "research",
+  app\agent\graph.py:411:        route_after_node,
+  app\agent\graph.py:412:        {
+  app\agent\graph.py:413:            "continue": "analyze",
+  app\agent\graph.py:414:            "end": END,
+  app\agent\graph.py:415:        },
+  app\agent\graph.py:416:    )
+  app\agent\graph.py:417:
+  app\agent\graph.py:418:    builder.add_conditional_edges(
+  app\agent\investigation_runner.py:4:from app.agent.ledger import (
+  app\agent\investigation_runner.py:5:    complete_investigation_run,
+  app\agent\investigation_runner.py:6:    fail_investigation_run,
+> app\agent\investigation_runner.py:7:    record_investigation_event,
+  app\agent\investigation_runner.py:8:    start_investigation_run,
+  app\agent\investigation_runner.py:9:)
+  app\agent\investigation_runner.py:10:from app.agent.state import SentinelInvestigationState
+  app\agent\investigation_runner.py:11:from app.schemas.investigation_ledger import (
+  app\agent\investigation_runner.py:12:    InvestigationRunRecord,
+  app\agent\investigation_runner.py:13:)
+  app\agent\investigation_runner.py:14:
+  app\agent\investigation_runner.py:15:
+  app\agent\investigation_runner.py:42:        context = result.get("context")
+  app\agent\investigation_runner.py:43:
+  app\agent\investigation_runner.py:44:        if context is not None:
+> app\agent\investigation_runner.py:45:            record_investigation_event(
+  app\agent\investigation_runner.py:46:                db,
+  app\agent\investigation_runner.py:47:                run_id=run.id,
+  app\agent\investigation_runner.py:48:                event_type="context_built",
+  app\agent\investigation_runner.py:49:                node_name="build_context",
+  app\agent\investigation_runner.py:50:                summary=(
+  app\agent\investigation_runner.py:51:                    "Investigation context "
+  app\agent\investigation_runner.py:52:                    "successfully built."
+  app\agent\investigation_runner.py:53:                ),
+  app\agent\investigation_runner.py:68:                },
+  app\agent\investigation_runner.py:69:            )
+  app\agent\investigation_runner.py:70:        # Triage
+> app\agent\investigation_runner.py:71:        if "needs_research" in result:
+> app\agent\investigation_runner.py:72:            record_investigation_event(
+  app\agent\investigation_runner.py:73:                db,
+  app\agent\investigation_runner.py:74:                run_id=run.id,
+  app\agent\investigation_runner.py:75:                event_type="triage_completed",
+  app\agent\investigation_runner.py:76:                node_name="triage",
+  app\agent\investigation_runner.py:77:                summary=(
+  app\agent\investigation_runner.py:78:                    "Investigation triage "
+  app\agent\investigation_runner.py:79:                    "completed."
+  app\agent\investigation_runner.py:80:                ),
+  app\agent\investigation_runner.py:81:                event_metadata={
+> app\agent\investigation_runner.py:82:                    "needs_research": result.get(
+> app\agent\investigation_runner.py:83:                        "needs_research"
+  app\agent\investigation_runner.py:84:                    ),
+  app\agent\investigation_runner.py:85:                    "triage_reason": result.get(
+  app\agent\investigation_runner.py:86:                        "triage_reason"
+  app\agent\investigation_runner.py:87:                    ),
+  app\agent\investigation_runner.py:88:                },
+  app\agent\investigation_runner.py:89:            )
+  app\agent\investigation_runner.py:90:
+> app\agent\investigation_runner.py:91:        # Research
+  app\agent\investigation_runner.py:92:        rag_result = result.get(
+  app\agent\investigation_runner.py:93:            "rag_result"
+  app\agent\investigation_runner.py:94:        )
+  app\agent\investigation_runner.py:95:        intelligence_result = result.get(
+  app\agent\investigation_runner.py:96:            "intelligence_result"
+  app\agent\investigation_runner.py:97:        )
+  app\agent\investigation_runner.py:98:
+  app\agent\investigation_runner.py:99:        if (
+  app\agent\investigation_runner.py:100:            rag_result is not None
+  app\agent\investigation_runner.py:101:            or intelligence_result is not None
+  app\agent\investigation_runner.py:102:        ):
+> app\agent\investigation_runner.py:103:            record_investigation_event(
+  app\agent\investigation_runner.py:104:                db,
+  app\agent\investigation_runner.py:105:                run_id=run.id,
+> app\agent\investigation_runner.py:106:                event_type="research_completed",
+> app\agent\investigation_runner.py:107:                node_name="research",
+  app\agent\investigation_runner.py:108:                summary=(
+> app\agent\investigation_runner.py:109:                    "Security research tools "
+  app\agent\investigation_runner.py:110:                    "completed."
+  app\agent\investigation_runner.py:111:                ),
+  app\agent\investigation_runner.py:112:                event_metadata={
+  app\agent\investigation_runner.py:113:                    "rag_used": (
+  app\agent\investigation_runner.py:114:                        rag_result is not None
+  app\agent\investigation_runner.py:115:                    ),
+  app\agent\investigation_runner.py:116:                    "intelligence_used": (
+  app\agent\investigation_runner.py:117:                        intelligence_result
+  app\agent\investigation_runner.py:126:        )
+  app\agent\investigation_runner.py:127:
+  app\agent\investigation_runner.py:128:        if evidence is not None:
+> app\agent\investigation_runner.py:129:            record_investigation_event(
+  app\agent\investigation_runner.py:130:                db,
+  app\agent\investigation_runner.py:131:                run_id=run.id,
+  app\agent\investigation_runner.py:132:                event_type="evidence_assessed",
+  app\agent\investigation_runner.py:133:                node_name="analyze",
+  app\agent\investigation_runner.py:134:                summary=(
+  app\agent\investigation_runner.py:135:                    "Finding evidence "
+  app\agent\investigation_runner.py:136:                    "assessment completed."
+  app\agent\investigation_runner.py:137:                ),
+  app\agent\investigation_runner.py:154:        )
+  app\agent\investigation_runner.py:155:
+  app\agent\investigation_runner.py:156:        if enrichment is not None:
+> app\agent\investigation_runner.py:157:            record_investigation_event(
+  app\agent\investigation_runner.py:158:                db,
+  app\agent\investigation_runner.py:159:                run_id=run.id,
+  app\agent\investigation_runner.py:160:                event_type="risk_enriched",
+  app\agent\investigation_runner.py:161:                node_name="analyze",
+  app\agent\investigation_runner.py:162:                summary=(
+  app\agent\investigation_runner.py:163:                    "Risk synthesis completed."
+  app\agent\investigation_runner.py:164:                ),
+  app\agent\investigation_runner.py:165:                event_metadata={
+  app\agent\investigation_runner.py:181:        )
+  app\agent\investigation_runner.py:182:
+  app\agent\investigation_runner.py:183:        if grounding is not None:
+> app\agent\investigation_runner.py:184:            record_investigation_event(
+  app\agent\investigation_runner.py:185:                db,
+  app\agent\investigation_runner.py:186:                run_id=run.id,
+  app\agent\investigation_runner.py:187:                event_type="grounding_validated",
+  app\agent\investigation_runner.py:188:                node_name="grounding",
+  app\agent\investigation_runner.py:189:                summary=(
+  app\agent\investigation_runner.py:190:                    "Final analysis passed "
+  app\agent\investigation_runner.py:191:                    "through grounding validation."
+  app\agent\investigation_runner.py:192:                ),
+  app\agent\investigation_runner.py:216:                or "Unknown investigation failure."
+  app\agent\investigation_runner.py:217:            )
+  app\agent\investigation_runner.py:218:
+> app\agent\investigation_runner.py:219:            record_investigation_event(
+  app\agent\investigation_runner.py:220:                db,
+  app\agent\investigation_runner.py:221:                run_id=run.id,
+  app\agent\investigation_runner.py:222:                event_type="investigation_failed",
+  app\agent\investigation_runner.py:223:                node_name=result.get(
+  app\agent\investigation_runner.py:224:                    "failed_node"
+  app\agent\investigation_runner.py:225:                ),
+  app\agent\investigation_runner.py:226:                status="failed",
+  app\agent\investigation_runner.py:227:                summary=error_message,
+  app\agent\investigation_runner.py:262:        )
+  app\agent\investigation_runner.py:263:
+  app\agent\investigation_runner.py:264:        try:
+> app\agent\investigation_runner.py:265:            record_investigation_event(
+  app\agent\investigation_runner.py:266:                db,
+  app\agent\investigation_runner.py:267:                run_id=run.id,
+  app\agent\investigation_runner.py:268:                event_type="investigation_failed",
+  app\agent\investigation_runner.py:269:                node_name="runner",
+  app\agent\investigation_runner.py:270:                status="failed",
+  app\agent\investigation_runner.py:271:                summary=error_message,
+  app\agent\investigation_runner.py:272:            )
+  app\agent\investigation_runner.py:273:
+  app\agent\ledger.py:40:    )
+  app\agent\ledger.py:41:
+  app\agent\ledger.py:42:
+> app\agent\ledger.py:43:def record_investigation_event(
+  app\agent\ledger.py:44:    db: Session,
+  app\agent\ledger.py:45:    *,
+  app\agent\ledger.py:46:    run_id: int,
+  app\agent\ledger.py:47:    event_type: str,
+  app\agent\ledger.py:48:    node_name: str | None = None,
+  app\agent\ledger.py:49:    status: str = "completed",
+  app\agent\ledger.py:50:    summary: str | None = None,
+  app\agent\ledger.py:51:    event_metadata: dict[str, Any] | None = None,
+  app\agent\response_runner.py:5:    reject_request,
+  app\agent\response_runner.py:6:)
+  app\agent\response_runner.py:7:from app.agent.ledger import (
+> app\agent\response_runner.py:8:    record_investigation_event,
+  app\agent\response_runner.py:9:)
+  app\agent\response_runner.py:10:from app.agent.policy_engine import (
+  app\agent\response_runner.py:11:    build_approval_requests,
+  app\agent\response_runner.py:12:    evaluate_response_plan,
+  app\agent\response_runner.py:13:)
+  app\agent\response_runner.py:14:from app.agent.response_agent import (
+  app\agent\response_runner.py:15:    generate_response_plan,
+  app\agent\response_runner.py:16:)
+  app\agent\response_runner.py:67:            "Response Agent produced a non-dry-run plan."
+  app\agent\response_runner.py:68:        )
+  app\agent\response_runner.py:69:
+> app\agent\response_runner.py:70:    record_investigation_event(
+  app\agent\response_runner.py:71:        db,
+  app\agent\response_runner.py:72:        run_id=run_id,
+  app\agent\response_runner.py:73:        event_type="response_planned",
+  app\agent\response_runner.py:74:        node_name="response_agent",
+  app\agent\response_runner.py:75:        status="completed",
+  app\agent\response_runner.py:76:        summary=(
+  app\agent\response_runner.py:77:            f"Generated dry-run response plan with "
+  app\agent\response_runner.py:78:            f"{len(plan.tool_requests)} tool request(s)."
+  app\agent\response_runner.py:107:        plan
+  app\agent\response_runner.py:108:    )
+  app\agent\response_runner.py:109:
+> app\agent\response_runner.py:110:    record_investigation_event(
+  app\agent\response_runner.py:111:        db,
+  app\agent\response_runner.py:112:        run_id=run_id,
+  app\agent\response_runner.py:113:        event_type="policy_evaluated",
+  app\agent\response_runner.py:114:        node_name="policy_engine",
+  app\agent\response_runner.py:115:        status="completed",
+  app\agent\response_runner.py:116:        summary=(
+  app\agent\response_runner.py:117:            "Policy Engine evaluated "
+  app\agent\response_runner.py:118:            f"{len(evaluation.results)} request(s): "
+  app\agent\response_runner.py:147:    )
+  app\agent\response_runner.py:148:
+  app\agent\response_runner.py:149:    for approval in approvals:
+> app\agent\response_runner.py:150:        record_investigation_event(
+  app\agent\response_runner.py:151:            db,
+  app\agent\response_runner.py:152:            run_id=run_id,
+  app\agent\response_runner.py:153:            event_type="approval_requested",
+  app\agent\response_runner.py:154:            node_name="human_approval",
+  app\agent\response_runner.py:155:            status="completed",
+  app\agent\response_runner.py:156:            summary=(
+  app\agent\response_runner.py:157:                "Human approval requested for "
+  app\agent\response_runner.py:158:                f"{approval.tool_request.tool_name}."
+  app\agent\response_runner.py:209:            reason=reason,
+  app\agent\response_runner.py:210:        )
+  app\agent\response_runner.py:211:
+> app\agent\response_runner.py:212:    record_investigation_event(
+  app\agent\response_runner.py:213:        db,
+  app\agent\response_runner.py:214:        run_id=run_id,
+  app\agent\response_runner.py:215:        event_type="approval_resolved",
+  app\agent\response_runner.py:216:        node_name="human_approval",
+  app\agent\response_runner.py:217:        status="completed",
+  app\agent\response_runner.py:218:        summary=(
+  app\agent\response_runner.py:219:            f"Human approval for "
+  app\agent\response_runner.py:220:            f"{resolved.tool_request.tool_name} "
+  app\agent\state.py:28:    context: NotRequired[SentinelContextBundle]
+  app\agent\state.py:29:
+  app\agent\state.py:30:    # Triage
+> app\agent\state.py:31:    needs_research: NotRequired[bool]
+  app\agent\state.py:32:    triage_reason: NotRequired[str]
+  app\agent\state.py:33:
+> app\agent\state.py:34:    # Research
+  app\agent\state.py:35:    rag_result: NotRequired[RAGToolResult]
+  app\agent\state.py:36:
+  app\agent\state.py:37:    intelligence_result: NotRequired[
+  app\agent\state.py:38:        VulnerabilityIntelligenceResult
+  app\agent\state.py:39:    ]
+  app\agent\state.py:40:
+  app\agent\state.py:41:    # Two-stage AI analysis
+  app\agent\state.py:42:    evidence_assessment: NotRequired[
+  app\agent\tool_broker.py:7:    simulate_notify,
+  app\agent\tool_broker.py:8:)
+  app\agent\tool_broker.py:9:from app.agent.ledger import (
+> app\agent\tool_broker.py:10:    record_investigation_event,
+  app\agent\tool_broker.py:11:)
+  app\agent\tool_broker.py:12:from app.schemas.policy import (
+  app\agent\tool_broker.py:13:    HumanApprovalRequest,
+  app\agent\tool_broker.py:14:    PolicyEvaluationResult,
+  app\agent\tool_broker.py:15:    ToolPolicyResult,
+  app\agent\tool_broker.py:16:)
+  app\agent\tool_broker.py:17:from app.schemas.tool_broker import (
+  app\agent\tool_broker.py:18:    ToolBrokerBatchResult,
+  app\agent\tool_broker.py:307:                "tool_execution_failed"
+  app\agent\tool_broker.py:308:            )
+  app\agent\tool_broker.py:309:
+> app\agent\tool_broker.py:310:        record_investigation_event(
+  app\agent\tool_broker.py:311:            db,
+  app\agent\tool_broker.py:312:            run_id=run_id,
+  app\agent\tool_broker.py:313:            event_type=event_type,
+  app\agent\tool_broker.py:314:            node_name="tool_broker",
+  app\agent\tool_broker.py:315:            status=(
+  app\agent\tool_broker.py:316:                "failed"
+  app\agent\tool_broker.py:317:                if result.status == "failed"
+  app\agent\tool_broker.py:318:                else "completed"
+  app\agent\tools\rag_tool.py:1:from app.models.finding import Finding
+> app\agent\tools\rag_tool.py:2:from app.rag.context_builder import build_rag_context
+  app\agent\tools\rag_tool.py:3:from app.rag.query_builder import build_finding_query
+  app\agent\tools\rag_tool.py:4:from app.rag.retriever import SecurityKnowledgeRetriever
+  app\agent\tools\rag_tool.py:5:from app.schemas.agent_tools import (
+  app\agent\tools\rag_tool.py:6:    RAGToolResult,
+  app\agent\tools\rag_tool.py:7:    SecurityKnowledgeItem,
+  app\agent\tools\rag_tool.py:8:)
+  app\agent\tools\rag_tool.py:9:from app.schemas.investigation_context import SentinelContextBundle
+  app\agent\tools\rag_tool.py:10:
+  app\agent\tools\rag_tool.py:35:        top_k=top_k,
+  app\agent\tools\rag_tool.py:36:    )
+  app\agent\tools\rag_tool.py:37:
+> app\agent\tools\rag_tool.py:38:    prompt_context = build_rag_context(
+  app\agent\tools\rag_tool.py:39:        results
+  app\agent\tools\rag_tool.py:40:    )
+  app\agent\tools\rag_tool.py:41:
+  app\agent\tools\rag_tool.py:42:    items = [
+  app\agent\tools\rag_tool.py:43:        SecurityKnowledgeItem(
+  app\agent\tools\rag_tool.py:44:            document_id=result.document.id,
+  app\agent\tools\rag_tool.py:45:            title=result.document.title,
+  app\agent\tools\rag_tool.py:46:            source=result.document.source,
+  app\agent\tools\rag_tool.py:88:        top_k=top_k,
+  app\agent\tools\rag_tool.py:89:    )
+  app\agent\tools\rag_tool.py:90:
+> app\agent\tools\rag_tool.py:91:    prompt_context = build_rag_context(
+  app\agent\tools\rag_tool.py:92:        results
+  app\agent\tools\rag_tool.py:93:    )
+  app\agent\tools\rag_tool.py:94:
+  app\agent\tools\rag_tool.py:95:    items = [
+  app\agent\tools\rag_tool.py:96:        SecurityKnowledgeItem(
+  app\agent\tools\rag_tool.py:97:            document_id=result.document.id,
+  app\agent\tools\rag_tool.py:98:            title=result.document.title,
+  app\agent\tools\rag_tool.py:99:            source=result.document.source,
+

@@ -20,8 +20,20 @@ class ExecutionClaim(Base):
     request_index: Mapped[int] = mapped_column(Integer, nullable=False)
     idempotency_key: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     request_fingerprint: Mapped[str] = mapped_column(String(80), nullable=False)
-    execution_id: Mapped[str] = mapped_column(String(40), nullable=False)
-    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    execution_id: Mapped[str] = mapped_column(
+    String(40),
+    nullable=False,
+    )
+
+    tool_name: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
     attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     owner_token: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

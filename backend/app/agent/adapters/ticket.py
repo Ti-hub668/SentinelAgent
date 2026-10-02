@@ -16,7 +16,9 @@ from app.core.tool_settings import (
     GitHubTicketSettings,
     get_github_ticket_settings,
 )
-
+from app.schemas.reconciliation import (
+    ToolReconciliationResult,
+)
 
 class TicketAdapter(ToolAdapter):
     @property
@@ -65,6 +67,82 @@ class TicketAdapter(ToolAdapter):
                 execution_context
             ),
             settings=settings,
+        )
+
+    def reconcile(
+        self,
+        *,
+        execution_context: ToolExecutionContext,
+    ) -> ToolReconciliationResult:
+        settings = (
+            get_github_ticket_settings()
+        )
+
+        if not settings.configured:
+            raise ToolAdapterConfigurationError(
+                "GitHub ticket integration "
+                "is not configured or enabled."
+            )
+
+        if not execution_context.execution_id:
+            raise ToolAdapterConfigurationError(
+                "Ticket reconciliation requires "
+                "an execution ID."
+            )
+
+        execution_id = (
+            execution_context.execution_id
+        )
+
+        client = GitHubIssueClient(
+            settings
+        )
+
+        issue = (
+            client.find_by_execution_id(
+                execution_id
+            )
+        )
+
+        if issue is None:
+            return ToolReconciliationResult(
+                state="not_found",
+                message=(
+                    "No matching external GitHub "
+                    "issue was confirmed."
+                ),
+                output={
+                    "provider":
+                        "github_issues",
+                    "execution_id":
+                        execution_id,
+                },
+            )
+
+        return ToolReconciliationResult(
+            state="confirmed_completed",
+            message=(
+                "Existing GitHub issue confirmed "
+                "for the execution ID."
+            ),
+            output={
+                "provider":
+                    "github_issues",
+                "mode":
+                    "real",
+                "ticket_created":
+                    False,
+                "reused_existing":
+                    True,
+                "ticket_number":
+                    issue.number,
+                "ticket_url":
+                    issue.html_url,
+                "execution_id":
+                    execution_id,
+                "reconciled":
+                    True,
+            },
         )
 
     def _execute_github(

@@ -362,9 +362,23 @@ def execute_policy_result(
             )
         if claim.state != "acquired":
             messages = {
-                "conflict": "Execution-slot fingerprint conflict; request blocked.",
-                "in_progress": "Execution claim in_progress; retry cannot invoke adapter.",
-                "retry_exhausted": "Execution retry budget exhausted; operator review required.",
+                "conflict": (
+                    "Execution-slot fingerprint conflict; "
+                    "request blocked."
+                ),
+                "in_progress": (
+                    "Execution claim in_progress; retry "
+                    "cannot invoke adapter."
+                ),
+                "reconciliation_required": (
+                    "Execution claim is stale and "
+                    "requires external reconciliation "
+                    "before any further execution."
+                ),
+                "retry_exhausted": (
+                    "Execution retry budget exhausted; "
+                    "operator review required."
+                ),
             }
             return ToolExecutionResult(**common, executed=False, status="blocked",
                                        message=messages[claim.state], output={})

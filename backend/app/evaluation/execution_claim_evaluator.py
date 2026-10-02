@@ -862,22 +862,31 @@ def test_claimed_conflict_and_no_timeout_takeover(
                 )
             )
 
-            claim.updated_at = (
-                datetime(
-                    2000,
-                    1,
-                    1,
-                )
+            claim.updated_at = datetime(
+                2000,
+                1,
+                1,
             )
-
             db.commit()
 
+        stale = invoke(
+            engine,
+            run_id,
+        )
+        print(
+            "STALE RESULT:",
+            stale.status,
+            stale.message,
+        )
+
         assert (
-            "in_progress"
-            in invoke(
-                engine,
-                run_id,
-            ).message
+            stale.status
+            == "blocked"
+        )
+
+        assert (
+            "reconciliation"
+            in stale.message.lower()
         )
 
         conflict = invoke(

@@ -27,10 +27,16 @@ from app.agent.orchestrator import (
     get_workflow_summary,
     resolve_workflow_approval,
 )
+from app.agent.reconciliation_service import (
+    reconcile_run,
+)
 from app.db.database import get_db
 from app.models.ai_analysis import AIAnalysis
 from app.models.agent_decision import AgentDecision
 from app.models.finding import Finding
+from app.models.investigation_run import (
+    InvestigationRun,
+)
 from app.schemas.agent_decision import (
     AgentDecisionInput,
     AgentDecisionOutput,
@@ -46,6 +52,9 @@ from app.schemas.investigation_ledger import (
 )
 from app.schemas.tool_broker import (
     ToolBrokerBatchResult,
+)
+from app.schemas.reconciliation import (
+    ReconciliationRunSummary,
 )
 
 router = APIRouter(
@@ -371,6 +380,39 @@ def reject_agent_workflow_action(
             detail=str(exc),
         ) from exc
 
+@router.post(
+    "/runs/{run_id}/reconcile",
+    response_model=ReconciliationRunSummary,
+)
+def reconcile_investigation_executions(
+    run_id: int,
+    db: Session = Depends(get_db),
+):
+    run = db.get(
+        InvestigationRun,
+        run_id,
+    )
+
+    if run is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Investigation run not found."
+            ),
+        )
+
+    summary = reconcile_run(
+        db,
+        run_id=run_id,
+    )
+
+    return ReconciliationRunSummary(
+        run_id=summary.run_id,
+        checked=summary.checked,
+        confirmed=summary.confirmed,
+        unresolved=summary.unresolved,
+        failed=summary.failed,
+    )
 
 @router.post(
     "/runs/{run_id}/execute",
