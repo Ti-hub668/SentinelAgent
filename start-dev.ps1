@@ -45,6 +45,11 @@ if (-not (Test-Path (Join-Path $frontend "node_modules"))) {
     exit 1
 }
 
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Host "[ERROR] npm not found. Install Node.js and reopen PowerShell." -ForegroundColor Red
+    exit 1
+}
+
 # -----------------------------
 # Helper
 # -----------------------------
@@ -106,6 +111,7 @@ Write-Host ''
 
     Start-Process `
         powershell.exe `
+        -WindowStyle Hidden `
         -ArgumentList "-NoExit", "-Command", $backendCommand
 }
 
@@ -129,6 +135,7 @@ npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 
     Start-Process `
         powershell.exe `
+        -WindowStyle Hidden `
         -ArgumentList "-NoExit", "-Command", $frontendCommand
 }
 

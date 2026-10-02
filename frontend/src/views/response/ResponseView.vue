@@ -1956,6 +1956,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .tool-title strong {
@@ -1995,6 +1997,8 @@ onMounted(async () => {
   font-size: 9px;
   line-height: 1.55;
   background: #182332;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .policy-counts,
@@ -2094,6 +2098,8 @@ onMounted(async () => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .approval-head strong {
@@ -2319,4 +2325,11 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 }
+
+.run-loader, .finding-banner, .main-column > .panel, .side-column > .panel { padding: 20px; min-width: 0; }
+.main-column, .side-column, .run-search, .safety-notice div { min-width: 0; }
+.main-column .panel-heading, .side-column .panel-heading { padding: 0; }
+.finding-banner { flex-wrap: wrap; }
+.finding-banner > div { flex: 1 1 250px; min-width: 0; }
+.finding-banner h3 { overflow-wrap: anywhere; }
 </style>

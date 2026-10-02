@@ -86,17 +86,6 @@ const currentLanguage = computed({
         </el-select>
       </div>
     </el-card>
-
-    <el-card
-      class="settings-card"
-      shadow="never"
-    >
-      <el-empty
-        :description="
-          t('settings.futureSettings')
-        "
-      />
-    </el-card>
   </section>
 </template>
 

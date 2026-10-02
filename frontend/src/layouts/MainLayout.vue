@@ -168,10 +168,6 @@ onUnmounted(() => {
             class="nav-caption"
           >
             {{ group.label }}
-
-            <span>
-              {{ group.english }}
-            </span>
           </div>
 
           <router-link
@@ -225,7 +221,7 @@ onUnmounted(() => {
           </strong>
 
             <small>
-              SentinelAgent v0.1.0
+              SentinelAgent v1.0-demo
             </small>
           </div>
         </div>
@@ -642,7 +638,7 @@ onUnmounted(() => {
 
   gap: 18px;
 
-  padding: 0 24px;
+  padding: 12px 24px;
 
   background:
     rgba(
@@ -655,6 +651,8 @@ onUnmounted(() => {
   border-bottom: 1px solid #e8edf3;
 
   backdrop-filter: blur(8px);
+
+  flex-wrap: wrap;
 }
 
 .topbar-left,
@@ -665,6 +663,8 @@ onUnmounted(() => {
 
 .topbar-left {
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .topbar-left strong {
@@ -776,7 +776,7 @@ onUnmounted(() => {
 
   gap: 20px;
 
-  padding: 0 24px;
+  padding: 12px 24px;
 
   color: #a0a8b5;
 
@@ -785,6 +785,8 @@ onUnmounted(() => {
   background: #ffffff;
 
   font-size: 10px;
+
+  flex-wrap: wrap;
 }
 
 .sidebar-collapsed .brand {
@@ -815,4 +817,8 @@ onUnmounted(() => {
     display: none;
   }
 }
+
+.nav-caption { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.nav-item > span { min-width: 0; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.topbar-left strong { min-width: 0; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 </style>

@@ -709,7 +709,7 @@ onBeforeUnmount(() => {
     <div class="severity-grid">
       <section
         v-for="item in severity"
-        {{ t(item.shortKey) }}
+        :key="item.key"
         class="severity-card panel"
         :style="{
           '--severity': item.color,

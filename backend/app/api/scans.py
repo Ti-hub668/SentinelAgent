@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -11,7 +11,7 @@ from app.models.port import Port
 from app.models.scan_task import ScanTask
 from app.models.vulnerability import Vulnerability
 from app.models.finding import Finding
-from app.schemas.scan import ScanCreate, ScanResponse
+from app.schemas.scan import DiscoveryResponse, ScanCreate, ScanResponse
 from app.scanners.nmap_scanner import run_nmap
 from app.scanners.nuclei_scanner import run_nuclei
 from app.scanners.web_discovery import build_web_targets
@@ -204,10 +204,6 @@ def create_scan(
 
 
 @router.get(
-    "/{scan_id}",
-    response_model=ScanResponse
-)
-@router.get(
     "",
     response_model=list[ScanResponse],
 )
@@ -248,6 +244,40 @@ def get_scans(
 
     return response
 
+
+@router.get("/discovery", response_model=list[DiscoveryResponse])
+def get_discovery(db: Session = Depends(get_db)):
+    """Read persisted discoveries; retain the latest observation per asset endpoint."""
+    discovered_at = func.coalesce(
+        ScanTask.finished_at, ScanTask.started_at, ScanTask.created_at
+    )
+    rows = db.execute(
+        select(Port, ScanTask)
+        .join(ScanTask, Port.scan_task_id == ScanTask.id)
+        .order_by(discovered_at.desc(), ScanTask.id.desc(), Port.id.desc())
+    )
+    seen = set()
+    inventory = []
+    for port, scan in rows:
+        key = (scan.asset_id, port.host, port.protocol, port.port)
+        if key in seen:
+            continue
+        seen.add(key)
+        observation = {
+            "host": port.host, "protocol": port.protocol, "port": port.port,
+            "service": port.service, "product": port.product, "version": port.version,
+        }
+        targets = build_web_targets([observation])
+        inventory.append({
+            **observation, "port_id": port.id, "scan_task_id": scan.id,
+            "asset_id": scan.asset_id, "web_target": targets[0] if targets else None,
+            "scan_status": scan.status,
+            "discovered_at": scan.finished_at or scan.started_at or scan.created_at,
+        })
+    return inventory
+
+
+@router.get("/{scan_id}", response_model=ScanResponse)
 def get_scan(
     scan_id: int,
     db: Session = Depends(get_db)

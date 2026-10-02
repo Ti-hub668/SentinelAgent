@@ -1180,12 +1180,12 @@ onMounted(() => {
 .finding-title {
   display: block;
   margin-top: 9px;
-  overflow: hidden;
+  overflow: visible;
   color: #334155;
   font-size: 13px;
   line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .finding-meta {
@@ -1195,6 +1195,7 @@ onMounted(() => {
   margin-top: 9px;
   color: #8795a8;
   font-size: 11px;
+  flex-wrap: wrap;
 }
 
 .finding-meta span {
@@ -1208,6 +1209,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .status-text {
@@ -1277,6 +1279,7 @@ onMounted(() => {
 
 .detail-header-main {
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .detail-id {
@@ -1536,6 +1539,183 @@ onMounted(() => {
   .investigation-callout {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+/* =========================
+   Finding detail polish
+   ========================= */
+
+.workspace-grid {
+  min-width: 0;
+}
+
+.workspace-grid > * {
+  min-width: 0;
+}
+
+.finding-detail-panel {
+  width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.detail-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.detail-header {
+  width: 100%;
+  min-width: 0;
+
+  align-items: flex-start;
+
+  gap: 16px;
+}
+
+.detail-header-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.detail-id {
+  overflow-wrap: anywhere;
+}
+
+.detail-header h3 {
+  width: 100%;
+  max-width: 100%;
+
+  margin:
+    7px 0 12px;
+
+  font-size:
+    clamp(
+      18px,
+      2vw,
+      22px
+    );
+
+  line-height: 1.35;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.detail-tags {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 8px;
+}
+
+.detail-tags > * {
+  flex-shrink: 0;
+
+  max-width: 100%;
+}
+
+
+/* Metadata 不要在中等宽度还强制四列 */
+
+.metadata-grid {
+  min-width: 0;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+}
+
+.metadata-grid > div {
+  min-width: 0;
+}
+
+.metadata-grid strong {
+  white-space: normal;
+
+  overflow: visible;
+  text-overflow: unset;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  line-height: 1.5;
+}
+
+
+/* Risk block */
+
+.risk-score-box {
+  min-width: 0;
+
+  grid-template-columns:
+    minmax(110px, 130px)
+    minmax(0, 1fr);
+}
+
+
+/* =========================
+   Finding responsive layout
+   ========================= */
+
+@media (max-width: 1600px) {
+  .workspace-grid {
+    grid-template-columns:
+      minmax(300px, 0.72fr)
+      minmax(0, 1.7fr);
+  }
+
+  .metadata-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (max-width: 1180px) {
+  .workspace-grid {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .metadata-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (max-width: 720px) {
+  .detail-header {
+    flex-direction: column;
+  }
+
+  .detail-header-main {
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .metadata-grid {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .risk-score-box {
+    grid-template-columns:
+      minmax(0, 1fr);
   }
 }
 </style>

@@ -3559,12 +3559,12 @@ onMounted(async () => {
 
 .timeline-main p {
   margin: 5px 0;
-  overflow: hidden;
+  overflow: visible;
   color: #718095;
   font-size: 9px;
   line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .timeline-meta {
@@ -3608,7 +3608,7 @@ onMounted(async () => {
 .workflow-meta {
   display: grid;
   grid-template-columns:
-    repeat(3, 1fr);
+    repeat(3, minmax(0, 1fr));
   gap: 7px;
   margin-top: 10px;
 }
@@ -4033,17 +4033,112 @@ onMounted(async () => {
   font-size: 13px;
 }
 
-@media (max-width: 1380px) {
+/* =========================
+   Audit responsive layout
+   ========================= */
+
+.audit-workspace {
+  min-width: 0;
+
+  grid-template-columns:
+    minmax(250px, 0.72fr)
+    minmax(390px, 1.15fr)
+    minmax(360px, 1fr);
+}
+
+.audit-workspace > * {
+  min-width: 0;
+}
+
+.detail-column {
+  min-width: 0;
+}
+
+.detail-column > * {
+  min-width: 0;
+}
+
+
+/*
+  浏览器宽度看起来还很大时，
+  实际内容区已经被 Sidebar 占掉一部分。
+  因此不要等到 1380px 才降级。
+*/
+@media (max-width: 1600px) {
   .audit-workspace {
     grid-template-columns:
-      300px 1fr;
+      minmax(280px, 0.72fr)
+      minmax(0, 1.55fr);
   }
 
   .detail-column {
     grid-column: 1 / -1;
+
     display: grid;
+
     grid-template-columns:
-      repeat(2, 1fr);
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap: 18px;
+  }
+}
+
+
+/*
+  中等宽度下进一步改单列详情，
+  避免 Event Inspector 再次被压缩。
+*/
+@media (max-width: 1180px) {
+  .audit-workspace {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .detail-column {
+    grid-column: auto;
+
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+}
+
+
+/*
+  小屏幕
+*/
+@media (max-width: 900px) {
+  .summary-grid {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .audit-workspace {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .detail-column {
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .event-filters,
+  .run-overview,
+  .workflow-meta,
+  .retrieval-grid,
+  .intel-grid,
+  .evidence-fields {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .wide-field {
+    grid-column: auto;
   }
 }
 
@@ -4079,10 +4174,7 @@ onMounted(async () => {
   .plan-grid {
   display: grid;
   grid-template-columns:
-    repeat(
-      3,
-      minmax(0, 1fr)
-    );
+    repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   gap: 12px;
   margin-top: 16px;
 }
@@ -4180,13 +4272,319 @@ onMounted(async () => {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* =========================
+   Audit UI polish
+   ========================= */
 
+/* ---------- Summary cards ---------- */
+
+.summary-grid {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  gap: 16px;
+}
+
+.summary-card {
+  min-width: 0;
+  min-height: 132px;
+
+  height: auto;
+
+  padding: 18px 20px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  overflow: hidden;
+}
+
+.summary-card > span {
+  display: block;
+
+  margin: 0;
+
+  color: #8b9aaf;
+
+  font-size: 12px;
+  line-height: 1.45;
+
+  overflow-wrap: anywhere;
+}
+
+.summary-card > strong {
+  display: block;
+
+  margin: 2px 0;
+
+  color: #27364a;
+
+  font-size: clamp(
+    28px,
+    2.5vw,
+    38px
+  );
+
+  line-height: 1.05;
+
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+.summary-card small {
+  display: block;
+
+  margin: 0;
+
+  color: #99a6b6;
+
+  font-size: 11px;
+  line-height: 1.45;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* ---------- Event inspector ---------- */
+
+.event-detail {
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.event-detail > * {
+  min-width: 0;
+}
+
+
+/* ---------- Event metadata ---------- */
+
+.event-info {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 12px;
+}
+
+.event-info div {
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.event-info span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #8b9aaf;
+
+  font-size: 11px;
+  line-height: 1.4;
+
+  overflow-wrap: anywhere;
+}
+
+.event-info strong {
+  display: block;
+
+  min-width: 0;
+
+  color: #314158;
+
+  font-size: 13px;
+  line-height: 1.55;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+/* ---------- Event summary ---------- */
+
+.event-summary {
+  width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.event-summary > span {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #8b9aaf;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.event-summary p {
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+
+  color: #5f7187;
+
+  font-size: 13px;
+  line-height: 1.65;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+/* ---------- Metadata / JSON ---------- */
+
+.metadata-block,
+.mini-metadata {
+  width: 100%;
+  max-width: 100%;
+
+  min-width: 0;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  overflow-x: auto;
+}
+
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1400px) {
+  .summary-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+  .event-info {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .summary-grid {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .summary-card {
+    min-height: 118px;
+  }
+}
 @media (
   max-width: 1200px
 ) {
   .plan-grid {
     grid-template-columns:
-      1fr;
+      repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  }
+}
+/* =========================
+   Audit detail protection
+   ========================= */
+
+.event-detail {
+  width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.event-info {
+  width: 100%;
+  min-width: 0;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+}
+
+.event-info div {
+  min-width: 0;
+}
+
+.event-info strong {
+  min-width: 0;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.event-summary {
+  width: 100%;
+  min-width: 0;
+}
+
+.event-summary p {
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  line-height: 1.65;
+}
+
+.metadata-block,
+.mini-metadata {
+  width: 100%;
+  max-width: 100%;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  overflow-x: auto;
+}
+
+@media (max-width: 1400px) {
+  .event-info {
+    grid-template-columns:
+      minmax(0, 1fr);
   }
 }
 </style>

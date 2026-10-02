@@ -15,6 +15,9 @@ export const createAsset = (data, config = {}) =>
 export const getScans = (config = {}) =>
   request.get('/scans', config)
 
+export const getDiscovery = (config = {}) =>
+  request.get('/scans/discovery', config)
+
 export const getScan = (scanId, config = {}) =>
   request.get(`/scans/${scanId}`, config)
 

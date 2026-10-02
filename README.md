@@ -399,6 +399,10 @@ Audit Trace
 
 ## 4.1 Automated Security Discovery
 
+Discovery 页面通过 `GET /api/scans/discovery` 展示已有扫描的服务库存，支持搜索、仅 Web 服务过滤、刷新与安全的新窗口链接。每个 `asset_id + host + protocol + port` 保留最近的发现，时间优先使用 `finished_at`、`started_at`、`created_at`。读取库存不会运行 Nmap / Nuclei。
+
+统计中，发现服务是已识别服务名称的端口数，开放端口是去重后的资产端点数，Web Targets 是不同 URL 数，Assets 是不同资产 ID 数。库存是历史观察结果，不代表端口当前仍开放。
+
 SentinelAgent 集成：
 
 - Nmap
@@ -1431,6 +1435,8 @@ Execute Again First
 
 # 31. Current Project Status
 
+**Release scope: v1.0-demo — 本地演示版本，生产级增强见 Roadmap。**
+
 目前已经完成：
 
 - [x] Vue 3 Frontend
@@ -1439,6 +1445,10 @@ Execute Again First
 - [x] MySQL Persistence
 - [x] Asset Management
 - [x] Scan Management
+- [x] Asset / Service Discovery
+- [x] Open Port Inventory
+- [x] Web Target Discovery
+- [x] Frontend Discovery Inventory
 - [x] Nmap Integration
 - [x] Nuclei Integration
 - [x] Unified Finding
@@ -1488,7 +1498,9 @@ Execute Again First
 - [ ] Multi-user authentication and RBAC
 - [ ] Production-grade database migration framework
 - [ ] More comprehensive benchmark datasets
-- [ ] End-to-end production deployment
+- [ ] CI/CD and end-to-end production deployment
+- [ ] Central integration settings UI
+- [ ] Discovery pagination and inventory lifecycle / freshness tracking
 - [ ] Observability / metrics
 - [ ] Additional external execution reconciliation providers
 

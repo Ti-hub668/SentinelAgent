@@ -589,7 +589,7 @@ onBeforeUnmount(cancelRequests)
 
     <template v-if="workflow">
       <div class="run-progress" role="status" aria-live="polite">
-        <el-tag :type="statusType(runStatus)">{{ t('interface.run') }} {{ runStatus }}</el-tag>
+        <el-tag :type="statusType(runStatus)">{{ t('interface.run') }} {{ label(runStatus) }}</el-tag>
         <span>{{ polling ? (runStatus === 'completed' ? t('interface.investigationAnalysisCompletedSynchronizingResponsePolicyAndApprovals') : t('interface.updatingInvestigationProgressLive')) : (pollError ? t('interface.automaticRefreshPaused') : t('interface.runFinishedAutomaticRefreshStopped')) }}</span>
         <small v-if="lastUpdated">{{ t('interface.lastSynchronized') }}{{ formatDate(lastUpdated) }}</small>
       </div>
@@ -1091,6 +1091,7 @@ onBeforeUnmount(cancelRequests)
   display: flex;
   align-items: flex-end;
   gap: 24px;
+  flex-wrap: wrap;
 }
 
 .control-block {
@@ -1297,12 +1298,12 @@ onBeforeUnmount(cancelRequests)
 
 .timeline-content p {
   margin: 5px 0;
-  overflow: hidden;
+  overflow: visible;
   color: #708094;
   font-size: 10px;
   line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .timeline-content small {
@@ -1406,6 +1407,7 @@ onBeforeUnmount(cancelRequests)
 .response-tags {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .policy-counts {
@@ -1494,6 +1496,7 @@ onBeforeUnmount(cancelRequests)
   .control-panel {
     flex-direction: column;
     align-items: stretch;
+    flex-wrap: wrap;
   }
 
   .control-divider {

@@ -34,3 +34,18 @@ class ScanResponse(BaseModel):
     started_at: datetime | None
     finished_at: datetime | None
     ports: list[PortResponse]
+
+
+class DiscoveryResponse(BaseModel):
+    port_id: int
+    scan_task_id: int
+    asset_id: int
+    host: str
+    protocol: str
+    port: int
+    service: str
+    product: str
+    version: str
+    web_target: str | None
+    scan_status: str
+    discovered_at: datetime

@@ -30,10 +30,10 @@ export default {
 
   layout: {
     footer: 'SentinelAgent · AI-Powered Security Operations Platform',
-    foundation: 'Day 29 / Foundation',
+    foundation: 'v1.0-demo',
     home: 'SentinelAgent Home',
     mainNavigation: 'Main navigation',
-    frontendFramework: 'Day 29 · Frontend foundation',
+    frontendFramework: 'v1.0-demo · Security Operations',
     workspace: 'Local Workspace',
     localDevelopment: 'Local Development',
     apiChecking: 'Checking API',
@@ -116,10 +116,8 @@ export default {
     chinese: '简体中文',
     english: 'English',
     saved: 'Language preference saved',
-    comingSoon:
-      'More system settings will be available later',
-    futureSettings:
-      'Ollama, RAG, Nuclei and Policy settings will be added later',
+    comingSoon: 'Preferences',
+    futureSettings: 'Language preferences are saved in this browser',
   },
 
   investigation: {
@@ -570,7 +568,7 @@ export default {
   "confirmRejection": "Confirm Rejection",
   "discovery": "Discovery",
   "assetDiscoveryAndServiceInventory": "Asset discovery and service inventory",
-  "openPortsServicesProductVersionsAndWebTargetsWillBeAddedLater": "Open ports, services, product versions and web targets will be added later"
+  "openPortsServicesProductVersionsAndWebTargetsWillBeAddedLater": "Open ports, services, product versions and web targets"
 },
   labels: {
   "active": "Active",
@@ -646,4 +644,32 @@ export default {
   "durationSeconds": "{seconds}s",
   "durationMinutes": "{minutes}m {seconds}s"
 },
+  discovery: {
+  "title": "Discovery",
+  "description": "Explore open ports, services and web targets observed in previous scans.",
+  "services": "Discovered Services",
+  "ports": "Open Ports",
+  "targets": "Web Targets",
+  "assets": "Assets",
+  "inventory": "Service Inventory",
+  "search": "Search host, port, service, product, version or web target",
+  "webOnly": "Web Services Only",
+  "refresh": "Refresh",
+  "assetId": "Asset ID",
+  "scanTask": "Scan Task",
+  "host": "Host",
+  "port": "Port",
+  "protocol": "Protocol",
+  "service": "Service",
+  "product": "Product",
+  "version": "Version",
+  "webTarget": "Web Target",
+  "scanStatus": "Scan Status",
+  "discoveredAt": "Discovered At",
+  "empty": "No discovery data yet. Run a scan task first.",
+  "noMatch": "No matching discoveries",
+  "loadFailed": "Unable to load discovery data. Please try again later.",
+  "count": "Showing {visible} / {total} records",
+  "statistics": "Statistics cover the full inventory; discovered services count ports with an identified service name."
+}
 }

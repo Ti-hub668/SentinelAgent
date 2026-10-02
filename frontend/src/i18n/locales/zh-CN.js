@@ -30,10 +30,10 @@ export default {
 
   layout: {
     footer: 'SentinelAgent · AI 智能安全运营平台',
-    foundation: 'Day 29 / 基础框架',
+    foundation: 'v1.0-demo',
     home: 'SentinelAgent 首页',
     mainNavigation: '主导航',
-    frontendFramework: 'Day 29 · 前端基础框架',
+    frontendFramework: 'v1.0-demo · 安全运营工作台',
     workspace: '本地工作空间',
     localDevelopment: '本地开发',
     apiChecking: 'API 检测中',
@@ -116,10 +116,8 @@ export default {
     chinese: '简体中文',
     english: 'English',
     saved: '语言设置已保存',
-    comingSoon:
-      '更多系统设置将在后续接入',
-    futureSettings:
-      'Ollama、RAG、Nuclei 与 Policy 设置将在后续接入',
+    comingSoon: '偏好设置',
+    futureSettings: '语言偏好保存在当前浏览器',
   },
 
   investigation: {
@@ -570,7 +568,7 @@ export default {
   "confirmRejection": "确认拒绝",
   "discovery": "资产发现",
   "assetDiscoveryAndServiceInventory": "资产发现与服务清单",
-  "openPortsServicesProductVersionsAndWebTargetsWillBeAddedLater": "开放端口、服务、产品版本与 Web Targets 将在后续接入"
+  "openPortsServicesProductVersionsAndWebTargetsWillBeAddedLater": "开放端口、服务、产品版本与 Web 目标"
 },
   labels: {
   "active": "活跃",
@@ -646,4 +644,32 @@ export default {
   "durationSeconds": "{seconds} 秒",
   "durationMinutes": "{minutes} 分 {seconds} 秒"
 },
+  discovery: {
+  "title": "资产发现",
+  "description": "查看历史扫描发现的开放端口、服务与 Web 目标。",
+  "services": "发现服务",
+  "ports": "开放端口",
+  "targets": "Web 目标",
+  "assets": "涉及资产",
+  "inventory": "服务清单",
+  "search": "搜索主机、端口、服务、产品、版本或 Web 目标",
+  "webOnly": "仅 Web 服务",
+  "refresh": "刷新",
+  "assetId": "资产 ID",
+  "scanTask": "扫描任务",
+  "host": "主机",
+  "port": "端口",
+  "protocol": "协议",
+  "service": "服务",
+  "product": "产品",
+  "version": "版本",
+  "webTarget": "Web 目标",
+  "scanStatus": "扫描状态",
+  "discoveredAt": "发现时间",
+  "empty": "暂无资产发现数据，请先运行一次扫描任务",
+  "noMatch": "没有匹配的发现记录",
+  "loadFailed": "无法加载资产发现数据，请稍后重试",
+  "count": "显示 {visible} / {total} 条记录",
+  "statistics": "统计基于全部库存；发现服务指已识别服务名称的端口。"
+}
 }
