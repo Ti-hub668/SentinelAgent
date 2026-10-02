@@ -15,72 +15,21 @@
 
 ## What is SentinelAgent?
 
-**SentinelAgent** 是一个面向安全运营场景设计的 AI Security Agent。
+# SentinelAgent
 
-它不是简单的：
+> **AI-Powered Security Operations Agent**
 
-```text
-Vulnerability Scanner
-        ↓
-       LLM
-        ↓
-Security Report
-```
+SentinelAgent 是一个面向安全运营场景设计的 AI Security Agent。
 
-而是把安全运营过程重新组织为：
+它将 Nmap / Nuclei 等安全扫描结果转化为结构化安全上下文，
+通过 LangGraph 驱动多阶段、证据约束的 AI 调查，
+并利用 Policy Engine、Human Approval 与具备幂等和崩溃恢复能力的
+Tool Broker 实现受控安全响应与完整审计。
 
-```text
-Detect
-  ↓
-Normalize
-  ↓
-Investigate
-  ↓
-Retrieve
-  ↓
-Ground
-  ↓
-Decide
-  ↓
-Govern
-  ↓
-Approve
-  ↓
-Execute
-  ↓
-Recover
-  ↓
-Audit
-```
-
-SentinelAgent 将：
-
-- Nmap / Nuclei 自动化扫描
-- Asset & Service Discovery
-- Unified Finding
-- Structured Security Context
-- LangGraph Multi-stage Investigation
-- Security RAG
-- Threat Intelligence
-- Evidence Assessment
-- Risk Synthesis
-- Grounding Validation
-- Policy Engine
-- Human Approval
-- Tool Broker
-- Idempotency / Replay
-- Crash Recovery / Reconciliation
-- Investigation Ledger / Audit Trace
-
-组合成一条完整的：
-
-> **Detection → Investigation → Decision → Governed Response → Audit**
-
-安全运营闭环。
-
-项目的核心目标不是让 LLM “看起来会分析漏洞”，而是探索：
-
-> **如何让 AI Security Agent 的调查有证据、执行有边界、失败可恢复、全过程可审计。**
+> SentinelAgent transforms raw security findings into structured investigation context,
+> performs evidence-grounded multi-stage AI investigation,
+> and executes response actions through policy-governed,
+> auditable, and crash-safe tooling.
 
 ---
 
@@ -88,10 +37,11 @@ SentinelAgent 将：
 
 SentinelAgent `v1.0-demo` 当前主要面向：
 
-- 本地开发
-- 安全研究
-- 简历 / 面试项目演示
-- 授权漏洞测试环境
+- 本地开发与测试
+- Defensive Security Research
+- AI Security Engineering
+- Authorized Vulnerability Assessment
+- Security Automation Experiments
 
 > [!WARNING]
 > SentinelAgent 包含主动安全扫描能力。  
@@ -688,8 +638,77 @@ Security Report
 - 外部动作成功后如果服务崩溃，本地可能不知道；
 - 整个调查过程难以解释和审计。
 
-SentinelAgent 针对这些问题分别设计了对应层。
+SentinelAgent 针对这些问题,将安全运营流程重新组织为：
 
+```text
+Detect
+  ↓
+Normalize
+  ↓
+Investigate
+  ↓
+Retrieve
+  ↓
+Ground
+  ↓
+Decide
+  ↓
+Govern
+  ↓
+Approve
+  ↓
+Execute
+  ↓
+Recover
+  ↓
+Audit
+```
+对应到系统内部，则是：
+
+Nmap / Nuclei
+      ↓
+Unified Finding
+      ↓
+Context Builder
+      ↓
+SentinelContextBundle
+      ↓
+LangGraph Investigator
+      ↓
+Triage
+      ↓
+Research
+ ├── Security RAG
+ └── Threat Intelligence
+      ↓
+Analysis
+      ↓
+Evidence Assessment
+      ↓
+Risk Synthesis
+      ↓
+Grounding Validator
+      ↓
+Final Verdict
+      ↓
+Response Plan
+      ↓
+Policy Engine
+      ↓
+ALLOW / DENY / REQUIRE_APPROVAL
+      ↓
+Human Approval
+      ↓
+Tool Broker
+      ↓
+Idempotent / Controlled Execution
+      ↓
+Crash Recovery / Reconciliation
+      ↓
+Investigation Ledger / Audit Trace
+
+SentinelAgent 的目标不是简单地产生一份 AI 安全报告，而是构建一条：
+从检测、调查、证据约束、风险决策，到策略治理、受控执行和审计恢复的完整安全运营 Agent Workflow。
 ---
 
 ## 1. Unified Finding
@@ -1421,9 +1440,9 @@ Scanner + LLM
 
 **Current release: `v1.0-demo`**
 
-定位：
+Release scope:
 
-> **Local demonstration / security research / portfolio project**
+> **Local-first security research and development release**
 
 当前已经完成：
 
@@ -1475,11 +1494,28 @@ Scanner + LLM
 
 ---
 
-# Local Demo Scope
+# Deployment Scope
 
-`v1.0-demo` 代表一个可以在本地完整展示核心设计的版本。
+SentinelAgent `v1.0-demo` is currently designed as a local-first security research and development release.
 
-它不是生产级 SOC 平台，也不声称已经解决所有企业级部署问题。
+The current release focuses on validating the complete security operations workflow:
+
+```text
+Security Detection
+        ↓
+Structured Context
+        ↓
+AI Investigation
+        ↓
+Evidence Grounding
+        ↓
+Policy Governance
+        ↓
+Controlled Tool Execution
+        ↓
+Crash-safe Recovery
+        ↓
+Auditability
 
 当前 Demo 重点验证的是：
 
@@ -1568,18 +1604,6 @@ Git whitespace / patch 检查：
 ```powershell
 git diff --check
 ```
-
----
-
-# Interview Summary
-
-如果用一句话介绍 SentinelAgent：
-
-> **SentinelAgent 将 Nmap / Nuclei 等安全扫描结果转化为结构化安全上下文，通过 LangGraph 驱动多阶段、证据约束的 AI 调查，并利用 Policy Engine、Human Approval 与具备幂等和崩溃恢复能力的 Tool Broker 实现受控安全响应与完整审计。**
-
-English:
-
-> **SentinelAgent transforms raw security findings into structured investigation context, performs evidence-grounded multi-stage AI investigation, and executes response actions through policy-governed, auditable, and crash-safe tooling.**
 
 ---
 
