@@ -97,4 +97,14 @@ export const executeInvestigationTools = (
     config,
   )
 
+export const reconcileInvestigationExecutions = (
+  runId,
+  config = {},
+) =>
+  request.post(
+    `/agent/runs/${runId}/reconcile`,
+    null,
+    config,
+  )
+
 export { default as request } from './request'

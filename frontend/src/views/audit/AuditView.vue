@@ -30,6 +30,7 @@ import {
   getInvestigationRun,
   getInvestigationRuns,
   getInvestigationTrace,
+  reconcileInvestigationExecutions,
 } from '../../api'
 
 const route = useRoute()
@@ -44,6 +45,9 @@ const selectedEvent = ref(null)
 
 const loadingRuns = ref(false)
 const loadingTrace = ref(false)
+const reconciling = ref(false)
+
+const reconciliationResult = ref(null)
 
 const runSearch = ref('')
 const runStatusFilter = ref('')
@@ -152,6 +156,9 @@ function eventCategory(event) {
   if (
     type.startsWith(
       'tool_execution',
+    ) ||
+    type.startsWith(
+      'tool_reconciliation',
     )
   ) {
     return 'execution'
@@ -806,6 +813,18 @@ function eventLabel(event) {
 
     tool_execution_failed:
       'Tool Broker Failed',
+
+    tool_reconciliation_started:
+      'Reconciliation Started',
+
+    tool_reconciliation_confirmed:
+      'Reconciliation Confirmed',
+
+    tool_reconciliation_unresolved:
+      'Reconciliation Unresolved',
+
+    tool_reconciliation_failed:
+      'Reconciliation Failed',
   }
 
   return (
@@ -942,6 +961,65 @@ async function selectRun(run) {
   }
 }
 
+async function reconcileSelectedRun() {
+  const runId =
+    trace.value?.run?.id ||
+    selectedRun.value?.id
+
+  if (!runId) {
+    ElMessage.warning(
+      'Please select an investigation run first.',
+    )
+    return
+  }
+
+  reconciling.value = true
+  reconciliationResult.value = null
+
+  try {
+    const result =
+      await reconcileInvestigationExecutions(
+        runId,
+      )
+
+    reconciliationResult.value =
+      result
+
+    const [
+      runResponse,
+      traceResponse,
+    ] = await Promise.all([
+      getInvestigationRun(runId),
+      getInvestigationTrace(runId),
+    ])
+
+    workflow.value =
+      runResponse
+
+    trace.value =
+      traceResponse
+
+    ElMessage.success(
+      `Reconciliation finished: ` +
+      `${result.confirmed} confirmed, ` +
+      `${result.unresolved} unresolved, ` +
+      `${result.failed} failed.`,
+    )
+  } catch (error) {
+    console.error(
+      'Reconciliation error:',
+      error,
+    )
+
+    ElMessage.error(
+      error?.response?.data?.detail ||
+      error?.message ||
+      'Execution reconciliation failed.',
+    )
+  } finally {
+    reconciling.value = false
+  }
+}
 async function refreshAll() {
   const currentId =
     selectedRun.value?.id
@@ -1045,7 +1123,40 @@ onMounted(async () => {
       >
         刷新审计数据
       </el-button>
+
+      <el-button
+        type="warning"
+        :loading="reconciling"
+        :disabled="!trace?.run?.id"
+        @click="reconcileSelectedRun"
+      >
+        Reconcile stale executions
+      </el-button>
     </div>
+
+    <el-alert
+      v-if="reconciliationResult"
+      type="info"
+      show-icon
+      :closable="false"
+      class="reconciliation-alert"
+    >
+      <template #title>
+        Reconciliation completed
+      </template>
+
+      Checked:
+      {{ reconciliationResult.checked }}
+
+      · Confirmed:
+      {{ reconciliationResult.confirmed }}
+
+      · Unresolved:
+      {{ reconciliationResult.unresolved }}
+
+      · Failed:
+      {{ reconciliationResult.failed }}
+    </el-alert>
 
     <div class="summary-grid">
       <section class="panel summary-card">

@@ -231,6 +231,30 @@ function eventLabel(event) {
     tool_execution_simulated:
       'Tool Broker',
 
+    tool_execution_executed:
+      'Tool Broker · Executed',
+
+    tool_execution_replayed:
+      'Tool Broker · Replay',
+
+    tool_execution_blocked:
+      'Tool Broker · Blocked',
+
+    tool_execution_failed:
+      'Tool Broker · Failed',
+
+    tool_reconciliation_started:
+      'Reconciliation Started',
+
+    tool_reconciliation_confirmed:
+      'Reconciliation Confirmed',
+
+    tool_reconciliation_unresolved:
+      'Reconciliation Unresolved',
+
+    tool_reconciliation_failed:
+      'Reconciliation Failed',
+
     investigation_failed: 'Investigation Failed',
     workflow_failed: 'Workflow Failed',
     stale_run_recovered: 'Stale Run Recovered',
