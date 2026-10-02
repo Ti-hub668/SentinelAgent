@@ -37,7 +37,6 @@ Tool Broker 实现受控安全响应与完整审计。
 
 SentinelAgent `v1.0-demo` 当前主要面向：
 
-- 本地开发与测试
 - Defensive Security Research
 - AI Security Engineering
 - Authorized Vulnerability Assessment
