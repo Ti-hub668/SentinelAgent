@@ -1235,6 +1235,10 @@ Recovery
 
 # Frontend
 
+界面沿用现有导航与业务流程，统一视觉规范见 [Frontend Design System v1](docs/FRONTEND_DESIGN_SYSTEM.md)。
+
+Settings 提供语言设置、真实后端健康检查和最近检查时间，并展示模型、扫描器与外部集成的配置说明。现有 `/health` 不探测 MySQL、Ollama、扫描器或 GitHub 状态，页面明确标记这些状态未由 API 提供。
+
 SentinelAgent 当前提供以下页面：
 
 ```text
@@ -1448,6 +1452,8 @@ Release scope:
 
 - [x] Vue 3 Frontend
 - [x] zh-CN / en-US i18n
+- [x] Frontend Design System v1
+- [x] Settings: browser language, backend health check and configuration guidance
 - [x] FastAPI Backend
 - [x] MySQL Persistence
 - [x] Asset Management
@@ -1544,6 +1550,7 @@ Auditability
 后续生产化方向包括：
 
 - [ ] Multi-user authentication
+- [ ] User profiles and email verification
 - [ ] RBAC
 - [ ] Additional SOAR integrations
 - [ ] Additional Threat Intelligence providers
@@ -1552,7 +1559,7 @@ Auditability
 - [ ] CI/CD
 - [ ] Containerized / production deployment
 - [ ] Observability / metrics
-- [ ] Central integration configuration UI
+- [ ] Editable central integration configuration UI with a secure server API
 - [ ] Discovery pagination
 - [ ] Asset lifecycle / freshness tracking
 - [ ] Larger benchmark datasets

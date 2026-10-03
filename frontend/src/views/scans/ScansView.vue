@@ -724,31 +724,6 @@ onMounted(() => {
   gap: 18px;
 }
 
-.page-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.page-heading h2 {
-  margin: 4px 0 6px;
-  color: #1f2937;
-  font-size: 26px;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #8a95a8;
-}
-
-.eyebrow {
-  color: #299dbc;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-}
-
 .scan-launcher {
   display: flex;
   flex-direction: column;

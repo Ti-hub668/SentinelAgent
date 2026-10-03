@@ -1707,32 +1707,6 @@ onMounted(async () => {
   gap: 18px;
 }
 
-.page-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.page-heading h2 {
-  margin: 4px 0 6px;
-  color: #1f2937;
-  font-size: 26px;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #8a95a8;
-}
-
-.eyebrow,
-.section-label {
-  color: #299dbc;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.3px;
-}
-
 .run-loader {
   display: grid;
   grid-template-columns:
@@ -1792,28 +1766,6 @@ onMounted(async () => {
   gap: 14px;
 }
 
-.summary-card > span {
-  display: block;
-  color: #94a3b8;
-  font-size: 10px;
-}
-
-.summary-card > strong {
-  display: block;
-  margin: 8px 0 6px;
-  color: #26364a;
-  font-size: 23px;
-}
-
-.summary-card .summary-text {
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.summary-card small {
-  color: #94a3b8;
-}
-
 .finding-banner {
   display: flex;
   align-items: center;
@@ -1847,20 +1799,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.panel-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.panel-heading h3 {
-  margin: 3px 0 0;
-  color: #334155;
-  font-size: 15px;
 }
 
 .response-overview {

@@ -445,60 +445,11 @@ onMounted(() => {
   gap: 18px;
 }
 
-.page-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.page-heading h2 {
-  margin: 4px 0 6px;
-  color: #1f2937;
-  font-size: 26px;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #8a95a8;
-}
-
-.eyebrow {
-  color: #299dbc;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-}
-
-.heading-actions {
-  display: flex;
-  gap: 10px;
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns:
     repeat(3, minmax(0, 1fr));
   gap: 14px;
-}
-
-.summary-card {
-  padding: 18px;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.summary-card span {
-  display: block;
-  color: #8a95a8;
-  font-size: 12px;
-}
-
-.summary-card strong {
-  display: block;
-  margin-top: 8px;
-  color: #26364a;
-  font-size: 26px;
 }
 
 .toolbar {

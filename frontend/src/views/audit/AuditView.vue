@@ -3264,79 +3264,10 @@ onMounted(async () => {
   gap: 18px;
 }
 
-.page-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.page-heading h2 {
-  margin: 4px 0 6px;
-  color: #1f2937;
-  font-size: 26px;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #8a95a8;
-}
-
-.eyebrow,
-.section-label {
-  color: #299dbc;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.3px;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.summary-card > span {
-  display: block;
-  color: #94a3b8;
-  font-size: 10px;
-}
-
-.summary-card > strong {
-  display: block;
-  margin: 8px 0 5px;
-  color: #26364a;
-  font-size: 24px;
-}
-
-.summary-card small {
-  color: #94a3b8;
-  font-size: 9px;
-}
-
 .audit-workspace {
   display: grid;
-  grid-template-columns:
-    minmax(250px, 0.72fr)
-    minmax(390px, 1.15fr)
-    minmax(330px, 1fr);
   gap: 18px;
   align-items: start;
-}
-
-.panel-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 15px;
-}
-
-.panel-heading h3 {
-  margin: 3px 0 0;
-  color: #334155;
-  font-size: 15px;
 }
 
 .run-filters {
@@ -3637,13 +3568,6 @@ onMounted(async () => {
   flex: 1;
 }
 
-.event-info {
-  display: grid;
-  grid-template-columns:
-    repeat(2, 1fr);
-  gap: 8px;
-}
-
 .event-info div {
   padding: 9px;
   border: 1px solid #edf0f4;
@@ -3652,22 +3576,11 @@ onMounted(async () => {
 }
 
 .event-info strong {
-  display: block;
   margin-top: 4px;
-  color: #475569;
-  font-size: 9px;
-  word-break: break-word;
 }
 
 .event-summary {
   margin-top: 13px;
-}
-
-.event-summary p {
-  margin: 6px 0 0;
-  color: #66778b;
-  font-size: 10px;
-  line-height: 1.7;
 }
 
 .metadata-title {
@@ -4293,77 +4206,8 @@ onMounted(async () => {
   gap: 16px;
 }
 
-.summary-card {
-  min-width: 0;
-  min-height: 132px;
-
-  height: auto;
-
-  padding: 18px 20px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  gap: 8px;
-
-  overflow: hidden;
-}
-
-.summary-card > span {
-  display: block;
-
-  margin: 0;
-
-  color: #8b9aaf;
-
-  font-size: 12px;
-  line-height: 1.45;
-
-  overflow-wrap: anywhere;
-}
-
-.summary-card > strong {
-  display: block;
-
-  margin: 2px 0;
-
-  color: #27364a;
-
-  font-size: clamp(
-    28px,
-    2.5vw,
-    38px
-  );
-
-  line-height: 1.05;
-
-  font-weight: 650;
-
-  white-space: nowrap;
-}
-
-.summary-card small {
-  display: block;
-
-  margin: 0;
-
-  color: #99a6b6;
-
-  font-size: 11px;
-  line-height: 1.45;
-
-  overflow-wrap: anywhere;
-}
-
 
 /* ---------- Event inspector ---------- */
-
-.event-detail {
-  min-width: 0;
-
-  overflow: hidden;
-}
 
 .event-detail > * {
   min-width: 0;
@@ -4373,22 +4217,13 @@ onMounted(async () => {
 /* ---------- Event metadata ---------- */
 
 .event-info {
-  width: 100%;
-  min-width: 0;
 
   display: grid;
-
-  grid-template-columns:
-    repeat(
-      2,
-      minmax(0, 1fr)
-    );
 
   gap: 12px;
 }
 
 .event-info div {
-  min-width: 0;
 
   overflow: hidden;
 }
@@ -4409,25 +4244,16 @@ onMounted(async () => {
 .event-info strong {
   display: block;
 
-  min-width: 0;
-
   color: #314158;
 
   font-size: 13px;
   line-height: 1.55;
-
-  white-space: normal;
-
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 
 /* ---------- Event summary ---------- */
 
 .event-summary {
-  width: 100%;
-  min-width: 0;
 
   overflow: hidden;
 }
@@ -4444,20 +4270,10 @@ onMounted(async () => {
 }
 
 .event-summary p {
-  width: 100%;
-  min-width: 0;
-
-  margin: 0;
 
   color: #5f7187;
 
   font-size: 13px;
-  line-height: 1.65;
-
-  white-space: normal;
-
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 
@@ -4465,17 +4281,8 @@ onMounted(async () => {
 
 .metadata-block,
 .mini-metadata {
-  width: 100%;
-  max-width: 100%;
 
   min-width: 0;
-
-  white-space: pre-wrap;
-
-  overflow-wrap: anywhere;
-  word-break: break-word;
-
-  overflow-x: auto;
 }
 
 

@@ -1,0 +1,110 @@
+/* SentinelAgent Design System v1. Shared presentation; page grids own their topology. */
+:root {
+  --sa-space-1: 4px;
+  --sa-space-2: 8px;
+  --sa-space-3: 12px;
+  --sa-space-4: 16px;
+  --sa-space-5: 20px;
+  --sa-space-6: 24px;
+  --sa-space-7: 32px;
+  --sa-page-padding: 28px 32px 40px;
+  --sa-card-padding: 20px 24px;
+  --sa-radius: 12px;
+  --sa-border: #e4eaf1;
+  --sa-surface: #fff;
+  --sa-surface-muted: #f7f9fc;
+  --sa-text: #233248;
+  --sa-text-secondary: #64748b;
+  --sa-accent: #078fb9;
+  --el-color-primary: var(--sa-accent);
+  --el-border-radius-base: 8px;
+  --el-text-color-primary: var(--sa-text);
+  --el-text-color-regular: var(--sa-text-secondary);
+}
+
+.main-shell .page-content { padding: var(--sa-page-padding); min-width: 0; }
+.app-shell .page-content > :is(.dashboard, .asset-page, .scan-page, .discovery-page, .findings-page, .investigations-page, .response-page, .audit-page, .settings-page) {
+  display: flex; flex-direction: column; min-width: 0; gap: var(--sa-space-6);
+}
+.app-shell .page-content .page-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: var(--sa-space-4); margin: 0; }
+.app-shell .page-content .page-heading > div { min-width: 0; }
+.app-shell .page-content .page-heading > div:first-child { flex: 1 1 360px; }
+.app-shell .page-content .page-heading .heading-actions { flex: 0 1 auto; }
+.app-shell .page-content .page-heading h2 { margin: 4px 0 8px; color: var(--sa-text); font-size: 26px; line-height: 1.3; font-weight: 650; overflow-wrap: anywhere; }
+.app-shell .page-content .page-heading p { margin: 0; color: var(--sa-text-secondary); font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.app-shell .page-content :is(.eyebrow, .section-label) { color: var(--sa-accent); font-size: 11px; line-height: 1.5; font-weight: 650; letter-spacing: .06em; }
+.app-shell .page-content :is(.summary-grid, .severity-grid, .chart-grid, .quick-row, .workspace-grid, .audit-workspace, .main-grid) { gap: var(--sa-space-5); min-width: 0; }
+.app-shell .page-content :is(.summary-grid, .severity-grid, .chart-grid, .quick-row, .workspace-grid, .audit-workspace, .main-grid) > * { min-width: 0; }
+.app-shell .page-content .panel { border: 1px solid var(--sa-border); border-radius: var(--sa-radius); background: var(--sa-surface); min-width: 0; height: auto; }
+.app-shell .page-content :is(.summary-card, .stat-card, .metric-card, .overview-card, .severity-card) {
+  padding: var(--sa-card-padding); min-height: 136px; height: auto; min-width: 0; border-radius: var(--sa-radius); background: var(--sa-surface); gap: 12px;
+}
+.app-shell .page-content .summary-card { border: 1px solid var(--sa-border); display: flex; flex-direction: column; justify-content: space-between; }
+.app-shell .page-content :is(.summary-card, .stat-card, .metric-card) > strong { font-size: 30px; line-height: 1.2; margin: 0; color: var(--sa-text); white-space: normal; overflow-wrap: anywhere; }
+.app-shell .page-content .summary-card .summary-text { font-size: 17px; line-height: 1.5; }
+.app-shell .page-content :is(.summary-card, .stat-card, .metric-card) > span { color: var(--sa-text-secondary); font-size: 13px; line-height: 1.5; }
+.app-shell .page-content :is(.summary-card, .stat-card, .metric-card) small { color: var(--sa-text-secondary); font-size: 12px; line-height: 1.6; }
+.app-shell .page-content .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: var(--sa-card-padding); margin: 0; }
+.app-shell .page-content .panel-heading > div { min-width: 0; }
+.app-shell .page-content .panel-heading :is(h3, h4) { margin: 4px 0 0; font-size: 16px; line-height: 1.5; color: var(--sa-text); overflow-wrap: anywhere; }
+.app-shell .page-content :is(.toolbar, .heading-actions, .tag-row, .detail-tags, .response-tags, .navigation-actions, .approval-actions) { display: flex; flex-wrap: wrap; gap: 12px; min-width: 0; }
+.app-shell .page-content .toolbar { align-items: center; margin-bottom: 20px; }
+.app-shell .page-content .toolbar > .el-input { flex: 1 1 280px; min-width: 0; }
+.app-shell .page-content .el-table { --el-table-header-bg-color: var(--sa-surface-muted); --el-table-border-color: var(--sa-border); font-size: 13px; }
+.app-shell .page-content .el-table :is(th, td).el-table__cell { padding: 13px 0; }
+.app-shell .page-content .el-table .cell { line-height: 1.65; word-break: break-word; overflow-wrap: anywhere; }
+.app-shell .page-content .el-form-item__label { line-height: 1.6; padding-bottom: 8px; color: var(--sa-text-secondary); }
+.app-shell .page-content .el-form-item { margin-bottom: 20px; min-width: 0; }
+.app-shell .page-content .el-button { min-height: 36px; height: auto; max-width: 100%; padding: 9px 16px; }
+.app-shell .page-content .el-button > span { white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+.app-shell .page-content .el-button + .el-button { margin-left: 0; }
+.app-shell .page-content .panel .el-tag,
+.app-shell .page-content .el-tag { font-size: 12px; max-width: 100%; height: auto; min-height: 24px; white-space: normal; line-height: 1.5; padding: 3px 8px; }
+.app-shell .page-content .el-tag__content { min-width: 0; overflow-wrap: anywhere; }
+.app-shell .page-content :is(.metadata-block, .mini-metadata, .event-summary, .event-info, .detail-header-main, .finding-title, .finding-meta, .response-summary, .event-metadata) { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+.app-shell .page-content :is(.event-summary, .response-summary) p { font-size: 13px; line-height: 1.8; white-space: normal; }
+.app-shell .page-content :is(.metadata-block, .mini-metadata, .tool-main, .broker-result) pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; overflow: auto; font-size: 12px; line-height: 1.7; }
+
+/* Insets belong either to the panel body or to its sections, never both. */
+.app-shell .page-content :is(.asset-page, .scan-page) > .panel,
+.app-shell .page-content :is(.scan-launcher, .run-loader, .finding-banner),
+.app-shell .page-content :is(.main-column, .side-column) > .panel { padding: var(--sa-card-padding); }
+.app-shell .page-content :is(.main-column, .side-column) > .panel > .panel-heading { padding: 0 0 20px; }
+.app-shell .page-content :is(.asset-page, .scan-page) > .panel > .el-table { width: 100%; max-width: 100%; margin: 0; }
+.app-shell .page-content .scan-launcher { gap: 24px; }
+.app-shell .page-content .scan-form { gap: 20px; }
+.app-shell .page-content .scan-form .el-form-item { margin-bottom: 0; }
+.app-shell .page-content .launcher-heading { gap: 16px; flex-wrap: wrap; }
+.app-shell .page-content .launcher-heading p { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
+.app-shell .page-content .inventory-toolbar { padding: 0 24px 20px; gap: 20px; }
+.app-shell .page-content .inventory-footer { padding: 20px 24px; line-height: 1.7; }
+.app-shell .page-content .distribution { min-height: 220px; height: auto; gap: 24px; flex-wrap: wrap; }
+.app-shell .page-content :is(.timeline-event, .timeline-item, .finding-item) { padding: 16px; }
+.app-shell .page-content :is(.timeline-main, .timeline-content) p { font-size: 12px; line-height: 1.75; margin: 8px 0; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.app-shell .page-content :is(.timeline-main, .timeline-content) strong { font-size: 13px; line-height: 1.6; }
+.app-shell .page-content :is(.event-info, .metadata-grid) > div { padding: 14px; }
+.app-shell .page-content :is(.detail-container, .event-detail, .workflow-state) { min-width: 0; }
+.app-shell .page-content .event-summary { margin-top: 20px; }
+.app-shell .page-content .detail-header { gap: 20px; }
+.app-shell .page-content .detail-header-main { min-width: 0; flex: 1 1 auto; }
+.app-shell .page-content .detail-header-main h3 { white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+
+@media (max-width: 1440px) {
+  :root { --sa-page-padding: 28px 24px 36px; }
+}
+@media (max-width: 900px) {
+  :root { --sa-page-padding: 24px 20px 32px; --sa-card-padding: 20px; }
+  .app-shell .page-content .page-heading > div:first-child { flex-basis: 100%; }
+}
+@media (max-width: 640px) {
+  :root { --sa-page-padding: 20px 16px 28px; --sa-card-padding: 18px; }
+}
+
+/* Auditable content gets a consistent body inset, including timeline filters. */
+.app-shell .page-content .audit-workspace .panel,
+.app-shell .page-content .investigations-page .workspace-grid .panel { padding: var(--sa-card-padding); }
+.app-shell .page-content .audit-workspace .panel > .panel-heading,
+.app-shell .page-content .investigations-page .workspace-grid .panel > .panel-heading { padding: 0 0 20px; }
+.app-shell .page-content :is(.run-filters, .event-filters) { gap: 12px; margin-bottom: 20px; }
+.app-shell .page-content :is(.timeline, .run-list) { gap: 12px; }
+.app-shell .page-content .run-verdict { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }

@@ -1019,59 +1019,11 @@ onMounted(() => {
   gap: 18px;
 }
 
-.page-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.page-heading h2 {
-  margin: 4px 0 6px;
-  color: #1f2937;
-  font-size: 26px;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #8a95a8;
-}
-
-.eyebrow {
-  color: #299dbc;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns:
     repeat(4, minmax(0, 1fr));
   gap: 14px;
-}
-
-.summary-card {
-  padding: 18px;
-}
-
-.summary-card span {
-  display: block;
-  color: #8a95a8;
-  font-size: 12px;
-}
-
-.summary-card strong {
-  display: block;
-  margin-top: 8px;
-  color: #26364a;
-  font-size: 26px;
-}
-
-.summary-card small {
-  display: block;
-  margin-top: 5px;
-  color: #a0a9b8;
 }
 
 .filter-panel {
@@ -1270,16 +1222,9 @@ onMounted(() => {
 
 .detail-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid #edf0f4;
-}
-
-.detail-header-main {
-  min-width: 0;
-  flex: 1 1 auto;
 }
 
 .detail-id {
@@ -1290,17 +1235,11 @@ onMounted(() => {
 }
 
 .detail-header h3 {
-  margin: 7px 0 12px;
   color: #26364a;
-  font-size: 22px;
-  line-height: 1.4;
 }
 
 .detail-tags {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
 }
 
 .detail-risk {
@@ -1332,13 +1271,10 @@ onMounted(() => {
 
 .metadata-grid {
   display: grid;
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
 .metadata-grid > div {
-  min-width: 0;
   padding: 12px;
   border: 1px solid #edf0f4;
   border-radius: 9px;
@@ -1354,18 +1290,13 @@ onMounted(() => {
 .metadata-grid strong {
   display: block;
   margin-top: 5px;
-  overflow: hidden;
   color: #334155;
   font-size: 12px;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .risk-score-box {
   display: grid;
-  grid-template-columns:
-    130px 1fr;
   gap: 20px;
   align-items: center;
   padding: 16px;

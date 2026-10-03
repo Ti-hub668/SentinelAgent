@@ -99,13 +99,7 @@ onBeforeUnmount(() => controller.abort())
 
 <style scoped>
 .discovery-page { display: grid; gap: 20px; min-width: 0; }
-.page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.page-heading > div { min-width: 0; flex: 1 1 300px; }
-.page-heading h2 { margin: 0; }
-.page-heading p { margin: 8px 0 0; color: var(--text-secondary); overflow-wrap: anywhere; }
 .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
-.summary-card { min-width: 0; border: 1px solid #edf0f4; border-radius: 10px; background: #fff; }
-.summary-card span { overflow-wrap: anywhere; }
 .inventory-panel { min-width: 0; }
 .inventory-toolbar { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; padding: 0 20px 20px; }
 .inventory-toolbar .el-input { flex: 1 1 350px; min-width: 0; }
