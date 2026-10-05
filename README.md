@@ -663,49 +663,6 @@ Recover
   ↓
 Audit
 ```
-对应到系统内部，则是：
-
-Nmap / Nuclei
-      ↓
-Unified Finding
-      ↓
-Context Builder
-      ↓
-SentinelContextBundle
-      ↓
-LangGraph Investigator
-      ↓
-Triage
-      ↓
-Research
- ├── Security RAG
- └── Threat Intelligence
-      ↓
-Analysis
-      ↓
-Evidence Assessment
-      ↓
-Risk Synthesis
-      ↓
-Grounding Validator
-      ↓
-Final Verdict
-      ↓
-Response Plan
-      ↓
-Policy Engine
-      ↓
-ALLOW / DENY / REQUIRE_APPROVAL
-      ↓
-Human Approval
-      ↓
-Tool Broker
-      ↓
-Idempotent / Controlled Execution
-      ↓
-Crash Recovery / Reconciliation
-      ↓
-Investigation Ledger / Audit Trace
 
 SentinelAgent 的目标不是简单地产生一份 AI 安全报告，而是构建一条：
 从检测、调查、证据约束、风险决策，到策略治理、受控执行和审计恢复的完整安全运营 Agent Workflow。
